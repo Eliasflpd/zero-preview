@@ -945,6 +945,76 @@ footer {
   .footer-inner { flex-direction: column; text-align: center; }
 }
 
+/* ─── REFERRAL ─── */
+.nav-referral {
+  color: #25D366 !important;
+  font-weight: 500;
+}
+.nav-referral:hover { color: #1ebe58 !important; }
+
+.referral-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: linear-gradient(135deg, rgba(37,211,102,.06), rgba(37,211,102,.02));
+  border: 1px solid rgba(37,211,102,.2);
+  border-radius: var(--r2);
+  padding: 36px 48px;
+  flex-wrap: wrap;
+}
+
+.referral-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.ref-emoji {
+  font-size: 2.4rem;
+  flex-shrink: 0;
+}
+
+.ref-title {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -.01em;
+}
+
+.ref-sub {
+  font-size: .9rem;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  background: #25D366;
+  color: white;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  transition: all .2s;
+  box-shadow: 0 4px 20px rgba(37,211,102,.3);
+}
+.btn-whatsapp:hover {
+  background: #1ebe58;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(37,211,102,.4);
+}
+
 /* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -963,6 +1033,7 @@ footer {
     <li><a href="#features">Funcionalidades</a></li>
     <li><a href="#how">Como funciona</a></li>
     <li><a href="#pricing">Preços</a></li>
+    <li><a href="#" class="nav-referral" onclick="openWhatsApp(event)">💚 Indicar amigo</a></li>
   </ul>
   <div class="nav-cta">
     <a href="#" class="btn btn-ghost">Entrar</a>
@@ -1275,6 +1346,27 @@ footer {
   </div>
 </section>
 
+<!-- REFERRAL -->
+<section id="referral" style="padding: 80px 0;">
+  <div class="container">
+    <div class="referral-box reveal">
+      <div class="referral-left">
+        <span class="ref-emoji">🤝</span>
+        <div>
+          <h3 class="ref-title">Conhece alguém que precisa criar apps?</h3>
+          <p class="ref-sub">Indique o Zero Preview pelo WhatsApp e ajude um amigo a construir mais rápido com IA.</p>
+        </div>
+      </div>
+      <button class="btn-whatsapp" onclick="openWhatsApp(event)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.526 5.845L.057 23.882l6.198-1.625A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.51-5.179-1.401l-.371-.22-3.681.965.982-3.586-.242-.382A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        Indicar pelo WhatsApp
+      </button>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
 <!-- CTA FINAL -->
 <section id="cta-final">
   <div class="container">
@@ -1315,6 +1407,21 @@ footer {
 </footer>
 
 <script>
+// ─── WHATSAPP REFERRAL ───
+function openWhatsApp(e) {
+  e.preventDefault();
+  const msg = encodeURIComponent(
+    '🚀 Cara, você precisa conhecer o *Zero Preview*!\n\n' +
+    'É uma plataforma que usa IA pra criar componentes React em segundos — ' +
+    'você descreve o que quer e ela gera o código pronto com preview ao vivo.\n\n' +
+    '✅ Grátis pra começar\n' +
+    '✅ Sem precisar saber programar\n' +
+    '✅ Deploy automático no Vercel\n\n' +
+    'Acessa agora: https://zero-preview-six.vercel.app'
+  );
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
+
 // ─── TYPING ANIMATION ───
 const prompts = [
   'Crie um dashboard de vendas com cards de métricas e gráfico de linha...',
