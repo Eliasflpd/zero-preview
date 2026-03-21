@@ -1476,6 +1476,119 @@ function UserMenu({username,onRename,onClose,licenseKey,onOpenRenameUser}){
   )
 }
 
+// ── TEMPLATE PREVIEW MODAL ────────────────────────────────────────────
+function TemplatePreviewModal({template, onUse, onClose, onPrev, onNext, currentIndex, total}){
+  // usa CodePreview diretamente
+
+  return(
+    <div
+      onClick={onClose}
+      style={{
+        position:'fixed', inset:0, zIndex:9998,
+        background:'rgba(0,0,0,0.85)', backdropFilter:'blur(12px)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        animation:'fadeIn 0.2s ease',
+        padding:'24px'
+      }}
+    >
+      <div
+        onClick={function(e){e.stopPropagation()}}
+        style={{
+          width:'100%', maxWidth:'1000px', height:'85vh',
+          background:'#0e0e12',
+          border:'1px solid rgba(255,255,255,0.1)',
+          borderRadius:'20px', overflow:'hidden',
+          display:'flex', flexDirection:'column',
+          boxShadow:'0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)',
+          animation:'fadeInScale 0.25s cubic-bezier(0.16,1,0.3,1)'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          padding:'16px 20px',
+          borderBottom:'1px solid rgba(255,255,255,0.07)',
+          background:'rgba(255,255,255,0.02)',
+          flexShrink:0
+        }}>
+          <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+            <div style={{
+              width:'36px', height:'36px', borderRadius:'10px',
+              background:template.color+'22', border:'1px solid '+template.color+'44',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              fontSize:'1.1rem'
+            }}>{template.icon}</div>
+            <div>
+              <p style={{color:'#fafafa', fontWeight:700, fontSize:'0.95rem', margin:0, fontFamily:'var(--font-ui)'}}>{template.name}</p>
+              <p style={{color:'var(--muted)', fontSize:'0.75rem', margin:0, fontFamily:'var(--font-ui)'}}>{template.desc}</p>
+            </div>
+            <div style={{
+              background:'rgba(74,222,128,0.1)', border:'1px solid rgba(74,222,128,0.2)',
+              borderRadius:'99px', padding:'3px 10px',
+              fontSize:'0.65rem', color:'#4ade80', fontFamily:'var(--font-mono)',
+              fontWeight:600
+            }}>GRÁTIS — SEM API</div>
+          </div>
+          <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+              {/* Navegação entre templates */}
+              <button onClick={onPrev} style={{
+                background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',
+                color:'#fafafa',borderRadius:'8px',padding:'7px 12px',
+                fontSize:'0.9rem',cursor:'pointer',transition:'all 0.15s'
+              }} onMouseEnter={function(e){e.currentTarget.style.background='rgba(255,255,255,0.1)'}}
+                 onMouseLeave={function(e){e.currentTarget.style.background='rgba(255,255,255,0.06)'}}>
+                {'‹'}
+              </button>
+              <span style={{color:'var(--muted)',fontSize:'0.72rem',fontFamily:'var(--font-mono)',minWidth:'36px',textAlign:'center'}}>
+                {(currentIndex+1)+'/'+total}
+              </span>
+              <button onClick={onNext} style={{
+                background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',
+                color:'#fafafa',borderRadius:'8px',padding:'7px 12px',
+                fontSize:'0.9rem',cursor:'pointer',transition:'all 0.15s'
+              }} onMouseEnter={function(e){e.currentTarget.style.background='rgba(255,255,255,0.1)'}}
+                 onMouseLeave={function(e){e.currentTarget.style.background='rgba(255,255,255,0.06)'}}>
+                {'›'}
+              </button>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
+                color:'var(--muted)', borderRadius:'8px', padding:'7px 14px',
+                fontSize:'0.78rem', cursor:'pointer', fontFamily:'var(--font-ui)'
+              }}
+            >✕ Fechar</button>
+            <button
+              onClick={function(){ onUse(template) }}
+              style={{
+                background:'linear-gradient(135deg, #4ade80, #22d3ee)',
+                border:'none', color:'#000',
+                borderRadius:'8px', padding:'8px 20px',
+                fontSize:'0.82rem', fontWeight:700, cursor:'pointer',
+                fontFamily:'var(--font-ui)',
+                boxShadow:'0 0 24px rgba(74,222,128,0.4)'
+              }}
+            >Usar este template →</button>
+          </div>
+        </div>
+
+        {/* Preview usando CodePreview que já funciona */}
+        <div style={{flex:1, overflow:'hidden'}}>
+          <CodePreview
+            code={template.code}
+            loading={false}
+            licenseKey={null}
+            onCodeFixed={function(){}}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ── SKELETON CARD ─────────────────────────────────────────────────────
 function SkeletonCard(){
   return(
@@ -1639,6 +1752,7 @@ export default function App(){
   var agentDoneState=useState(false);var agentDone=agentDoneState[0];var setAgentDone=agentDoneState[1]
   var agentActiveState=useState(false);var agentActive=agentActiveState[0];var setAgentActive=agentActiveState[1]
   var toastHook=useToast();var toasts=toastHook.toasts;var toast=toastHook.toast
+  var templatePreviewState=useState(null);var previewTemplate=templatePreviewState[0];var setPreviewTemplate=templatePreviewState[1]
   var introState=useState(function(){
     // Só mostra a intro uma vez por sessão
     return !sessionStorage.getItem('zp-intro-seen')
@@ -2064,6 +2178,14 @@ export default function App(){
   }
 
   // ── TELA LICENÇA ──────────────────────────────────────────────────────
+  function useTemplate(t){
+    setPreviewTemplate(null)
+    var proj={id:Date.now(),name:t.name,components:[{id:Date.now()+1,name:t.name,code:t.code}],createdAt:Date.now(),lastEdited:Date.now(),starred:false,published:false,thumbnail:null}
+    setProjects(function(p){var n=p.concat([proj]);saveProjects(n);return n})
+    setActiveProject(proj);setComponents(proj.components)
+    setSelected(proj.components[0]);setView('single');setScreen('editor')
+  }
+
   if(showIntro) return <IntroScreen onDone={dismissIntro}/>
   if(screen==='license')return(
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'var(--bg)'}}>
@@ -2197,24 +2319,16 @@ export default function App(){
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'12px'}}>
                       {TEMPLATES.map(function(t){
                         return(
-                          <div key={t.id} onClick={function(){
-                            if(t.code){
-                              var proj={id:Date.now(),name:t.name,components:[{id:Date.now()+1,name:t.name,code:t.code}],createdAt:Date.now(),lastEdited:Date.now(),starred:false,published:false,thumbnail:null}
-                              setProjects(function(p){var n=p.concat([proj]);saveProjects(n);return n})
-                              setActiveProject(proj);setComponents(proj.components)
-                              setSelected(proj.components[0]);setView('single');setScreen('editor')
-                            } else {
-                              setHomePrompt(t.prompt);setTimeout(handleHomePromptSubmit,50)
-                            }
-                          }}
-                            style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'12px',padding:'18px',cursor:'pointer',display:'flex',gap:'14px',alignItems:'flex-start',transition:'all 0.18s'}}
-                            onMouseEnter={function(e){e.currentTarget.style.borderColor=t.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'}}
+                          <div key={t.id} onClick={function(){ setPreviewTemplate(t) }}
+                            style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'12px',padding:'18px',cursor:'pointer',display:'flex',gap:'14px',alignItems:'flex-start',transition:'all 0.18s',position:'relative',overflow:'hidden'}}
+                            onMouseEnter={function(e){e.currentTarget.style.borderColor=t.color;e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 6px 24px rgba(0,0,0,0.3), 0 0 0 1px '+t.color+'22'}}
                             onMouseLeave={function(e){e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>
                             <div style={{width:'40px',height:'40px',borderRadius:'10px',background:t.color+'22',border:'1px solid '+t.color+'44',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.2rem',flexShrink:0}}>{t.icon}</div>
-                            <div>
-                              <p style={{fontSize:'0.88rem',fontWeight:600,color:'var(--text)',margin:0}}>{t.name}</p>
-                              <p style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'3px',lineHeight:1.4}}>{t.desc}</p>
+                            <div style={{flex:1}}>
+                              <p style={{fontSize:'0.88rem',fontWeight:600,color:'var(--text)',margin:'0 0 3px'}}>{t.name}</p>
+                              <p style={{fontSize:'0.75rem',color:'var(--muted)',lineHeight:1.4,margin:0}}>{t.desc}</p>
                             </div>
+                            <span style={{fontSize:'0.6rem',color:t.color,fontFamily:'var(--font-mono)',fontWeight:700,flexShrink:0,opacity:0.7}}>PREVIEW</span>
                           </div>
                         )
                       })}
@@ -2234,16 +2348,7 @@ export default function App(){
                     <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
                       {TEMPLATES.map(function(t){
                         return(
-                          <button key={t.id} onClick={function(){
-                            if(t.code){
-                              var proj={id:Date.now(),name:t.name,components:[{id:Date.now()+1,name:t.name,code:t.code}],createdAt:Date.now(),lastEdited:Date.now(),starred:false,published:false,thumbnail:null}
-                              setProjects(function(p){var n=p.concat([proj]);saveProjects(n);return n})
-                              setActiveProject(proj);setComponents(proj.components)
-                              setSelected(proj.components[0]);setView('single');setScreen('editor')
-                            } else {
-                              setHomePrompt(t.prompt);setTimeout(handleHomePromptSubmit,50)
-                            }
-                          }}
+                          <button key={t.id} onClick={function(){ setPreviewTemplate(t) }}
                             className='template-chip animate-in'
                             style={{borderColor:'var(--border)'}}
                             onMouseEnter={function(e){e.currentTarget.style.borderColor=t.color;e.currentTarget.style.boxShadow='0 0 20px '+t.color+'22'}}
@@ -2283,7 +2388,24 @@ export default function App(){
           )}
         </main>
         <ClaudePanel licenseKey={licenseKey} initMsg={claudeInitMsg} forceOpen={claudePanelForced}/>
-        {modal&&(
+        {previewTemplate&&(
+        <TemplatePreviewModal
+          template={previewTemplate}
+          currentIndex={TEMPLATES.findIndex(function(t){return t.id===previewTemplate.id})}
+          total={TEMPLATES.length}
+          onUse={useTemplate}
+          onClose={function(){setPreviewTemplate(null)}}
+          onPrev={function(){
+            var idx=TEMPLATES.findIndex(function(t){return t.id===previewTemplate.id})
+            setPreviewTemplate(TEMPLATES[(idx-1+TEMPLATES.length)%TEMPLATES.length])
+          }}
+          onNext={function(){
+            var idx=TEMPLATES.findIndex(function(t){return t.id===previewTemplate.id})
+            setPreviewTemplate(TEMPLATES[(idx+1)%TEMPLATES.length])
+          }}
+        />
+      )}
+      {modal&&(
           <Modal title={modal.title} placeholder={modal.placeholder} defaultValue={modal.defaultValue} confirmLabel={modal.confirmLabel} onConfirm={modal.onConfirm} onCancel={modal.noCancel?function(){}:closeModal}>{modal.children}</Modal>
         )}
         <ToastContainer toasts={toasts}/>
