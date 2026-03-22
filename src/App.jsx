@@ -63,7 +63,7 @@ Regras obrigatorias:
 // ─── MODOS ────────────────────────────────────────────────────────────────────
 const MODES = [
   {
-    id: 'landing', label: 'Landing Page', icon: '🚀',
+    id: 'landing', label: 'Criar sua Landing Page', icon: '🚀',
     color: '#FFD050', colorBg: 'rgba(255,208,80,.12)',
     description: 'Pagina de vendas completa', system: SYSTEM_LANDING,
     examples: [
@@ -73,7 +73,7 @@ const MODES = [
     ],
   },
   {
-    id: 'site', label: 'Site Completo', icon: '🌐',
+    id: 'site', label: 'Criar seu Site', icon: '🌐',
     color: '#4A8FF0', colorBg: 'rgba(74,143,240,.12)',
     description: 'Site institucional multipagina', system: SYSTEM_SITE,
     examples: [
@@ -83,7 +83,7 @@ const MODES = [
     ],
   },
   {
-    id: 'dashboard', label: 'Dashboard', icon: '📊',
+    id: 'dashboard', label: 'Criar seu Dashboard', icon: '📊',
     color: '#22D3A0', colorBg: 'rgba(34,211,160,.1)',
     description: 'Painel de gestao com metricas', system: SYSTEM_DASHBOARD,
     examples: [
@@ -93,7 +93,7 @@ const MODES = [
     ],
   },
   {
-    id: 'component', label: 'Componente', icon: '⚡',
+    id: 'component', label: 'Criar seu App', icon: '⚡',
     color: '#A855F7', colorBg: 'rgba(168,85,247,.1)',
     description: 'Componente web interativo', system: SYSTEM_COMPONENT,
     examples: [
@@ -103,13 +103,13 @@ const MODES = [
     ],
   },
   {
-    id: 'image', label: 'Imagem IA', icon: '🎨',
+    id: 'image', label: 'Imagem com IA', icon: '🎨',
     color: '#FF8C42', colorBg: 'rgba(255,140,66,.1)',
     badge: 'em breve', description: 'Banners e artes com IA',
     system: null, examples: [],
   },
   {
-    id: 'video', label: 'Video IA', icon: '🎬',
+    id: 'video', label: 'Video com IA', icon: '🎬',
     color: '#FF6BFF', colorBg: 'rgba(255,107,255,.1)',
     badge: 'em breve', description: 'Videos e anuncios com IA',
     system: null, examples: [],
@@ -202,7 +202,7 @@ function greeting() {
 // ─── ESTILOS ──────────────────────────────────────────────────────────────────
 const S = {
   root: { display: 'flex', height: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', overflow: 'hidden' },
-  sidebar: { width: '232px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border)', overflow: 'hidden' },
+  sidebar: { width: '256px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border)', overflow: 'hidden' },
   sideHead: { padding: '14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' },
   logoArea: { flex: 1, minWidth: 0 },
   newBtn: { width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', fontSize: '1.1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1, fontWeight: 700 },
@@ -568,18 +568,59 @@ export default function App() {
 
       {/* SIDEBAR */}
       <div style={S.sidebar}>
+
+        {/* LOGO */}
         <div style={S.sideHead}>
           <div style={S.logoArea}><Logo /></div>
           <button style={S.newBtn} onClick={() => { setActiveId(null); activeIdRef.current = null; setCode('') }} title="Novo projeto">+</button>
         </div>
 
-        <div style={S.searchWrap}>
-          <input style={S.searchInput} placeholder="Buscar projeto..." value={search} onChange={e => setSearch(e.target.value)} />
+        {/* MODOS — empilhados verticalmente */}
+        <div style={{ padding: '10px 10px 0', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px' }}>O que criar</div>
+          {MODES.map(m => {
+            const isActive = mode === m.id && !m.badge
+            const modeColorMap = {
+              landing:   { bg: '#FFF8E6', border: '#FFE08A', text: '#7A5000', dot: '#F59E0B' },
+              site:      { bg: '#EFF6FF', border: '#BFDBFE', text: '#1E40AF', dot: '#3B82F6' },
+              dashboard: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', dot: '#10B981' },
+              component: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', dot: '#7C3AED' },
+            }
+            const c = modeColorMap[m.id]
+            return (
+              <button
+                key={m.id}
+                onClick={() => !m.badge && setMode(m.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '9px',
+                  width: '100%', padding: '8px 10px', marginBottom: '3px',
+                  borderRadius: '8px', border: isActive ? `1.5px solid ${c?.border || 'var(--border)'}` : '1.5px solid transparent',
+                  background: isActive ? (c?.bg || 'var(--bg2)') : 'transparent',
+                  color: isActive ? (c?.text || 'var(--text)') : 'var(--muted)',
+                  fontSize: '.8rem', fontWeight: isActive ? 600 : 500,
+                  fontFamily: 'var(--font-body)', cursor: m.badge ? 'not-allowed' : 'pointer',
+                  opacity: m.badge ? .45 : 1, transition: 'all .15s', textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: '1rem', flexShrink: 0 }}>{m.icon}</span>
+                <span style={{ flex: 1, lineHeight: 1.3 }}>{m.label}</span>
+                {m.badge && <span style={{ fontSize: '.58rem', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)', whiteSpace: 'nowrap' }}>{m.badge}</span>}
+                {isActive && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c?.dot || 'var(--accent)', flexShrink: 0 }} />}
+              </button>
+            )
+          })}
+          <div style={{ height: '8px' }} />
+        </div>
+
+        {/* PROJETOS */}
+        <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
+          <div style={{ fontSize: '.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>Projetos</div>
+          <input style={S.searchInput} placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
         <div style={S.projList}>
           {filtered.length === 0 && (
-            <div style={S.projEmpty}>{search ? 'Nenhum resultado' : 'Nenhum projeto ainda.\nDescreva algo e gere!'}</div>
+            <div style={S.projEmpty}>{search ? 'Nenhum resultado' : 'Nenhum projeto ainda.'}</div>
           )}
           {filtered.map(proj => {
             const pm = MODES.find(m => m.id === (proj.mode || 'landing')) || MODES[0]
@@ -608,11 +649,15 @@ export default function App() {
           })}
         </div>
 
-        <div style={S.sideFooter}>
-          <div>
-            <div style={S.usageRow}><span>Uso</span><span style={{ color: 'var(--yellow)' }}>Pro · ilimitado</span></div>
-            <div style={S.usageBar}><div style={S.usageFill} /></div>
+        {/* PROMPT INPUT NA SIDEBAR */}
+        {!activeMode?.badge && (
+          <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+            <PromptInput onSubmit={generate} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} compact />
           </div>
+        )}
+
+        {/* FOOTER */}
+        <div style={{ ...S.sideFooter, borderTop: '1px solid var(--border)' }}>
           <div style={S.userRow}>
             <div style={S.avatar}>{user.initial}</div>
             <div>
@@ -692,19 +737,6 @@ export default function App() {
           </div>
         )}
 
-        <div style={S.modeBar}>
-          {MODES.map(m => (
-            <button
-              key={m.id}
-              style={{ ...S.modeBtn, ...(mode === m.id ? { ...S.modeBtnActive, color: m.color } : {}), opacity: m.badge ? .45 : 1, cursor: m.badge ? 'not-allowed' : 'pointer' }}
-              onClick={() => !m.badge && setMode(m.id)}
-            >
-              {m.icon} {m.label}
-              {m.badge && <span style={S.modeBadge}>{m.badge}</span>}
-            </button>
-          ))}
-        </div>
-
         <div style={S.content}>
           <div style={S.previewArea}>
             {activeMode?.badge
@@ -714,11 +746,7 @@ export default function App() {
                 : renderWelcome()
             }
           </div>
-          {!activeMode?.badge && (
-            <div style={S.inputArea}>
-              <PromptInput onSubmit={generate} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} />
-            </div>
-          )}
+
         </div>
       </div>
     </div>

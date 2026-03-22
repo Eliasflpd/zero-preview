@@ -1,75 +1,109 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
-export default function PromptInput({ onGenerate, loading, placeholder }) {
-  const [text, setText] = useState('')
+export default function PromptInput({ onSubmit, loading, placeholder, compact }) {
+  const [value, setValue] = useState('')
+  const textareaRef = useRef(null)
 
   function handleSubmit() {
-    if (!text.trim() || loading) return
-    onGenerate(text.trim())
-    setText('')
+    const trimmed = value.trim()
+    if (!trimmed || loading) return
+    onSubmit(trimmed)
+    setValue('')
+    if (textareaRef.current) textareaRef.current.style.height = compact ? '70px' : '80px'
   }
 
   function handleKey(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSubmit()
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
   }
 
+  function handleInput(e) {
+    setValue(e.target.value)
+    const el = e.target
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, compact ? 120 : 160) + 'px'
+  }
+
+  if (compact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', background: 'white' }}>
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleInput}
+          onKeyDown={handleKey}
+          placeholder={placeholder}
+          disabled={loading}
+          rows={3}
+          style={{
+            width: '100%', resize: 'none', border: 'none', outline: 'none',
+            padding: '10px 12px', fontSize: '.82rem', fontFamily: 'var(--font-body)',
+            color: 'var(--text)', background: 'white', lineHeight: 1.5,
+            minHeight: '70px', maxHeight: '120px',
+          }}
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !value.trim()}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            width: '100%', padding: '10px', border: 'none', cursor: loading || !value.trim() ? 'not-allowed' : 'pointer',
+            background: loading || !value.trim() ? 'var(--border)' : 'var(--accent)',
+            color: loading || !value.trim() ? 'var(--muted)' : 'white',
+            fontSize: '.82rem', fontWeight: 700, fontFamily: 'var(--font-head)',
+            transition: 'all .15s', letterSpacing: '.02em',
+          }}
+        >
+          {loading
+            ? <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} />Gerando...</>
+            : <>▶ Gerar</>
+          }
+        </button>
+      </div>
+    )
+  }
+
+  // modo normal (fallback — mantido caso usado em outro lugar)
   return (
-    <div style={styles.wrap}>
+    <div style={{ display: 'flex', flexDirection: 'column', background: 'white', borderTop: '1px solid var(--border)' }}>
       <textarea
-        style={styles.textarea}
-        placeholder={placeholder || 'Descreva o componente... (Ctrl+Enter para gerar)'}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        ref={textareaRef}
+        value={value}
+        onChange={handleInput}
         onKeyDown={handleKey}
+        placeholder={placeholder}
         disabled={loading}
-        rows={4}
+        rows={3}
+        style={{
+          width: '100%', resize: 'none', border: 'none', outline: 'none',
+          padding: '14px 18px', fontSize: '.9rem', fontFamily: 'var(--font-body)',
+          color: 'var(--text)', background: 'white', lineHeight: 1.6,
+          minHeight: '80px', maxHeight: '160px',
+        }}
       />
-      <button
-        style={{ ...styles.btn, ...(loading ? styles.btnDisabled : {}) }}
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? '◌ Gerando...' : '▶ Gerar'}
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '8px 12px', borderTop: '1px solid var(--border)', gap: '8px' }}>
+        <span style={{ fontSize: '.72rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>Enter para gerar</span>
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !value.trim()}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+            padding: '8px 20px', borderRadius: '7px', border: 'none',
+            cursor: loading || !value.trim() ? 'not-allowed' : 'pointer',
+            background: loading || !value.trim() ? 'var(--border)' : 'var(--accent)',
+            color: loading || !value.trim() ? 'var(--muted)' : 'white',
+            fontSize: '.82rem', fontWeight: 700, fontFamily: 'var(--font-head)',
+            transition: 'all .15s',
+          }}
+        >
+          {loading
+            ? <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} />Gerando...</>
+            : <>▶ Gerar</>
+          }
+        </button>
+      </div>
     </div>
   )
-}
-
-const styles = {
-  wrap: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    borderTop: '1px solid var(--border)',
-    paddingTop: '12px',
-    flexShrink: 0,
-  },
-  textarea: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius)',
-    color: 'var(--text)',
-    fontFamily: 'var(--font-ui)',
-    fontSize: '0.88rem',
-    padding: '10px 12px',
-    resize: 'none',
-    outline: 'none',
-    lineHeight: 1.6,
-  },
-  btn: {
-    background: 'var(--accent)',
-    color: '#000',
-    border: 'none',
-    borderRadius: 'var(--radius)',
-    padding: '10px 0',
-    fontWeight: 700,
-    fontSize: '0.88rem',
-    fontFamily: 'var(--font-mono)',
-    cursor: 'pointer',
-    letterSpacing: '0.04em',
-  },
-  btnDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  },
 }
