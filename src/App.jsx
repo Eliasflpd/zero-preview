@@ -318,7 +318,8 @@ export default function App() {
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [apiError, setApiError] = useState('')
   const [showSettings, setShowSettings] = useState(false)
-  const [user, setUser] = useState(loadUser)
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(false)
   const [nameInput, setNameInput] = useState('')
 
   // BUG 1 FIX: refs para valores mais recentes dentro do useCallback
@@ -338,6 +339,32 @@ export default function App() {
       generate(prompt)
     }
   }, [mode])
+
+  // AUTH — check Puter on mount
+  useEffect(() => {
+    function tryAuth() {
+      if (!window.puter) return
+      window.puter.auth.isSignedIn().then(signedIn => {
+        if (signedIn) {
+          window.puter.auth.getUser().then(pu => {
+            const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
+            saveUser(u); setUser(u)
+          }).catch(() => {})
+        }
+      }).catch(() => {})
+    }
+    if (window.puter) { tryAuth() }
+    else { const t = setInterval(() => { if (window.puter) { clearInterval(t); tryAuth() } }, 200); setTimeout(() => clearInterval(t), 4000) }
+  }, [])
+
+  async function loginWithPuter() {
+    try {
+      await window.puter.auth.signIn()
+      const pu = await window.puter.auth.getUser()
+      const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
+      saveUser(u); setUser(u); setApi('puter')
+    } catch(e) { console.error(e) }
+  }
 
   const activeMode = MODES.find(m => m.id === mode)
   const activeProject = projects.find(p => p.id === activeId)
