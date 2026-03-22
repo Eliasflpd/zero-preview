@@ -342,16 +342,16 @@ export default function App() {
 
   // AUTH — check Puter on mount
   useEffect(() => {
-    function tryAuth() {
+    async function tryAuth() {
       if (!window.puter) return
-      window.puter.auth.isSignedIn().then(signedIn => {
+      try {
+        const signedIn = window.puter.auth.isSignedIn()
         if (signedIn) {
-          window.puter.auth.getUser().then(pu => {
-            const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
-            saveUser(u); setUser(u)
-          }).catch(() => {})
+          const pu = await window.puter.auth.getUser()
+          const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
+          saveUser(u); setUser(u)
         }
-      }).catch(() => {})
+      } catch(e) { console.warn('tryAuth', e) }
     }
     if (window.puter) { tryAuth() }
     else { const t = setInterval(() => { if (window.puter) { clearInterval(t); tryAuth() } }, 200); setTimeout(() => clearInterval(t), 4000) }
