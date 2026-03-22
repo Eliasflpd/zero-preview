@@ -44,7 +44,7 @@ package.json — SEMPRE com estas dependências exatas:
 
 src/App.jsx — QUALIDADE OBRIGATÓRIA:
 - Sidebar lateral real com navegação funcional entre pelo menos 4 páginas
-- KPIs com números animados usando useState + useEffect contador
+- KPIs com números animados usando useState + useEffect contador — OBRIGATÓRIO: o contador DEVE parar exatamente no valor final. Use este padrão: const [val, setVal] = useState(0); useEffect(() => { let start = 0; const end = 847; const duration = 1500; const step = end / (duration / 16); const timer = setInterval(() => { start += step; if (start >= end) { setVal(end); clearInterval(timer); } else { setVal(Math.floor(start)); } }, 16); return () => clearInterval(timer); }, []);
 - Pelo menos 2 gráficos com SVG puro (barras, linhas ou pizza)
 - SVG OBRIGATÓRIO: SEMPRE com viewBox e dimensões FIXAS em px. Ex: <svg viewBox="0 0 400 200" width="400" height="200">. NUNCA use height="100%" ou width="100%" em SVG.
 - Dados mockados realistas brasileiros (nomes, R$, datas, porcentagens)
