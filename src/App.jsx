@@ -475,7 +475,7 @@ export default function App() {
 
         {/* MODO CARDS — coloridos, grandes, convidativos */}
         <div style={{ padding: '24px 36px 20px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.12em', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
+          <div style={{ fontSize: '.72rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
             Escolha o que criar
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
@@ -508,7 +508,7 @@ export default function App() {
 
         {/* EXEMPLOS como chips clicaveis */}
         <div style={{ padding: '20px 36px 28px' }}>
-          <div style={{ fontSize: '.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.12em', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
+          <div style={{ fontSize: '.72rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
             Exemplos para comecar — clique para gerar
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -577,7 +577,7 @@ export default function App() {
 
         {/* MODOS — empilhados verticalmente */}
         <div style={{ padding: '10px 10px 0', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px' }}>O que criar</div>
+          <div style={{ fontSize: '.68rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px', fontWeight: 600 }}>O que criar</div>
           {MODES.map(m => {
             const isActive = mode === m.id && !m.badge
             const modeColorMap = {
@@ -614,7 +614,7 @@ export default function App() {
 
         {/* PROJETOS */}
         <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
-          <div style={{ fontSize: '.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>Projetos</div>
+          <div style={{ fontSize: '.68rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '6px', fontWeight: 600 }}>Projetos</div>
           <input style={S.searchInput} placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
@@ -649,21 +649,69 @@ export default function App() {
           })}
         </div>
 
-        {/* PROMPT INPUT NA SIDEBAR */}
+        {/* PROMPT INPUT + API NA SIDEBAR */}
         {!activeMode?.badge && (
           <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+
+            {/* seletor de API — compacto */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg2)' }}>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[
+                  { id: 'gemini', label: 'Gemini', tag: 'gratis' },
+                  { id: 'claude', label: 'Claude', tag: 'pago' },
+                ].map(a => (
+                  <button
+                    key={a.id}
+                    onClick={() => { setApi(a.id); setApiError('') }}
+                    style={{ padding: '3px 9px', borderRadius: '5px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '.72rem', fontWeight: 500, transition: 'all .15s', background: api === a.id ? 'var(--accent)' : 'white', color: api === a.id ? 'white' : 'var(--muted)' }}
+                  >{a.label}</button>
+                ))}
+              </div>
+              {api === 'gemini' && (
+                <button
+                  onClick={() => setShowKeyInput(v => !v)}
+                  style={{ fontSize: '.7rem', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', color: geminiKey ? 'var(--green)' : '#D97706', fontWeight: 600 }}
+                >
+                  {geminiKey ? '✓ chave ok' : '⚠ sem chave'}
+                </button>
+              )}
+            </div>
+
+            {/* painel chave gemini */}
+            {showKeyInput && api === 'gemini' && (
+              <div style={{ padding: '8px 12px', background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '.72rem', color: '#92400E', fontWeight: 600 }}>Chave do Gemini (gratuita)</div>
+                <input
+                  type="password"
+                  placeholder="Cole sua chave aqui..."
+                  value={geminiKey}
+                  onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
+                  style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid #FDE68A', fontSize: '.75rem', fontFamily: 'var(--font-mono)', outline: 'none', width: '100%', background: 'white' }}
+                />
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.7rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
+                  <button onClick={() => setShowKeyInput(false)} style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: '5px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '.72rem', fontWeight: 600 }}>Ok</button>
+                </div>
+              </div>
+            )}
+
+            {/* erro */}
+            {apiError && (
+              <div style={{ padding: '7px 12px', background: '#FEF2F2', borderBottom: '1px solid #FECACA', fontSize: '.75rem', color: '#DC2626', fontWeight: 500 }}>
+                ⚠ {apiError}
+              </div>
+            )}
+
             <PromptInput onSubmit={generate} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} compact />
           </div>
         )}
 
         {/* FOOTER */}
-        <div style={{ ...S.sideFooter, borderTop: '1px solid var(--border)' }}>
-          <div style={S.userRow}>
-            <div style={S.avatar}>{user.initial}</div>
-            <div>
-              <div style={S.userName}>{user.name}</div>
-              <div style={S.userPlan}>Zero Preview Pro</div>
-            </div>
+        <div style={{ borderTop: '1px solid var(--border)', padding: '10px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={S.avatar}>{user.initial}</div>
+          <div>
+            <div style={S.userName}>{user.name}</div>
+            <div style={S.userPlan}>Zero Preview Pro</div>
           </div>
         </div>
       </div>
@@ -675,67 +723,13 @@ export default function App() {
 
           {/* download */}
           {code && !loading && (
-            <button style={{ ...S.topBtn, color: 'var(--green)', borderColor: 'rgba(34,211,160,.3)' }} onClick={downloadHtml}>
-              ↓ Download HTML
-            </button>
-          )}
-
-          {/* seletor de API */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'var(--bg3)', borderRadius: '8px', padding: '3px', border: '1px solid var(--border2)' }}>
-            {[
-              { id: 'gemini', label: 'Gemini', color: '#4A8FF0', tag: 'gratis' },
-              { id: 'claude', label: 'Claude', color: '#FFD050', tag: 'pago' },
-            ].map(a => (
-              <button
-                key={a.id}
-                onClick={() => { setApi(a.id); setApiError('') }}
-                style={{ padding: '4px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 500, transition: 'all .15s', background: api === a.id ? a.color : 'transparent', color: api === a.id ? '#060F1E' : 'var(--text2)', display: 'flex', alignItems: 'center', gap: '5px' }}
-              >
-                {a.label}
-                <span style={{ fontSize: '.6rem', opacity: .75 }}>{a.tag}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* chave gemini */}
-          {api === 'gemini' && (
-            <button
-              style={{ ...S.topBtn, color: geminiKey ? 'var(--green)' : 'var(--yellow)', borderColor: geminiKey ? 'rgba(34,211,160,.3)' : 'rgba(255,208,80,.3)' }}
-              onClick={() => setShowKeyInput(v => !v)}
-            >
-              {geminiKey ? '✓ chave ok' : '⚠ inserir chave'}
-            </button>
+            <button style={{ ...S.topBtn, color: 'var(--green)' }} onClick={downloadHtml}>↓ Download HTML</button>
           )}
 
           {activeId && (
             <button style={S.topBtn} onClick={() => { setActiveId(null); activeIdRef.current = null; setCode('') }}>+ Novo</button>
           )}
         </div>
-
-        {/* painel chave gemini */}
-        {showKeyInput && api === 'gemini' && (
-          <div style={{ padding: '10px 16px', background: 'var(--bg3)', borderBottom: '1px solid var(--border2)', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <span style={{ fontSize: '.78rem', color: 'var(--text2)', whiteSpace: 'nowrap' }}>Chave Gemini:</span>
-            <input
-              style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'var(--bg)', color: 'var(--text)', fontSize: '.8rem', fontFamily: 'var(--font-mono)', outline: 'none' }}
-              type="password"
-              placeholder="Cole sua chave do aistudio.google.com"
-              value={geminiKey}
-              onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
-            />
-            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.75rem', color: 'var(--accent2)', whiteSpace: 'nowrap', textDecoration: 'none' }}>
-              Obter chave gratis →
-            </a>
-            <button style={{ ...S.topBtn, color: 'var(--green)' }} onClick={() => setShowKeyInput(false)}>Salvar</button>
-          </div>
-        )}
-
-        {/* erro */}
-        {apiError && (
-          <div style={{ padding: '8px 16px', background: 'rgba(255,100,80,.08)', borderBottom: '1px solid rgba(255,100,80,.2)', fontSize: '.8rem', color: '#FF8070', flexShrink: 0 }}>
-            ⚠ {apiError}
-          </div>
-        )}
 
         <div style={S.content}>
           <div style={S.previewArea}>
