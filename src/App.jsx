@@ -134,7 +134,7 @@ const BACKEND = 'https://zero-backend-production.up.railway.app'
 
 async function callGemini(system, prompt, key) {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+  const timeoutId = setTimeout(() => controller.abort(), 300_000) // 5 min
   let lastError
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -172,7 +172,7 @@ async function callGemini(system, prompt, key) {
       return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     } catch (err) {
       clearTimeout(timeoutId)
-      if (err.name === 'AbortError') throw new Error('Tempo limite excedido (120s). Tente um prompt menor.')
+      if (err.name === 'AbortError') throw new Error('Tempo limite excedido. Tente novamente.')
       if (attempt === 1 || !lastError) throw err
     }
   }
