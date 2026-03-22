@@ -767,11 +767,11 @@ export default function App() {
               {/* API ativa */}
               <div>
                 <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>API de geracao</div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
                   {[
-                    { id: 'puter', label: 'Puter.js', tag: 'Gratis · ilimitado · sem chave', color: '#16A34A', icon: '★' },
-                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia · chave propria', color: '#2D6BE4', icon: '✦' },
-                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · ilimitado · via backend', color: '#F59E0B', icon: '◆' },
+                    { id: 'puter', label: 'Puter.js', tag: 'Gratis ilimitado', color: '#16A34A', icon: '★' },
+                    { id: 'gemini', label: 'Gemini', tag: 'Gratis 1500/dia', color: '#2D6BE4', icon: '✦' },
+                    { id: 'claude', label: 'Claude', tag: 'Pago premium', color: '#F59E0B', icon: '◆' },
                   ].map(a => (
                     <div
                       key={a.id}
