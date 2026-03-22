@@ -213,6 +213,45 @@ const S = {
   csFeat: { padding: '4px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg3)', fontSize: '.78rem', color: 'var(--text2)' },
 }
 
+// ─── GEMINI CALL ──────────────────────────────────────────────────────────────
+const GEMINI_KEY_STORAGE = 'zp_gemini_key'
+const loadGeminiKey = () => { try { return localStorage.getItem(GEMINI_KEY_STORAGE) || '' } catch { return '' } }
+const saveGeminiKey = (k) => { try { localStorage.setItem(GEMINI_KEY_STORAGE, k) } catch {} }
+
+async function callGemini(system, prompt, key) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 8192 },
+      }),
+    }
+  )
+  const data = await res.json()
+  if (data.error) throw new Error(data.error.message)
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+}
+
+async function callClaude(system, prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      system,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
+  const data = await res.json()
+  if (data.error) throw new Error(data.error.message)
+  return data.content?.[0]?.text || ''
+}
+
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [projects, setProjects] = useState(load)
@@ -222,6 +261,10 @@ export default function App() {
   const [mode, setMode] = useState('landing')
   const [search, setSearch] = useState('')
   const [hovered, setHovered] = useState(null)
+  const [api, setApi] = useState('gemini')
+  const [geminiKey, setGeminiKey] = useState(loadGeminiKey)
+  const [showKeyInput, setShowKeyInput] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const activeMode = MODES.find(m => m.id === mode)
   const activeProject = projects.find(p => p.id === activeId)
@@ -247,21 +290,18 @@ export default function App() {
 
   const generate = useCallback(async (prompt) => {
     if (!activeMode?.system) return
+    if (api === 'gemini' && !geminiKey.trim()) {
+      setShowKeyInput(true)
+      setApiError('Cole sua chave do Gemini para continuar')
+      return
+    }
+    setApiError('')
     const currentId = activeId || createProject(mode)
     setLoading(true)
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 8000,
-          system: activeMode.system,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      })
-      const data = await res.json()
-      const raw = data.content?.[0]?.text || ''
+      const raw = api === 'gemini'
+        ? await callGemini(activeMode.system, prompt, geminiKey.trim())
+        : await callClaude(activeMode.system, prompt)
       const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
       setCode(clean)
       const name = prompt.length > 48 ? prompt.slice(0, 48) + '...' : prompt
@@ -269,9 +309,12 @@ export default function App() {
         const updated = prev.map(p => p.id === currentId ? { ...p, code: clean, name, mode } : p)
         save(updated); return updated
       })
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      setApiError(e.message || 'Erro ao gerar. Verifique a chave da API.')
+      console.error(e)
+    }
     finally { setLoading(false) }
-  }, [activeMode, activeId, projects, mode])
+  }, [activeMode, activeId, projects, mode, api, geminiKey])
 
   function clickExample(ex, exMode) {
     setMode(exMode)
@@ -421,16 +464,69 @@ export default function App() {
       <div style={S.main}>
         <div style={S.topbar}>
           <div style={S.topTitle}>{activeProject ? activeProject.name : 'Zero Preview'}</div>
+
+          {/* seletor de API */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg3)', borderRadius: '8px', padding: '3px', border: '1px solid var(--border)' }}>
+            {[
+              { id: 'gemini', label: 'Gemini', color: '#4A8FF0', tag: 'gratis' },
+              { id: 'claude', label: 'Claude', color: '#FFD050', tag: 'pago' },
+            ].map(a => (
+              <button
+                key={a.id}
+                onClick={() => { setApi(a.id); setApiError('') }}
+                style={{
+                  padding: '4px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 500, transition: 'all .15s',
+                  background: api === a.id ? a.color : 'transparent',
+                  color: api === a.id ? 'var(--bg)' : 'var(--muted)',
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}
+              >
+                {a.label}
+                <span style={{ fontSize: '.6rem', opacity: .75 }}>{a.tag}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* chave gemini */}
+          {api === 'gemini' && (
+            <button
+              style={{ ...S.topBtn, color: geminiKey ? 'var(--green)' : 'var(--yellow)', borderColor: geminiKey ? 'rgba(34,211,160,.3)' : 'rgba(255,208,80,.3)' }}
+              onClick={() => setShowKeyInput(v => !v)}
+            >
+              {geminiKey ? '✓ chave ok' : '⚠ inserir chave'}
+            </button>
+          )}
+
           {activeProject && (
             <button style={S.topBtn} onClick={() => { setActiveId(null); setCode('') }}>+ Novo</button>
           )}
-          <button
-            style={{ ...S.topBtn, ...S.topBtnAccent }}
-            onClick={() => !activeId ? createProject(mode) : null}
-          >
-            {activeId ? 'Projeto ativo' : '+ Criar projeto'}
-          </button>
         </div>
+
+        {/* painel de chave gemini */}
+        {showKeyInput && api === 'gemini' && (
+          <div style={{ padding: '10px 16px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <span style={{ fontSize: '.78rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>Chave Gemini:</span>
+            <input
+              style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'var(--bg)', color: 'var(--text)', fontSize: '.8rem', fontFamily: 'var(--font-mono)', outline: 'none' }}
+              type="password"
+              placeholder="Cole sua chave do aistudio.google.com"
+              value={geminiKey}
+              onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
+            />
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.75rem', color: 'var(--accent2)', whiteSpace: 'nowrap', textDecoration: 'none' }}>
+              Obter chave gratis →
+            </a>
+            <button style={{ ...S.topBtn, color: 'var(--green)' }} onClick={() => setShowKeyInput(false)}>Salvar</button>
+          </div>
+        )}
+
+        {/* erro de API */}
+        {apiError && (
+          <div style={{ padding: '8px 16px', background: 'rgba(255,100,80,.08)', borderBottom: '1px solid rgba(255,100,80,.2)', fontSize: '.8rem', color: '#FF8070', flexShrink: 0 }}>
+            ⚠ {apiError}
+          </div>
+        )}
 
         <div style={S.modeBar}>
           {MODES.map(m => (
