@@ -202,71 +202,56 @@ function greeting() {
 // ─── ESTILOS ──────────────────────────────────────────────────────────────────
 const S = {
   root: { display: 'flex', height: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', overflow: 'hidden' },
-  sidebar: { width: '228px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border2)', overflow: 'hidden' },
-  sideHead: { padding: '14px', borderBottom: '1px solid var(--border2)', display: 'flex', alignItems: 'center', gap: '8px' },
+  sidebar: { width: '232px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border)', overflow: 'hidden' },
+  sideHead: { padding: '14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' },
   logoArea: { flex: 1, minWidth: 0 },
-  newBtn: { width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--yellow)', fontSize: '1.2rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1 },
-  searchWrap: { padding: '8px 10px', borderBottom: '1px solid var(--border2)' },
-  searchInput: { width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--text)', fontSize: '.82rem', fontFamily: 'var(--font-body)', outline: 'none' },
+  newBtn: { width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', fontSize: '1.1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1, fontWeight: 700 },
+  searchWrap: { padding: '8px 10px', borderBottom: '1px solid var(--border)' },
+  searchInput: { width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--text)', fontSize: '.82rem', fontFamily: 'var(--font-body)', outline: 'none' },
   projList: { flex: 1, overflowY: 'auto', padding: '6px' },
-  projEmpty: { padding: '24px 12px', textAlign: 'center', color: 'var(--text2)', fontSize: '.82rem', lineHeight: 1.7 },
+  projEmpty: { padding: '24px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '.82rem', lineHeight: 1.7 },
   projItem: { padding: '9px 10px', borderRadius: '8px', cursor: 'pointer', marginBottom: '2px', transition: 'all .15s', display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative' },
   projIcon: { width: '28px', height: '28px', borderRadius: '7px', display: 'grid', placeItems: 'center', fontSize: '.9rem', flexShrink: 0, marginTop: '1px' },
   projInfo: { flex: 1, minWidth: 0 },
-  projName: { fontSize: '.84rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3, color: 'var(--text)' },
+  projName: { fontSize: '.84rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 },
   projMeta: { fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' },
   projDel: { width: '20px', height: '20px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '.75rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: 0, transition: 'all .15s' },
-  sideFooter: { borderTop: '1px solid var(--border2)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  usageRow: { display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--text2)', marginBottom: '5px' },
-  usageBar: { height: '3px', borderRadius: '2px', background: 'var(--border2)', overflow: 'hidden' },
+  sideFooter: { borderTop: '1px solid var(--border)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' },
+  usageRow: { display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '5px' },
+  usageBar: { height: '3px', borderRadius: '2px', background: 'var(--border)', overflow: 'hidden' },
   usageFill: { height: '100%', width: '30%', background: 'linear-gradient(90deg,var(--accent),var(--yellow))', borderRadius: '2px' },
   userRow: { display: 'flex', alignItems: 'center', gap: '10px' },
-  avatar: { width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', display: 'grid', placeItems: 'center', fontSize: '.72rem', fontWeight: 700, color: '#060F1E', flexShrink: 0 },
-  userName: { fontSize: '.85rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' },
-  userPlan: { fontSize: '.7rem', color: 'var(--yellow)' },
+  avatar: { width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', display: 'grid', placeItems: 'center', fontSize: '.72rem', fontWeight: 700, color: 'white', flexShrink: 0 },
+  userName: { fontSize: '.84rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' },
+  userPlan: { fontSize: '.7rem', color: 'var(--accent)', fontWeight: 600 },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
-  topbar: { height: '48px', borderBottom: '1px solid var(--border2)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px', background: 'var(--bg2)', flexShrink: 0 },
+  topbar: { height: '52px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 20px', gap: '10px', background: 'var(--bg)', flexShrink: 0 },
   topTitle: { fontSize: '.88rem', fontWeight: 600, flex: 1, color: 'var(--text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' },
-  topBtn: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'transparent', color: 'var(--text2)', fontSize: '.78rem', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .15s', whiteSpace: 'nowrap', fontWeight: 500 },
-  modeBar: { padding: '0 12px', borderBottom: '1px solid var(--border2)', display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flexShrink: 0, background: 'var(--bg2)', height: '42px' },
-  modeBtn: { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 11px', borderRadius: '6px', border: '1px solid transparent', background: 'transparent', color: 'var(--text2)', fontSize: '.8rem', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', transition: 'all .15s', flexShrink: 0, fontWeight: 500 },
-  modeBtnActive: { background: 'var(--bg3)', border: '1px solid var(--border2)' },
-  modeBadge: { fontSize: '.6rem', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255,208,80,.12)', color: 'var(--yellow)', border: '1px solid rgba(255,208,80,.35)' },
+  topBtn: { padding: '6px 14px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: '.78rem', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .15s', whiteSpace: 'nowrap', fontWeight: 500 },
+  topBtnAccent: { background: 'var(--accent)', border: '1px solid var(--accent)', color: 'white', fontWeight: 600 },
+  modeBar: { padding: '0 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flexShrink: 0, background: 'var(--bg)', height: '44px' },
+  modeBtn: { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '6px', border: '1px solid transparent', background: 'transparent', color: 'var(--muted)', fontSize: '.8rem', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', transition: 'all .15s', flexShrink: 0, fontWeight: 500 },
+  modeBtnActive: { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)' },
+  modeBadge: { fontSize: '.6rem', padding: '1px 6px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)' },
   content: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   previewArea: { flex: 1, overflow: 'hidden', position: 'relative' },
-  inputArea: { borderTop: '1px solid var(--border2)', background: 'var(--bg2)', flexShrink: 0 },
-  welcome: { height: '100%', overflowY: 'auto', padding: '32px 36px' },
-  wHead: { marginBottom: '28px' },
-  wTitle: { fontFamily: 'var(--font-head)', fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1.2, marginBottom: '8px', color: 'var(--text)' },
-  wSpan: { background: 'linear-gradient(135deg,var(--accent2),var(--yellow))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
-  wSub: { fontSize: '.9rem', color: 'var(--text2)', fontWeight: 400, lineHeight: 1.6 },
-  statsRow: { display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px' },
-  statCard: { flex: '1 1 120px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: '10px', padding: '14px' },
-  statNum: { fontFamily: 'var(--font-head)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, marginBottom: '4px' },
-  statLabel: { fontSize: '.72rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.08em' },
-  exLabel: { fontSize: '.74rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' },
-  exGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: '8px' },
-  exCard: { background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: '10px', padding: '14px', cursor: 'pointer', transition: 'all .2s', display: 'flex', flexDirection: 'column', gap: '8px' },
-  exTop: { display: 'flex', alignItems: 'center', gap: '8px' },
-  exIconBox: { width: '26px', height: '26px', borderRadius: '6px', display: 'grid', placeItems: 'center', fontSize: '.82rem', flexShrink: 0 },
-  exMode: { fontSize: '.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontWeight: 500 },
-  exText: { fontSize: '.84rem', color: 'var(--text)', lineHeight: 1.5, fontWeight: 400 },
-  exArrow: { fontSize: '.85rem', color: 'var(--text2)', alignSelf: 'flex-end' },
-  cs: { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px', padding: '48px' },
+  inputArea: { borderTop: '1px solid var(--border)', background: 'var(--bg)', flexShrink: 0 },
+  welcome: { height: '100%', overflowY: 'auto', background: 'var(--bg)' },
+  cs: { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px', padding: '48px', background: 'var(--bg)' },
   csIcon: { width: '72px', height: '72px', borderRadius: '18px', display: 'grid', placeItems: 'center', fontSize: '2rem' },
   csTitle: { fontFamily: 'var(--font-head)', fontSize: '1.4rem', fontWeight: 700, textAlign: 'center', color: 'var(--text)' },
-  csSub: { fontSize: '.9rem', color: 'var(--text2)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6 },
-  csBadge: { padding: '6px 18px', borderRadius: '999px', border: '1px solid rgba(255,208,80,.4)', fontSize: '.78rem', fontFamily: 'var(--font-mono)', color: 'var(--yellow)' },
+  csSub: { fontSize: '.9rem', color: 'var(--muted)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6 },
+  csBadge: { padding: '6px 18px', borderRadius: '999px', border: '1px solid var(--border)', fontSize: '.78rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', background: 'var(--bg2)' },
   csFeats: { display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '360px' },
-  csFeat: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border2)', background: 'var(--bg3)', fontSize: '.8rem', color: 'var(--text)', fontWeight: 500 },
-  // onboarding modal
-  modalBg: { position: 'fixed', inset: 0, background: 'rgba(6,15,30,.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '20px', padding: '40px', width: '400px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 40px 80px rgba(0,0,0,.6)' },
-  modalTitle: { fontFamily: 'var(--font-head)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-.02em' },
-  modalSub: { fontSize: '.9rem', color: 'var(--text2)', lineHeight: 1.6, marginTop: '-12px' },
-  modalInput: { padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border2)', background: 'var(--bg3)', color: 'var(--text)', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', width: '100%' },
-  modalBtn: { padding: '12px', borderRadius: '10px', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', color: '#060F1E', fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'opacity .15s' },
+  csFeat: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '.8rem', color: 'var(--text2)', fontWeight: 500 },
+  modalBg: { position: 'fixed', inset: 0, background: 'rgba(6,15,30,.5)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { background: 'white', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px', width: '380px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 40px 80px rgba(0,0,0,.12)' },
+  modalTitle: { fontFamily: 'var(--font-head)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-.02em' },
+  modalSub: { fontSize: '.9rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '-12px' },
+  modalInput: { padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', width: '100%' },
+  modalBtn: { padding: '13px', borderRadius: '10px', background: 'var(--accent)', color: 'white', fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700, border: 'none', cursor: 'pointer' },
 }
+
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -445,52 +430,121 @@ export default function App() {
 
   // ── welcome ─────────────────────────────────────────────────────────────────
   function renderWelcome() {
+    const modeColors = {
+      landing:   { bg: '#FFF8E6', border: '#FFE08A', text: '#7A5000', accent: '#F59E0B' },
+      site:      { bg: '#EFF6FF', border: '#BFDBFE', text: '#1E40AF', accent: '#3B82F6' },
+      dashboard: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', accent: '#10B981' },
+      component: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', accent: '#7C3AED' },
+    }
+
     return (
       <div style={S.welcome} className="animate-in">
-        <div style={S.wHead}>
-          <div style={S.wTitle}>
-            {greeting()}, <span style={S.wSpan}>{user.name}!</span>
-          </div>
-          <div style={S.wSub}>Escolha um exemplo ou descreva no campo abaixo. A IA gera o resultado completo.</div>
-        </div>
-        <div style={S.statsRow}>
-          {[
-            { num: String(projects.length || 0), label: 'Projetos' },
-            { num: '4', label: 'Modos ativos' },
-            { num: '8k', label: 'Tokens por geracao' },
-            { num: 'Pro', label: 'Plano atual' },
-          ].map((s, i) => (
-            <div key={i} style={S.statCard}>
-              <div style={S.statNum}>{s.num}</div>
-              <div style={S.statLabel}>{s.label}</div>
+
+        {/* HERO BANNER */}
+        <div style={{ background: 'linear-gradient(135deg,#060F1E 0%,#0F2040 100%)', padding: '32px 36px', marginBottom: '0', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '280px', height: '280px', borderRadius: '50%', background: 'rgba(255,208,80,.08)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-80px', left: '20%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(45,107,228,.1)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.7rem', fontWeight: 800, color: 'white', letterSpacing: '-.03em', lineHeight: 1.2, marginBottom: '8px' }}>
+                {greeting()},{' '}
+                <span style={{ color: '#FFD050' }}>{user.name}!</span>
+              </div>
+              <div style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.55)', fontWeight: 300, lineHeight: 1.5 }}>
+                Escolha um modo abaixo ou descreva o que quer criar. A IA gera o resultado completo.
+              </div>
             </div>
-          ))}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#FFD050', lineHeight: 1 }}>{projects.length}</div>
+                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>projetos</div>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#5A90F0', lineHeight: 1 }}>65k</div>
+                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>tokens</div>
+              </div>
+              <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#22D3A0', lineHeight: 1 }}>Pro</div>
+                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>plano</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={S.exLabel}><span>✦</span> exemplos para comecar</div>
-        <div style={S.exGrid}>
-          {MODES.filter(m => !m.badge).flatMap(m =>
-            m.examples.slice(0, 2).map((ex, i) => {
-              const k = `${m.id}-${i}`
-              const isHov = hovered === k
+
+        {/* MODO CARDS — coloridos, grandes, convidativos */}
+        <div style={{ padding: '24px 36px 20px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.12em', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
+            Escolha o que criar
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
+            {MODES.filter(m => !m.badge).map(m => {
+              const c = modeColors[m.id] || modeColors.landing
+              const isActive = mode === m.id
               return (
                 <div
-                  key={k}
-                  style={{ ...S.exCard, borderColor: isHov ? m.color : 'var(--border2)', background: isHov ? m.colorBg : 'var(--bg3)', transform: isHov ? 'translateY(-2px)' : 'none', boxShadow: isHov ? '0 8px 28px rgba(0,0,0,.35)' : 'none' }}
-                  onMouseEnter={() => setHovered(k)}
-                  onMouseLeave={() => setHovered(null)}
-                  onClick={() => clickExample(ex, m.id)}
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  style={{
+                    background: isActive ? c.bg : 'white',
+                    border: `1.5px solid ${isActive ? c.border : 'var(--border)'}`,
+                    borderRadius: '10px', padding: '16px 14px',
+                    cursor: 'pointer', transition: 'all .18s',
+                    boxShadow: isActive ? `0 4px 16px ${c.accent}22` : 'none',
+                    transform: isActive ? 'translateY(-1px)' : 'none',
+                  }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bg } }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'white' } }}
                 >
-                  <div style={S.exTop}>
-                    <div style={{ ...S.exIconBox, background: m.colorBg }}>{m.icon}</div>
-                    <span style={{ ...S.exMode, color: isHov ? m.color : 'var(--muted)' }}>{m.label}</span>
-                  </div>
-                  <div style={S.exText}>{ex}</div>
-                  <div style={{ ...S.exArrow, color: isHov ? m.color : 'var(--muted)' }}>→</div>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{m.icon}</div>
+                  <div style={{ fontFamily: 'var(--font-head)', fontSize: '.88rem', fontWeight: 700, color: isActive ? c.text : 'var(--text)', marginBottom: '3px' }}>{m.label}</div>
+                  <div style={{ fontSize: '.72rem', color: isActive ? c.text : 'var(--muted)', opacity: .75, lineHeight: 1.4 }}>{m.description}</div>
                 </div>
               )
-            })
-          )}
+            })}
+          </div>
         </div>
+
+        {/* EXEMPLOS como chips clicaveis */}
+        <div style={{ padding: '20px 36px 28px' }}>
+          <div style={{ fontSize: '.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.12em', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>
+            Exemplos para comecar — clique para gerar
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {MODES.filter(m => !m.badge && m.id === mode).flatMap(m =>
+              m.examples.map((ex, i) => {
+                const c = modeColors[m.id] || modeColors.landing
+                const isHov = hovered === `ex-${i}`
+                return (
+                  <div
+                    key={i}
+                    onClick={() => clickExample(ex, m.id)}
+                    onMouseEnter={() => setHovered(`ex-${i}`)}
+                    onMouseLeave={() => setHovered(null)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '13px 16px', borderRadius: '10px',
+                      border: `1.5px solid ${isHov ? c.border : 'var(--border)'}`,
+                      background: isHov ? c.bg : 'white',
+                      cursor: 'pointer', transition: 'all .18s',
+                      boxShadow: isHov ? `0 2px 12px ${c.accent}18` : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', fontSize: '1rem', flexShrink: 0 }}>{m.icon}</div>
+                      <span style={{ fontSize: '.85rem', color: 'var(--text)', fontWeight: 400 }}>{ex}</span>
+                    </div>
+                    <span style={{ fontSize: '.75rem', color: isHov ? c.accent : 'var(--muted)', fontWeight: 600, flexShrink: 0, marginLeft: '12px' }}>
+                      {isHov ? 'Gerar →' : '→'}
+                    </span>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+
       </div>
     )
   }

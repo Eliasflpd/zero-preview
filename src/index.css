@@ -1,51 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* fundos — mais distintos entre si */
-  --bg:       #060F1E;
-  --bg2:      #0C1929;
-  --bg3:      #132236;
-  --surface:  #0E1F33;
-  --surface2: #1C3050;
-
-  /* bordas — mais visiveis */
-  --border:   #263D5A;
-  --border2:  #3A5880;
-
-  /* textos — muito mais contrastados */
-  --text:     #FFFFFF;
-  --text2:    #D4E4F7;
-  --muted:    #8AAECF;
-
-  /* acentos */
-  --accent:   #3D7BFF;
-  --accent2:  #5A9FFF;
+  --bg:       #FFFFFF;
+  --bg2:      #F7F8FA;
+  --bg3:      #EEF0F5;
+  --surface:  #E8EBF2;
+  --border:   #DDE1EB;
+  --border2:  #C8CDD9;
+  --text:     #0D1117;
+  --text2:    #3B4252;
+  --muted:    #6B7589;
+  --accent:   #2D6BE4;
+  --accent2:  #1A54C8;
   --yellow:   #FFD050;
-  --yellow2:  #E6A800;
-  --green:    #22D3A0;
+  --yellow2:  #FFC000;
+  --green:    #16A34A;
+  --red:      #DC2626;
+  --navy:     #060F1E;
   --wpp:      #25D366;
-
-  --font-head:'Syne',sans-serif;
-  --font-body:'DM Sans',sans-serif;
-  --font-mono:'JetBrains Mono',monospace;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body,#root{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden;}
-/* força contraste em todos os textos do app */
-input,button,select,textarea{color:var(--text);font-family:var(--font-body);}
-input::placeholder{color:var(--muted);opacity:1;}
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
-::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow: hidden; }
+body { background: var(--bg); color: var(--text); }
+input, button, select, textarea { font-family: var(--font-body); color: var(--text); }
+input::placeholder { color: var(--muted); opacity: 1; }
 
-@keyframes fade-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
-@keyframes spin{to{transform:rotate(360deg);}}
-@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
-@keyframes appear{from{opacity:0;transform:scale(.97) translateY(8px);}to{opacity:1;transform:none;}}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes fade-in  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes shimmer  { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes pop      { 0% { transform: scale(.94); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pulse-y  { 0%,100% { box-shadow: 0 0 0 0 rgba(255,208,80,.4); } 50% { box-shadow: 0 0 0 8px rgba(255,208,80,.0); } }
 
-.animate-in{animation:fade-in .3s ease both;}
-.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--surface2) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px;}
-.spinner{width:20px;height:20px;border:2.5px solid var(--border2);border-top-color:var(--yellow);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+.animate-in { animation: fade-in .3s ease both; }
+.spinner { width: 20px; height: 20px; border: 2.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
