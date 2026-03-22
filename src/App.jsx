@@ -462,10 +462,12 @@ function Terminal({ logs }) {
 }
 
 // ─── PREVIEW PANEL (WebContainer Blindado) ───────────────────────────────────
-function PreviewPanel({ files, onClose }) {
-  const [status, setStatus] = useState("booting");
+function PreviewPanel({ files, onClose, isNew }) {
+  const [status, setStatus] = useState(() =>
+    WCManager.serverReadyUrl ? "ready" : "booting"
+  );
   const [logs, setLogs] = useState([]);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(WCManager.serverReadyUrl || "");
 
   const addLog = useCallback((text, type = "default") => {
     const clean = String(text).trim();
@@ -474,6 +476,13 @@ function PreviewPanel({ files, onClose }) {
   }, []);
 
   useEffect(() => {
+    // Se já tem URL rodando E não é geração nova — só mostra o iframe
+    if (WCManager.serverReadyUrl && !isNew) {
+      setPreviewUrl(WCManager.serverReadyUrl);
+      setStatus("ready");
+      return;
+    }
+
     let active = true;
 
     async function run() {
@@ -497,7 +506,7 @@ function PreviewPanel({ files, onClose }) {
 
     run();
     return () => { active = false; };
-  }, [files]);
+  }, [files, isNew]);
 
   const statusInfo = {
     booting: { label: "Iniciando WebContainer...", color: C.info },
@@ -572,6 +581,7 @@ function Dashboard({ user, onLogout }) {
   const [prompt, setPrompt] = useState("");
   const [history, setHistory] = useState([]);
   const [generating, setGenerating] = useState(false);
+  const [isNewGeneration, setIsNewGeneration] = useState(false);
   const [generatedFiles, setGeneratedFiles] = useState(null);
   const [error, setError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -620,12 +630,13 @@ function Dashboard({ user, onLogout }) {
   };
 
   const handleSelect = (id) => {
-    if (id === activeId) return; // já está selecionado
+    if (id === activeId) return;
     const p = projects.find(x => x.id === id);
     if (!p) return;
     setActiveId(id);
     setPrompt(p.lastPrompt || "");
     setGeneratedFiles(p.files || null);
+    setIsNewGeneration(false);
     setError("");
   };
 
@@ -690,6 +701,7 @@ function Dashboard({ user, onLogout }) {
       }
 
       setGeneratedFiles(files);
+      setIsNewGeneration(true);
       setHistory(prev => [...prev, { prompt }]);
       setPrompt(""); // limpa o campo após gerar
     } catch (e) {
@@ -898,6 +910,7 @@ function Dashboard({ user, onLogout }) {
           {hasPreview && (
             <PreviewPanel
               files={generatedFiles}
+              isNew={isNewGeneration}
               onClose={() => setGeneratedFiles(null)}
             />
           )}
