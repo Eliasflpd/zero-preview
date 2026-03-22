@@ -103,16 +103,28 @@ const MODES = [
     ],
   },
   {
-    id: 'image', label: 'Imagem com IA', icon: '🎨',
+    id: 'image', label: 'Criar Imagem com IA', icon: '🎨',
     color: '#FF8C42', colorBg: 'rgba(255,140,66,.1)',
-    badge: 'em breve', description: 'Banners e artes com IA',
-    system: null, examples: [],
+    description: 'Imagens com GPT Image 1.5',
+    system: 'IMAGE_MODE',
+    examples: [
+      'Foto profissional de um hamburguer artesanal, fundo escuro, iluminacao dramatica',
+      'Logo moderno para academia de musculacao, minimalista, fundo preto e dourado',
+      'Foto de produto: perfume luxuoso em fundo branco com reflexos suaves',
+      'Banner para clinica estetica, tons rosados, flores, elegante e feminino',
+    ],
   },
   {
-    id: 'video', label: 'Video com IA', icon: '🎬',
+    id: 'video', label: 'Criar Video com IA', icon: '🎬',
     color: '#FF6BFF', colorBg: 'rgba(255,107,255,.1)',
-    badge: 'em breve', description: 'Videos e anuncios com IA',
-    system: null, examples: [],
+    description: 'Videos com Sora 2',
+    system: 'VIDEO_MODE',
+    examples: [
+      'Drone voando sobre uma praia paradisiaca ao por do sol, cinematografico',
+      'Cafe sendo despejado em slow motion, vapor subindo, iluminacao quente',
+      'Cidade futurista a noite com carros voadores e luzes neon',
+      'Produto de beleza girando elegantemente sobre fundo branco com luz suave',
+    ],
   },
 ]
 
@@ -205,6 +217,29 @@ async function callPuter(system, prompt) {
   // response pode ser string ou objeto dependendo do modelo
   if (typeof response === 'string') return response
   return response?.message?.content?.[0]?.text || response?.message?.content || String(response)
+}
+
+// ─── PUTER IMAGE ──────────────────────────────────────────────────────────────
+async function callPuterImage(prompt) {
+  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
+  const image = await window.puter.ai.txt2img(prompt, {
+    model: 'gpt-image-1',
+    quality: 'medium',
+  })
+  // Returns HTMLImageElement — convert to data URL string
+  return image.src || ''
+}
+
+// ─── PUTER VIDEO ──────────────────────────────────────────────────────────────
+async function callPuterVideo(prompt) {
+  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
+  const video = await window.puter.ai.txt2vid(prompt, {
+    model: 'sora-2',
+    seconds: 8,
+    size: '1280x720',
+  })
+  // Returns HTMLVideoElement — get src
+  return video.src || video.getAttribute('data-source') || ''
 }
 
 // ─── SAUDAÇÃO DINÂMICA ────────────────────────────────────────────────────────
@@ -367,11 +402,20 @@ export default function App() {
     const currentId = activeIdRef.current || createProject(modeRef.current)
     setLoading(true)
     try {
-      const raw = api === 'puter'
-        ? await callPuter(currentMode.system, prompt)
-        : api === 'gemini'
-          ? await callGemini(currentMode.system, prompt, geminiKey.trim())
-          : await callClaude(currentMode.system, prompt)
+      let raw = ''
+      if (currentMode.system === 'IMAGE_MODE') {
+        const imgSrc = await callPuterImage(prompt)
+        raw = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;}img{max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);}a{color:#FFD050;font-size:.85rem;text-decoration:none;padding:8px 18px;border:1px solid rgba(255,208,80,.4);border-radius:6px;}a:hover{background:rgba(255,208,80,.1);}</style></head><body><img src="${imgSrc}" alt="Imagem gerada"/><a href="${imgSrc}" download="imagem-ia.png">↓ Baixar imagem</a></body></html>`
+      } else if (currentMode.system === 'VIDEO_MODE') {
+        const vidSrc = await callPuterVideo(prompt)
+        raw = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;}video{max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);}a{color:#FFD050;font-size:.85rem;text-decoration:none;padding:8px 18px;border:1px solid rgba(255,208,80,.4);border-radius:6px;}a:hover{background:rgba(255,208,80,.1);}</style></head><body><video src="${vidSrc}" controls autoplay loop></video><a href="${vidSrc}" download="video-ia.mp4">↓ Baixar video</a></body></html>`
+      } else {
+        raw = api === 'puter'
+          ? await callPuter(currentMode.system, prompt)
+          : api === 'gemini'
+            ? await callGemini(currentMode.system, prompt, geminiKey.trim())
+            : await callClaude(currentMode.system, prompt)
+      }
       const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
       setCode(clean)
       const name = prompt.length > 48 ? prompt.slice(0, 48) + '...' : prompt
