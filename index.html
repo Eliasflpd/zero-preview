@@ -6,172 +6,211 @@
 <title>Zero Preview — Crie sites, landing pages e apps com IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#07090F;--bg2:#0C1018;--bg3:#111720;--surface:#161C27;--border:#1F2B3E;--border2:#2A3A54;--text:#E4EAF4;--muted:#6B7D95;--accent:#5E6BFF;--accent2:#00C8FF;--accent3:#A855F7;--green:#22D3A0;--wpp:#25D366;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;--r:12px;--r2:20px;}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
-.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(94,107,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(94,107,255,.035) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black 30%,transparent 100%);pointer-events:none;}
-.orb{position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;}
-.orb-1{width:700px;height:500px;background:rgba(94,107,255,.12);top:-200px;left:-200px;animation:pls 8s ease-in-out infinite;}
-.orb-2{width:500px;height:500px;background:rgba(0,200,255,.08);top:-100px;right:-150px;animation:pls 8s 3s ease-in-out infinite;}
-.orb-3{width:400px;height:400px;background:rgba(168,85,247,.08);bottom:0;left:30%;animation:pls 8s 6s ease-in-out infinite;}
-@keyframes pls{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.1);}}
-@keyframes fade-up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
-@keyframes cursor-blink{0%,100%{opacity:1;}50%{opacity:0;}}
+:root{
+  --navy:#060F1E;--navy2:#0A1628;--navy3:#0F1F38;--navy4:#162848;
+  --blue:#2D6BE4;--blue2:#1A54C8;--blue3:#5A90F0;
+  --yellow:#FFD050;--yellow2:#FFC000;
+  --white:rgba(255,255,255,1);--w80:rgba(255,255,255,.80);
+  --w50:rgba(255,255,255,.50);--w20:rgba(255,255,255,.20);
+  --w10:rgba(255,255,255,.10);--w06:rgba(255,255,255,.06);--w04:rgba(255,255,255,.04);
+  --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+  --wpp:#25D366;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--navy);color:var(--white);font-family:var(--fb);font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.01) 40px,rgba(255,255,255,.01) 41px);}
+@keyframes fu{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease;}.reveal.visible{opacity:1;transform:none;}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,80px);height:64px;background:rgba(7,9,15,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(31,43,62,.6);transition:border-color .3s;}
-.nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-weight:700;font-size:1.1rem;text-decoration:none;color:var(--text);}
-.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:grid;place-items:center;font-size:.72rem;font-family:var(--font-mono);font-weight:500;color:white;}
-.nav-links{display:flex;align-items:center;gap:28px;list-style:none;}
-.nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;transition:color .2s;}.nav-links a:hover{color:var(--text);}
-.nav-wpp{color:var(--wpp) !important;font-weight:500;}.nav-wpp:hover{color:#1ebe58 !important;}
-.nav-cta{display:flex;align-items:center;gap:10px;}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;text-decoration:none;transition:all .2s;font-family:var(--font-body);border:none;white-space:nowrap;}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid transparent;}.btn-ghost:hover{color:var(--text);border-color:var(--border);}
-.btn-primary{background:var(--accent);color:white;box-shadow:0 0 20px rgba(94,107,255,.3);}.btn-primary:hover{background:#6F7BFF;box-shadow:0 0 30px rgba(94,107,255,.5);transform:translateY(-1px);}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border2);}.btn-outline:hover{border-color:var(--accent);color:var(--accent);background:rgba(94,107,255,.06);}
-.btn-lg{padding:14px 28px;font-size:1rem;border-radius:10px;}
-section{position:relative;width:100%;}.container{max-width:1160px;margin:0 auto;padding:0 clamp(20px,5vw,60px);}
-.section-label{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;}
-.section-label::before{content:'';width:20px;height:1px;background:var(--accent);}
-.section-title{font-family:var(--font-head);font-size:clamp(1.8rem,4vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.025em;max-width:640px;margin-bottom:16px;}
-.section-sub{font-size:1rem;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:64px;font-weight:300;}
-.section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 auto;max-width:1160px;}
+@keyframes cur{0%,100%{opacity:1;}50%{opacity:0;}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease;}.reveal.visible{opacity:1;transform:none;}
+.container{max-width:1120px;margin:0 auto;padding:0 clamp(20px,5vw,64px);}
+section{position:relative;width:100%;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,64px);height:60px;background:rgba(6,15,30,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:border-color .3s;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--white);font-family:var(--fh);font-weight:700;font-size:1rem;}
+.logo-mark{width:30px;height:30px;border-radius:7px;background:var(--yellow);display:grid;place-items:center;font-family:var(--fm);font-size:.65rem;font-weight:700;color:var(--navy);}
+.nav-links{display:flex;align-items:center;gap:24px;list-style:none;}
+.nav-links a{color:var(--w50);text-decoration:none;font-size:.85rem;transition:color .15s;}.nav-links a:hover{color:var(--white);}
+.nav-wpp{color:var(--wpp) !important;font-weight:500;}
+.nav-actions{display:flex;align-items:center;gap:10px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:7px;font-size:.85rem;font-weight:500;cursor:pointer;text-decoration:none;transition:all .18s;font-family:var(--fb);border:none;white-space:nowrap;}
+.btn-ghost{background:transparent;color:var(--w50);border:1px solid var(--border);}.btn-ghost:hover{color:var(--white);border-color:var(--border2);}
+.btn-yellow{background:var(--yellow);color:var(--navy);font-weight:700;}.btn-yellow:hover{background:#ffe066;transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,208,80,.35);}
+.btn-lg{padding:14px 28px;font-size:.95rem;border-radius:9px;}
+.btn-ow{background:transparent;color:var(--white);border:1.5px solid var(--border2);}.btn-ow:hover{border-color:var(--w50);background:var(--w06);}
+
 /* HERO */
-#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 0 80px;overflow:hidden;}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid rgba(94,107,255,.3);background:rgba(94,107,255,.08);font-size:.8rem;color:#9BA8FF;margin-bottom:32px;animation:fade-up .6s ease both;}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:blink 2s ease-in-out infinite;}
-.hero-title{font-family:var(--font-head);font-size:clamp(2.4rem,6vw,5.2rem);font-weight:800;line-height:1.06;text-align:center;max-width:860px;letter-spacing:-.035em;margin-bottom:24px;animation:fade-up .6s .1s ease both;}
-.hl-blue{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hl-purple{background:linear-gradient(135deg,var(--accent3),#FF6BFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hero-sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);text-align:center;max-width:580px;line-height:1.7;margin-bottom:40px;font-weight:300;animation:fade-up .6s .2s ease both;}
-.hero-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:48px;animation:fade-up .6s .3s ease both;}
-.mode-pills{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:52px;animation:fade-up .6s .35s ease both;}
-.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);font-size:.78rem;color:var(--muted);font-family:var(--font-mono);cursor:default;transition:all .2s;}
-.pill.active{border-color:rgba(94,107,255,.5);background:rgba(94,107,255,.1);color:#9BA8FF;}.pill.soon{opacity:.5;}
-.pill-dot{width:6px;height:6px;border-radius:50%;}
-.pd-blue{background:var(--accent);}.pd-cyan{background:var(--accent2);}.pd-purple{background:var(--accent3);}.pd-orange{background:#FF8C42;}.pd-pink{background:#FF6BFF;}
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 0 60px;overflow:hidden;background:radial-gradient(ellipse 80% 55% at 50% -5%,rgba(45,107,228,.16) 0%,transparent 70%);}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:999px;background:var(--w04);border:1px solid var(--border);font-size:.75rem;color:var(--w50);margin-bottom:28px;animation:fu .5s ease both;}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);box-shadow:0 0 8px var(--yellow);animation:blink 2s ease-in-out infinite;}
+.badge-yl{color:var(--yellow);font-family:var(--fm);font-size:.68rem;font-weight:500;}
+.hero-hl{font-family:var(--fh);font-weight:800;font-size:clamp(3rem,7.5vw,6.8rem);line-height:.95;text-align:center;letter-spacing:-.04em;margin-bottom:28px;animation:fu .6s .08s ease both;}
+.hl-w{color:var(--white);}
+.hl-y{color:var(--yellow);}
+.hl-b{color:var(--blue3);}
+.hl-out{color:transparent;-webkit-text-stroke:2px var(--w20);}
+.hero-sub{font-size:clamp(.92rem,1.8vw,1.1rem);color:var(--w50);text-align:center;max-width:500px;line-height:1.75;margin-bottom:36px;animation:fu .6s .16s ease both;font-weight:300;}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;animation:fu .6s .22s ease both;}
+.hero-proof{font-size:.72rem;color:var(--w20);font-family:var(--fm);margin-bottom:36px;animation:fu .6s .26s ease both;}
+.mode-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:44px;animation:fu .6s .3s ease both;}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:5px;border:1px solid var(--border);background:var(--w04);font-size:.72rem;color:var(--w50);font-family:var(--fm);transition:all .18s;}
+.pill.active{background:rgba(45,107,228,.14);border-color:rgba(45,107,228,.4);color:var(--blue3);}
+.pill.soon{opacity:.4;}
+.pdot{width:5px;height:5px;border-radius:50%;}
+.py{background:var(--yellow);}.pb{background:var(--blue);}.pg{background:#22D3A0;}.po{background:#FF8C42;}.pp{background:#FF6BFF;}
+
 /* TERMINAL */
-.terminal-wrap{width:min(940px,96vw);border-radius:var(--r2);border:1px solid var(--border);background:var(--bg2);box-shadow:0 0 0 1px rgba(94,107,255,.1),0 40px 120px rgba(0,0,0,.7);overflow:hidden;animation:fade-up .7s .45s ease both;}
-.terminal-bar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);}
-.terminal-dots{display:flex;gap:7px;}.dot{width:12px;height:12px;border-radius:50%;}
-.dot-r{background:#FF5F57;}.dot-y{background:#FEBC2E;}.dot-g{background:#28C840;}
-.terminal-title{flex:1;text-align:center;font-family:var(--font-mono);font-size:.75rem;color:var(--muted);}
-.terminal-body{display:grid;grid-template-columns:1fr 1fr;min-height:320px;}
-.terminal-input{padding:24px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:16px;}
-.t-label{font-size:.7rem;font-family:var(--font-mono);color:var(--accent2);text-transform:uppercase;letter-spacing:.12em;}
-.t-prompt{font-family:var(--font-mono);font-size:.82rem;color:var(--text);line-height:1.7;flex:1;}
-.t-cursor{display:inline-block;width:2px;height:1em;background:var(--accent2);margin-left:2px;vertical-align:text-bottom;animation:cursor-blink 1s ease-in-out infinite;}
-.t-gen-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7B87FF);color:white;font-size:.82rem;font-family:var(--font-mono);border:none;cursor:pointer;width:fit-content;box-shadow:0 4px 20px rgba(94,107,255,.35);}
-.terminal-preview{padding:24px;background:#0A0E18;display:flex;flex-direction:column;gap:12px;}
-.fake-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
-.fake-bar{height:8px;border-radius:4px;background:var(--border2);margin-bottom:8px;}.fake-bar.accent{background:linear-gradient(90deg,var(--accent),var(--accent2));width:60%;}.fake-bar.sm{width:80%;}.fake-bar.xs{width:45%;opacity:.5;}
-.fake-row{display:flex;gap:10px;margin-top:14px;}.fake-btn{height:32px;border-radius:6px;background:var(--accent);flex:1;opacity:.9;}.fake-btn.out{background:transparent;border:1px solid var(--border2);opacity:.6;}
+.terminal{width:min(880px,94vw);border-radius:14px;background:var(--navy2);border:1px solid var(--border);overflow:hidden;box-shadow:0 0 0 1px rgba(45,107,228,.08),0 40px 100px rgba(0,0,0,.6);animation:fu .7s .36s ease both;position:relative;}
+.terminal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,208,80,.25),transparent);}
+.t-bar{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--navy3);border-bottom:1px solid var(--border);}
+.t-dots{display:flex;gap:6px;}
+.tdot{width:11px;height:11px;border-radius:50%;}
+.tdr{background:#FF5F57;}.tdy{background:#FEBC2E;}.tdg{background:#28C840;}
+.t-title{flex:1;text-align:center;font-family:var(--fm);font-size:.7rem;color:var(--w20);}
+.t-body{display:grid;grid-template-columns:1fr 1fr;min-height:280px;}
+.t-in{padding:20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:12px;}
+.t-lbl{font-size:.66rem;font-family:var(--fm);color:var(--yellow);text-transform:uppercase;letter-spacing:.14em;}
+.t-txt{font-family:var(--fm);font-size:.78rem;color:var(--w80);line-height:1.8;flex:1;}
+.t-cur{display:inline-block;width:2px;height:.88em;background:var(--yellow);margin-left:1px;vertical-align:text-bottom;animation:cur 1s ease-in-out infinite;}
+.t-genb{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:6px;background:var(--yellow);color:var(--navy);font-size:.75rem;font-family:var(--fm);font-weight:700;border:none;cursor:pointer;width:fit-content;}
+.t-pv{padding:20px;background:#050D1A;display:flex;flex-direction:column;gap:8px;}
+.tb{height:6px;border-radius:3px;background:var(--navy3);}
+.tb.y{background:var(--yellow);width:55%;}
+.tb.b{background:var(--blue);width:72%;}
+.tb.s{width:38%;opacity:.45;}
+.tr{display:flex;gap:8px;margin-top:8px;}
+.trb{height:26px;border-radius:5px;flex:1;}
+.trb.y{background:var(--yellow);}.trb.o{background:transparent;border:1px solid var(--border);}
+.t-code{font-family:var(--fm);font-size:.68rem;line-height:1.8;margin-top:6px;}
+
 /* STATS */
-.stats-bar{padding:40px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.stats-inner{display:flex;justify-content:center;align-items:center;gap:clamp(32px,6vw,80px);flex-wrap:wrap;}
-.stat-item{text-align:center;opacity:0;animation:fade-up .5s ease both;}
-.stat-item:nth-child(1){animation-delay:.1s;}.stat-item:nth-child(2){animation-delay:.2s;}.stat-item:nth-child(3){animation-delay:.3s;}.stat-item:nth-child(4){animation-delay:.4s;}
-.stat-num{font-family:var(--font-head);font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;line-height:1;margin-bottom:6px;}
-.stat-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
-/* CREATE CARDS */
-.create-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
-.create-card{border-radius:var(--r2);border:1px solid var(--border);padding:28px;transition:all .25s;}
-.create-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4);}
-.cc-lp{background:linear-gradient(145deg,rgba(94,107,255,.07),var(--bg2));}.cc-lp:hover{border-color:rgba(94,107,255,.4);}
-.cc-site{background:linear-gradient(145deg,rgba(0,200,255,.06),var(--bg2));}.cc-site:hover{border-color:rgba(0,200,255,.4);}
-.cc-app{background:linear-gradient(145deg,rgba(168,85,247,.06),var(--bg2));}.cc-app:hover{border-color:rgba(168,85,247,.4);}
-.cc-img{background:linear-gradient(145deg,rgba(255,140,66,.05),var(--bg2));opacity:.65;}.cc-img:hover{border-color:rgba(255,140,66,.3);opacity:1;}
-.cc-vid{background:linear-gradient(145deg,rgba(255,107,255,.04),var(--bg2));opacity:.5;}.cc-vid:hover{border-color:rgba(255,107,255,.3);opacity:.85;}
-.cc-soon{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:.68rem;font-family:var(--font-mono);color:var(--muted);margin-bottom:12px;}
-.cc-icon{font-size:2rem;margin-bottom:16px;display:block;}
-.cc-title{font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:8px;}
-.cc-desc{font-size:.88rem;color:var(--muted);line-height:1.6;font-weight:300;}
-.cc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}
-.cc-tag{font-size:.68rem;font-family:var(--font-mono);padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.05);color:var(--muted);}
+.stats-strip{padding:28px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.stats-inner{display:flex;justify-content:center;align-items:center;gap:clamp(24px,6vw,80px);flex-wrap:wrap;}
+.stat-n{font-family:var(--fh);font-size:2rem;font-weight:800;color:var(--white);line-height:1;margin-bottom:4px;}
+.stat-n em{color:var(--yellow);font-style:normal;}
+.stat-l{font-size:.7rem;color:var(--w20);text-transform:uppercase;letter-spacing:.1em;font-family:var(--fm);}
+
+/* SECOES */
+.stag{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:.68rem;color:var(--yellow);text-transform:uppercase;letter-spacing:.15em;margin-bottom:12px;}
+.stag::before{content:'';width:16px;height:1px;background:var(--yellow);}
+.sh{font-family:var(--fh);font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:800;line-height:1.15;letter-spacing:-.025em;max-width:580px;margin-bottom:12px;}
+.ss{font-size:.92rem;color:var(--w50);max-width:460px;line-height:1.7;margin-bottom:48px;font-weight:300;}
+.sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 auto;max-width:1120px;}
+
+/* CRIA */
+#create{padding:96px 0;}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.cc{border:1px solid var(--border);border-radius:12px;padding:22px;transition:all .22s;background:var(--w04);position:relative;overflow:hidden;}
+.cc::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;border-radius:12px;}
+.cc:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.4);}
+.cc:hover::after{opacity:1;}
+.cc-lp::after{background:radial-gradient(circle at 0 0,rgba(255,208,80,.08),transparent 60%);}.cc-lp:hover{border-color:rgba(255,208,80,.35);}
+.cc-st::after{background:radial-gradient(circle at 0 0,rgba(45,107,228,.1),transparent 60%);}.cc-st:hover{border-color:rgba(45,107,228,.4);}
+.cc-ap::after{background:radial-gradient(circle at 0 0,rgba(34,211,160,.08),transparent 60%);}.cc-ap:hover{border-color:rgba(34,211,160,.3);}
+.cc-im,.cc-vi{opacity:.5;}.cc-im:hover,.cc-vi:hover{opacity:1;}
+.cc-icon{font-size:1.7rem;margin-bottom:12px;display:block;}
+.cc-tag2{display:inline-flex;padding:2px 8px;border-radius:4px;background:rgba(255,208,80,.1);border:1px solid rgba(255,208,80,.2);font-size:.6rem;font-family:var(--fm);color:var(--yellow);margin-bottom:8px;}
+.cc-t{font-family:var(--fh);font-size:.95rem;font-weight:700;margin-bottom:5px;color:var(--white);}
+.cc-d{font-size:.8rem;color:var(--w50);line-height:1.5;font-weight:300;}
+.cc-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.chip{font-size:.62rem;font-family:var(--fm);padding:2px 6px;border-radius:4px;background:var(--w04);color:var(--w20);border:1px solid var(--border);}
+
 /* FEATURES */
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
-.feature-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:32px;transition:all .25s;}
-.feature-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4);}
-.feature-icon{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:1.4rem;margin-bottom:20px;}
-.fi-blue{background:rgba(94,107,255,.12);}.fi-cyan{background:rgba(0,200,255,.1);}.fi-purple{background:rgba(168,85,247,.1);}.fi-green{background:rgba(34,211,160,.1);}
-.feature-card h3{font-family:var(--font-head);font-size:1.05rem;font-weight:700;margin-bottom:10px;}
-.feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;font-weight:300;}
+#features{padding:96px 0;background:linear-gradient(180deg,transparent,rgba(45,107,228,.04) 50%,transparent);}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;}
+.feat{background:var(--w04);border:1px solid var(--border);border-radius:12px;padding:26px;transition:all .22s;}
+.feat:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 16px 48px rgba(0,0,0,.4);}
+.fi{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:1.2rem;margin-bottom:16px;}
+.fiy{background:rgba(255,208,80,.12);border:1px solid rgba(255,208,80,.2);}
+.fib{background:rgba(45,107,228,.12);border:1px solid rgba(45,107,228,.2);}
+.fig{background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);}
+.feat h3{font-family:var(--fh);font-size:.92rem;font-weight:700;margin-bottom:7px;color:var(--white);}
+.feat p{font-size:.8rem;color:var(--w50);line-height:1.6;font-weight:300;}
+
 /* STEPS */
-.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;position:relative;}
-.steps-grid::before{content:'';position:absolute;top:36px;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
-.step-card{text-align:center;padding:40px 24px;position:relative;z-index:1;}
-.step-num{width:72px;height:72px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:grid;place-items:center;margin:0 auto 24px;font-family:var(--font-head);font-size:1.4rem;font-weight:800;transition:all .3s;position:relative;}
-.step-card:hover .step-num{background:var(--accent);border-color:var(--accent);box-shadow:0 0 30px rgba(94,107,255,.4);}
-.step-card h3{font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:10px;}
-.step-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
-.step-emoji{position:absolute;top:-8px;right:-8px;font-size:1.2rem;}
-/* DEMO */
-.demo-layout{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
-.demo-list{list-style:none;display:flex;flex-direction:column;gap:16px;margin-bottom:40px;}
-.demo-list li{display:flex;align-items:flex-start;gap:14px;font-size:.93rem;color:var(--muted);line-height:1.6;}
-.check{width:22px;height:22px;border-radius:6px;background:rgba(34,211,160,.12);display:grid;place-items:center;flex-shrink:0;margin-top:2px;font-size:.8rem;color:var(--green);}
-.demo-visual{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5);}
-.demo-visual-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;}
-.demo-tabs{display:flex;gap:4px;}
-.demo-tab{padding:4px 12px;border-radius:5px;font-size:.72rem;font-family:var(--font-mono);color:var(--muted);}
-.demo-tab.active{background:rgba(94,107,255,.15);color:var(--accent);}
-.demo-code{padding:24px;font-family:var(--font-mono);font-size:.78rem;line-height:1.9;min-height:260px;}
+#how{padding:96px 0;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;position:relative;}
+.steps::before{content:'';position:absolute;top:31px;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
+.step{text-align:center;padding:28px 18px;z-index:1;position:relative;}
+.step-n{width:62px;height:62px;border-radius:50%;border:1.5px solid var(--border);background:var(--navy3);display:grid;place-items:center;margin:0 auto 18px;font-family:var(--fh);font-size:1.2rem;font-weight:800;color:var(--white);transition:all .3s;}
+.step:hover .step-n{background:var(--yellow);border-color:var(--yellow);color:var(--navy);box-shadow:0 0 24px rgba(255,208,80,.4);}
+.step h3{font-family:var(--fh);font-size:.95rem;font-weight:700;margin-bottom:7px;color:var(--white);}
+.step p{font-size:.8rem;color:var(--w50);line-height:1.6;}
+
 /* ROADMAP */
-.roadmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
-.roadmap-item{border:1px solid var(--border);border-radius:var(--r2);padding:24px;text-align:center;}
-.ri-done{border-color:rgba(34,211,160,.25);background:rgba(34,211,160,.04);}
-.ri-next{border-color:rgba(94,107,255,.3);background:rgba(94,107,255,.06);}
-.ri-soon{opacity:.55;}.ri-future{opacity:.38;}
-.ri-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:.68rem;font-family:var(--font-mono);margin-bottom:16px;}
-.rs-done{background:rgba(34,211,160,.12);color:var(--green);border:1px solid rgba(34,211,160,.2);}
-.rs-next{background:rgba(94,107,255,.12);color:#9BA8FF;border:1px solid rgba(94,107,255,.2);}
-.rs-soon{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);}
-.ri-icon{font-size:2rem;margin-bottom:12px;display:block;}
-.ri-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:6px;}
-.ri-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+#roadmap{padding:72px 0;}
+.rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px;}
+.rm{border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+.rm-done{border-color:rgba(34,211,160,.25);background:rgba(34,211,160,.04);}
+.rm-next{border-color:rgba(45,107,228,.3);background:rgba(45,107,228,.05);}
+.rm-soon,.rm-fut{opacity:.42;}
+.rmbg{display:inline-flex;padding:3px 10px;border-radius:999px;font-size:.62rem;font-family:var(--fm);margin-bottom:12px;}
+.rbd{background:rgba(34,211,160,.1);color:#22D3A0;border:1px solid rgba(34,211,160,.2);}
+.rbn{background:rgba(45,107,228,.12);color:var(--blue3);border:1px solid rgba(45,107,228,.2);}
+.rbs{background:var(--w04);color:var(--w20);border:1px solid var(--border);}
+.rm-icon{font-size:1.7rem;margin-bottom:8px;display:block;}
+.rm-t{font-family:var(--fh);font-size:.88rem;font-weight:700;margin-bottom:3px;color:var(--white);}
+.rm-d{font-size:.72rem;color:var(--w50);}
+
 /* PRICING */
-.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;align-items:start;}
-.price-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:36px;transition:all .25s;position:relative;}
-.price-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4);}
-.price-card.featured{border-color:var(--accent);background:linear-gradient(145deg,rgba(94,107,255,.08),var(--bg2));box-shadow:0 0 0 1px rgba(94,107,255,.2),0 20px 60px rgba(94,107,255,.1);}
-.price-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);padding:4px 16px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:.72rem;font-weight:600;color:white;white-space:nowrap;}
-.price-plan{font-family:var(--font-head);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;}
-.price-card.featured .price-plan{color:var(--accent);}
-.price-value{font-family:var(--font-head);font-size:2.8rem;font-weight:800;letter-spacing:-.04em;margin-bottom:4px;line-height:1;}
-.price-period{font-size:.85rem;color:var(--muted);margin-bottom:24px;}
-.price-sep{height:1px;background:var(--border);margin:24px 0;}
-.price-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
-.price-features li{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted);}
-.price-features li::before{content:"✓";width:20px;height:20px;border-radius:50%;background:rgba(34,211,160,.12);color:var(--green);display:grid;place-items:center;font-size:.7rem;flex-shrink:0;}
+#pricing{padding:96px 0;}
+.pg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;align-items:start;}
+.pc{background:var(--w04);border:1px solid var(--border);border-radius:14px;padding:30px;transition:all .22s;position:relative;}
+.pc:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.pc.feat{background:linear-gradient(145deg,rgba(45,107,228,.1),var(--navy2));border-color:rgba(45,107,228,.4);box-shadow:0 0 0 1px rgba(45,107,228,.12),0 20px 60px rgba(45,107,228,.08);}
+.pbadge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:3px 12px;border-radius:999px;background:var(--yellow);color:var(--navy);font-size:.65rem;font-weight:700;white-space:nowrap;font-family:var(--fm);}
+.pplan{font-family:var(--fm);font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--w50);margin-bottom:9px;}
+.pc.feat .pplan{color:var(--yellow);}
+.pval{font-family:var(--fh);font-size:2.5rem;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:3px;color:var(--white);}
+.pper{font-size:.8rem;color:var(--w50);margin-bottom:18px;}
+.psep{height:1px;background:var(--border);margin:18px 0;}
+.plist{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:24px;}
+.plist li{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--w80);}
+.plist li::before{content:"✓";width:17px;height:17px;border-radius:50%;background:rgba(34,211,160,.12);color:#22D3A0;display:grid;place-items:center;font-size:.62rem;flex-shrink:0;}
+.pbtn{display:block;width:100%;padding:10px;border-radius:8px;text-align:center;font-size:.83rem;font-weight:600;cursor:pointer;font-family:var(--fb);transition:all .18s;text-decoration:none;}
+.pbo{background:transparent;color:var(--w80);border:1px solid var(--border2);}.pbo:hover{border-color:var(--w50);}
+.pbp{background:var(--blue);color:white;border:none;}.pbp:hover{background:var(--blue2);}
+.pby{background:var(--yellow);color:var(--navy);border:none;font-weight:700;}.pby:hover{background:#ffe066;box-shadow:0 4px 18px rgba(255,208,80,.35);}
+
 /* REFERRAL */
-.referral-box{display:flex;align-items:center;justify-content:space-between;gap:32px;background:linear-gradient(135deg,rgba(37,211,102,.06),rgba(37,211,102,.02));border:1px solid rgba(37,211,102,.2);border-radius:var(--r2);padding:36px 48px;flex-wrap:wrap;}
-.referral-left{display:flex;align-items:center;gap:20px;flex:1;min-width:260px;}
-.ref-emoji{font-size:2.4rem;flex-shrink:0;}
-.ref-title{font-family:var(--font-head);font-size:1.2rem;font-weight:700;margin-bottom:6px;}
-.ref-sub{font-size:.88rem;color:var(--muted);line-height:1.6;font-weight:300;}
-.btn-whatsapp{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:10px;background:var(--wpp);color:white;font-size:.95rem;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);white-space:nowrap;transition:all .2s;box-shadow:0 4px 20px rgba(37,211,102,.3);}
-.btn-whatsapp:hover{background:#1ebe58;transform:translateY(-2px);box-shadow:0 8px 30px rgba(37,211,102,.4);}
-/* CTA & FOOTER */
-.cta-box{max-width:800px;margin:0 auto;text-align:center;background:linear-gradient(145deg,rgba(94,107,255,.08),rgba(0,200,255,.04));border:1px solid rgba(94,107,255,.25);border-radius:28px;padding:clamp(48px,8vw,80px) clamp(32px,6vw,80px);position:relative;overflow:hidden;}
-footer{padding:48px 0 40px;border-top:1px solid var(--border);}
-.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;}
-.footer-note{font-size:.82rem;color:var(--muted);}
-.footer-links{display:flex;gap:24px;list-style:none;}
-.footer-links a{font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s;}
-.footer-links a:hover{color:var(--text);}
-::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
-@media(max-width:768px){.nav-links{display:none;}.terminal-body{grid-template-columns:1fr;}.terminal-preview{display:none;}.demo-layout{grid-template-columns:1fr;}.steps-grid::before{display:none;}.pricing-grid{grid-template-columns:1fr;}.referral-box{flex-direction:column;padding:28px;}.footer-inner{flex-direction:column;text-align:center;}}
+#referral{padding:56px 0;}
+.refbox{display:flex;align-items:center;justify-content:space-between;gap:24px;background:linear-gradient(135deg,rgba(37,211,102,.06),rgba(37,211,102,.02));border:1px solid rgba(37,211,102,.2);border-radius:14px;padding:28px 40px;flex-wrap:wrap;}
+.refleft{display:flex;align-items:center;gap:16px;flex:1;min-width:220px;}
+.refem{font-size:2rem;flex-shrink:0;}
+.reft{font-family:var(--fh);font-size:1rem;font-weight:700;margin-bottom:4px;color:var(--white);}
+.refs{font-size:.8rem;color:var(--w50);font-weight:300;}
+.bwpp{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;background:var(--wpp);color:white;font-size:.85rem;font-weight:600;cursor:pointer;border:none;font-family:var(--fb);transition:all .2s;box-shadow:0 4px 16px rgba(37,211,102,.3);white-space:nowrap;}
+.bwpp:hover{background:#1ebe58;transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,211,102,.4);}
+
+/* CTA FINAL */
+#cta{padding:96px 0;}
+.ctabox{max-width:720px;margin:0 auto;text-align:center;background:var(--w04);border:1px solid var(--border);border-radius:20px;padding:clamp(44px,8vw,80px) clamp(24px,6vw,80px);position:relative;overflow:hidden;}
+.ctabox::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(45,107,228,.12),transparent 70%);pointer-events:none;}
+.ctabox::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:50%;height:1px;background:linear-gradient(90deg,transparent,var(--yellow),transparent);}
+.ctat{font-family:var(--fh);font-size:clamp(1.8rem,4vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:14px;color:var(--white);}
+.ctat span{color:var(--yellow);}
+.ctas{font-size:.92rem;color:var(--w50);max-width:420px;margin:0 auto 26px;line-height:1.7;font-weight:300;}
+.ctan{font-size:.72rem;color:var(--w20);margin-top:12px;font-family:var(--fm);}
+
+/* FOOTER */
+footer{padding:36px 0;border-top:1px solid var(--border);}
+.fi2{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;}
+.fn{font-size:.75rem;color:var(--w20);}
+.flinks{display:flex;gap:18px;list-style:none;}
+.flinks a{font-size:.75rem;color:var(--w20);text-decoration:none;transition:color .15s;}.flinks a:hover{color:var(--w50);}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--navy);}::-webkit-scrollbar-thumb{background:var(--navy4);border-radius:3px;}
+@media(max-width:768px){.nav-links{display:none;}.t-body{grid-template-columns:1fr;}.t-pv{display:none;}.steps::before{display:none;}.pg2{grid-template-columns:1fr;}.refbox{flex-direction:column;padding:22px;}.fi2{flex-direction:column;text-align:center;}}
 </style>
 </head>
 <body>
-<div id="landing" style="position:fixed;inset:0;z-index:10;overflow-y:auto;background:var(--bg);transition:opacity .35s ease,transform .35s ease;">
 
-<!-- NAV -->
 <nav id="main-nav">
-  <a class="nav-logo" href="#"><div class="logo-icon">ZP</div>Zero Preview</a>
+  <a class="nav-logo" href="#"><div class="logo-mark">ZP</div>Zero Preview</a>
   <ul class="nav-links">
     <li><a href="#create">O que cria</a></li>
     <li><a href="#features">Funcionalidades</a></li>
@@ -179,253 +218,182 @@ footer{padding:48px 0 40px;border-top:1px solid var(--border);}
     <li><a href="#pricing">Precos</a></li>
     <li><a href="#" class="nav-wpp" onclick="openWhatsApp(event)">Indicar amigo</a></li>
   </ul>
-  <div class="nav-cta">
-    <a href="#" onclick="startApp();return false;" class="btn btn-ghost">Entrar</a>
-    <a href="#" onclick="startApp();return false;" class="btn btn-primary">Comecar gratis</a>
+  <div class="nav-actions">
+    <a href="#" class="btn btn-ghost" onclick="startApp();return false;">Entrar</a>
+    <a href="#" class="btn btn-yellow" onclick="startApp();return false;">Comecar gratis</a>
   </div>
 </nav>
 
+<div id="landing">
+
 <!-- HERO -->
 <section id="hero">
-  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
-  <div class="grid-bg"></div>
   <div class="container" style="display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;">
-    <div class="hero-badge"><span class="badge-dot"></span>Powered by Claude Sonnet · A IA mais avancada do mundo</div>
-    <h1 class="hero-title">Descreva.<br/><span class="hl-blue">A IA cria.</span> <span class="hl-purple">Voce publica.</span></h1>
-    <p class="hero-sub">Sites, landing pages, apps e muito mais — gerados por inteligencia artificial em segundos. Sem codigo, sem designer, sem complicacao.</p>
+
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span class="badge-yl">NOVO</span>
+      <span style="color:rgba(255,255,255,.25);">·</span>
+      Gemini 2.5 Flash + Claude Sonnet integrados
+    </div>
+
+    <h1 class="hero-hl">
+      <span class="hl-w">Descreva.</span><br/>
+      <span class="hl-y">A IA constroi.</span><br/>
+      <span class="hl-out">Voce lanca.</span>
+    </h1>
+
+    <p class="hero-sub">Sites, landing pages, apps e dashboards gerados por inteligencia artificial em segundos. Sem codigo, sem designer.</p>
+
     <div class="hero-actions">
-      <a href="#" onclick="startApp();return false;" class="btn btn-primary btn-lg">Criar agora — e gratis</a>
-      <a href="#create" class="btn btn-outline btn-lg">Ver o que cria</a>
+      <a href="#" class="btn btn-yellow btn-lg" onclick="startApp();return false;">Criar agora — e gratis</a>
+      <a href="#create" class="btn btn-ow btn-lg">Ver o que cria</a>
     </div>
+    <div class="hero-proof">Sem cartao de credito · Gratis para comecar · 1500 geracoes/dia no plano free</div>
+
     <div class="mode-pills">
-      <div class="pill active"><span class="pill-dot pd-blue"></span>Landing Pages</div>
-      <div class="pill"><span class="pill-dot pd-cyan"></span>Sites completos</div>
-      <div class="pill"><span class="pill-dot pd-purple"></span>Apps e dashboards</div>
-      <div class="pill soon"><span class="pill-dot pd-orange"></span>Imagens com IA — em breve</div>
-      <div class="pill soon"><span class="pill-dot pd-pink"></span>Videos com IA — em breve</div>
+      <div class="pill active"><span class="pdot py"></span>Landing Pages</div>
+      <div class="pill"><span class="pdot pb"></span>Sites completos</div>
+      <div class="pill"><span class="pdot pg"></span>Apps e dashboards</div>
+      <div class="pill soon"><span class="pdot po"></span>Imagens com IA</div>
+      <div class="pill soon"><span class="pdot pp"></span>Videos com IA</div>
     </div>
-    <div class="terminal-wrap">
-      <div class="terminal-bar">
-        <div class="terminal-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
-        <div class="terminal-title">zero-preview · modo: landing page</div>
+
+    <div class="terminal">
+      <div class="t-bar">
+        <div class="t-dots"><div class="tdot tdr"></div><div class="tdot tdy"></div><div class="tdot tdg"></div></div>
+        <div class="t-title">zero-preview · gemini-2.5-flash · landing page</div>
       </div>
-      <div class="terminal-body">
-        <div class="terminal-input">
-          <div class="t-label">descreva o que quer criar</div>
-          <div class="t-prompt"><span id="typed-text"></span><span class="t-cursor"></span></div>
-          <button class="t-gen-btn">Gerar agora</button>
+      <div class="t-body">
+        <div class="t-in">
+          <div class="t-lbl">descreva o que quer criar</div>
+          <div class="t-txt"><span id="typed-text"></span><span class="t-cur"></span></div>
+          <button class="t-genb">Gerar agora</button>
         </div>
-        <div class="terminal-preview">
-          <div class="t-label">preview ao vivo</div>
-          <div class="fake-card"><div class="fake-bar accent"></div><div class="fake-bar sm"></div><div class="fake-bar xs"></div><div class="fake-row"><div class="fake-btn"></div><div class="fake-btn out"></div></div></div>
-          <div style="font-family:var(--font-mono);font-size:.72rem;color:#7EAAFF;line-height:1.8;">
-            <span style="color:#4B6079">// Gerado pelo Zero Preview</span><br/>
-            <span style="color:#C792EA">export default function</span> <span style="color:#82AAFF">LandingPage</span>() {<br/>
-            &nbsp;&nbsp;<span style="color:#89DDFF">&lt;Hero /&gt;&lt;Features /&gt;&lt;Pricing /&gt;</span><br/>
-            }
+        <div class="t-pv">
+          <div class="t-lbl">preview ao vivo</div>
+          <div class="tb y"></div><div class="tb b"></div><div class="tb s"></div>
+          <div class="tr"><div class="trb y"></div><div class="trb o"></div></div>
+          <div class="t-code">
+            <span style="color:#5A90F0">&lt;section</span> <span style="color:#FFD050">id</span>=<span style="color:#6EE7B7">"hero"</span><span style="color:#5A90F0">&gt;</span><br/>
+            &nbsp;&nbsp;<span style="color:#5A90F0">&lt;h1&gt;</span><span style="color:rgba(255,255,255,.65)">Transforme seu negocio</span><span style="color:#5A90F0">&lt;/h1&gt;</span><br/>
+            &nbsp;&nbsp;<span style="color:#5A90F0">&lt;button&gt;</span><span style="color:#6EE7B7">Comecar agora</span><span style="color:#5A90F0">&lt;/button&gt;</span><br/>
+            <span style="color:#5A90F0">&lt;/section&gt;</span>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </section>
 
 <!-- STATS -->
-<div class="stats-bar">
+<div class="stats-strip">
   <div class="container">
     <div class="stats-inner">
-      <div class="stat-item"><span class="stat-num">5s</span><span class="stat-label">do prompt ao site</span></div>
-      <div class="stat-item"><span class="stat-num">10k+</span><span class="stat-label">criacoes geradas</span></div>
-      <div class="stat-item"><span class="stat-num">3</span><span class="stat-label">modos de geracao</span></div>
-      <div class="stat-item"><span class="stat-num">R$0</span><span class="stat-label">pra comecar</span></div>
+      <div><div class="stat-n"><em>5</em>s</div><div class="stat-l">do prompt ao site</div></div>
+      <div><div class="stat-n"><em>10k</em>+</div><div class="stat-l">criacoes geradas</div></div>
+      <div><div class="stat-n"><em>65k</em></div><div class="stat-l">tokens por geracao</div></div>
+      <div><div class="stat-n">R$<em>0</em></div><div class="stat-l">pra comecar</div></div>
     </div>
   </div>
 </div>
 
 <!-- O QUE CRIA -->
 <section id="create">
-  <div class="container" style="padding-top:120px;padding-bottom:120px;">
-    <div class="section-label">O que voce pode criar</div>
-    <h2 class="section-title reveal">De uma ideia a qualquer tipo de criacao digital</h2>
-    <p class="section-sub reveal">Voce descreve. A IA entende e gera. Funciona pra qualquer pessoa — mesmo quem nunca programou na vida.</p>
-    <div class="create-grid">
-      <div class="create-card cc-lp reveal">
-        <span class="cc-icon">🚀</span>
-        <div class="cc-title">Landing Pages</div>
-        <p class="cc-desc">Paginas de vendas profissionais com hero, beneficios, depoimentos, precos e CTA — prontas pra converter.</p>
-        <div class="cc-tags"><span class="cc-tag">hero section</span><span class="cc-tag">pricing</span><span class="cc-tag">depoimentos</span><span class="cc-tag">CTA</span></div>
-      </div>
-      <div class="create-card cc-site reveal">
-        <span class="cc-icon">🌐</span>
-        <div class="cc-title">Sites Completos</div>
-        <p class="cc-desc">Sites institucionais, portfolios, blogs e lojas — com multiplas paginas, navegacao e design coeso.</p>
-        <div class="cc-tags"><span class="cc-tag">multiplas paginas</span><span class="cc-tag">portfolio</span><span class="cc-tag">loja</span></div>
-      </div>
-      <div class="create-card cc-app reveal">
-        <span class="cc-icon">📱</span>
-        <div class="cc-title">Apps e Dashboards</div>
-        <p class="cc-desc">Interfaces funcionais com graficos, formularios, tabelas e componentes interativos — prontos pra usar.</p>
-        <div class="cc-tags"><span class="cc-tag">dashboard</span><span class="cc-tag">formularios</span><span class="cc-tag">graficos</span></div>
-      </div>
-      <div class="create-card cc-img reveal">
-        <span class="cc-icon">🎨</span>
-        <span class="cc-soon">EM BREVE</span>
-        <div class="cc-title">Imagens com IA</div>
-        <p class="cc-desc">Gere imagens, banners, ilustracoes e artes para seu site — direto dentro da plataforma.</p>
-        <div class="cc-tags"><span class="cc-tag">banners</span><span class="cc-tag">ilustracoes</span><span class="cc-tag">capas</span></div>
-      </div>
-      <div class="create-card cc-vid reveal">
-        <span class="cc-icon">🎬</span>
-        <span class="cc-soon">EM BREVE</span>
-        <div class="cc-title">Videos com IA</div>
-        <p class="cc-desc">Crie videos de apresentacao, anuncios e conteudo para redes sociais com IA — sem camera.</p>
-        <div class="cc-tags"><span class="cc-tag">apresentacoes</span><span class="cc-tag">anuncios</span><span class="cc-tag">reels</span></div>
-      </div>
+  <div class="container">
+    <div class="stag">O que voce pode criar</div>
+    <h2 class="sh reveal">Do prompt a qualquer criacao digital</h2>
+    <p class="ss reveal">Voce descreve. A IA entende e gera. Funciona pra qualquer pessoa — mesmo quem nunca programou na vida.</p>
+    <div class="cg">
+      <div class="cc cc-lp reveal"><span class="cc-icon">🚀</span><div class="cc-t">Landing Pages</div><p class="cc-d">Paginas de vendas profissionais com hero, beneficios, depoimentos, precos e CTA prontas pra converter.</p><div class="cc-chips"><span class="chip">hero</span><span class="chip">pricing</span><span class="chip">depoimentos</span></div></div>
+      <div class="cc cc-st reveal"><span class="cc-icon">🌐</span><div class="cc-t">Sites Completos</div><p class="cc-d">Sites institucionais, portfolios e lojas com navbar, multiplas secoes, contato e footer.</p><div class="cc-chips"><span class="chip">navbar</span><span class="chip">portfolio</span><span class="chip">footer</span></div></div>
+      <div class="cc cc-ap reveal"><span class="cc-icon">📊</span><div class="cc-t">Apps e Dashboards</div><p class="cc-d">Interfaces funcionais com KPIs, graficos, tabelas e componentes interativos.</p><div class="cc-chips"><span class="chip">KPIs</span><span class="chip">graficos</span><span class="chip">tabelas</span></div></div>
+      <div class="cc cc-im reveal"><span class="cc-icon">🎨</span><span class="cc-tag2">EM BREVE</span><div class="cc-t">Imagens com IA</div><p class="cc-d">Banners, capas e ilustracoes geradas por IA direto na plataforma.</p></div>
+      <div class="cc cc-vi reveal"><span class="cc-icon">🎬</span><span class="cc-tag2">EM BREVE</span><div class="cc-t">Videos com IA</div><p class="cc-d">Videos de apresentacao, anuncios e conteudo para redes — sem camera.</p></div>
     </div>
   </div>
 </section>
 
-<div class="section-divider"></div>
+<div class="sdiv"></div>
 
 <!-- FEATURES -->
 <section id="features">
-  <div class="container" style="padding-top:120px;padding-bottom:120px;">
-    <div class="section-label">Funcionalidades</div>
-    <h2 class="section-title reveal">Tudo numa plataforma so</h2>
-    <p class="section-sub reveal">Do prompt ao ar — com preview, codigo limpo e publicacao automatica.</p>
-    <div class="features-grid">
-      <div class="feature-card reveal"><div class="feature-icon fi-blue">⚡</div><h3>Geracao em segundos</h3><p>Descreva em portugues o que quer criar e receba o resultado completo — codigo, design e logica — em segundos.</p></div>
-      <div class="feature-card reveal"><div class="feature-icon fi-cyan">👁</div><h3>Preview instantaneo</h3><p>Veja o resultado renderizado ao vivo antes de copiar qualquer coisa. Sandbox isolado e seguro.</p></div>
-      <div class="feature-card reveal"><div class="feature-icon fi-purple">🎨</div><h3>Design profissional</h3><p>A IA gera interfaces modernas, responsivas e com identidade visual — sem precisar de designer.</p></div>
-      <div class="feature-card reveal"><div class="feature-icon fi-green">🚀</div><h3>Publica com 1 clique</h3><p>Integracao com GitHub e Vercel — sua criacao vai pro ar automaticamente com URL propria.</p></div>
-      <div class="feature-card reveal"><div class="feature-icon fi-blue">📁</div><h3>Projetos salvos</h3><p>Todos os seus projetos armazenados com versoes. Acesse, edite e reutilize quando quiser.</p></div>
-      <div class="feature-card reveal"><div class="feature-icon fi-cyan">🌐</div><h3>Funciona no celular</h3><p>Interface 100% responsiva. Crie um site do celular, veja o preview e publique — sem computador.</p></div>
+  <div class="container">
+    <div class="stag">Funcionalidades</div>
+    <h2 class="sh reveal">Tudo numa plataforma so</h2>
+    <p class="ss reveal">Do prompt ao ar — HTML profissional, preview ao vivo e deploy automatico.</p>
+    <div class="fg">
+      <div class="feat reveal"><div class="fi fiy">⚡</div><h3>Geracao em segundos</h3><p>Descreva em portugues e receba HTML profissional completo — via Gemini gratis ou Claude premium.</p></div>
+      <div class="feat reveal"><div class="fi fib">👁</div><h3>Preview instantaneo</h3><p>Veja o resultado renderizado ao vivo antes de usar. Sandbox isolado, seguro e fiel ao real.</p></div>
+      <div class="feat reveal"><div class="fi fiy">🎨</div><h3>Design profissional</h3><p>A IA gera interfaces modernas, responsivas, com fontes e paleta coerentes com o nicho.</p></div>
+      <div class="feat reveal"><div class="fi fig">🚀</div><h3>Publica com 1 clique</h3><p>Download do HTML gerado ou deploy via GitHub + Vercel — sua criacao vai pro ar com URL propria.</p></div>
+      <div class="feat reveal"><div class="fi fib">📁</div><h3>Projetos salvos</h3><p>Todos os seus projetos armazenados. Acesse, edite e reutilize quando quiser.</p></div>
+      <div class="feat reveal"><div class="fi fiy">🌐</div><h3>Funciona no celular</h3><p>Interface 100% responsiva. Crie um site do celular, veja o preview e publique sem computador.</p></div>
     </div>
   </div>
 </section>
 
-<div class="section-divider"></div>
+<div class="sdiv"></div>
 
-<!-- HOW IT WORKS -->
-<section id="how" style="background:linear-gradient(180deg,transparent,rgba(94,107,255,.025) 50%,transparent);">
-  <div class="container" style="padding-top:120px;padding-bottom:120px;">
-    <div class="section-label">Como funciona</div>
-    <h2 class="section-title reveal">3 passos do zero ao ar</h2>
-    <p class="section-sub reveal">Qualquer pessoa consegue. Sem curva de aprendizado, sem configuracao.</p>
-    <div class="steps-grid">
-      <div class="step-card reveal"><div class="step-num">1<span class="step-emoji">✍️</span></div><h3>Descreva</h3><p>Escreva em portugues o que quer criar: "uma landing page pra minha academia com planos e depoimentos".</p></div>
-      <div class="step-card reveal"><div class="step-num">2<span class="step-emoji">🤖</span></div><h3>A IA monta</h3><p>A inteligencia artificial le seu pedido e gera o site, landing page ou app completo — com design e conteudo.</p></div>
-      <div class="step-card reveal"><div class="step-num">3<span class="step-emoji">🚀</span></div><h3>Publique</h3><p>Veja o resultado ao vivo, faca ajustes com novos prompts e publique online com um clique.</p></div>
+<!-- COMO FUNCIONA -->
+<section id="how">
+  <div class="container">
+    <div class="stag">Como funciona</div>
+    <h2 class="sh reveal">3 passos do zero ao ar</h2>
+    <p class="ss reveal">Qualquer pessoa consegue. Sem curva de aprendizado.</p>
+    <div class="steps">
+      <div class="step reveal"><div class="step-n">1</div><h3>Descreva</h3><p>Escreva em portugues o que quer criar: "landing page para academia com planos e depoimentos".</p></div>
+      <div class="step reveal"><div class="step-n">2</div><h3>A IA constroi</h3><p>Gemini 2.5 Flash ou Claude Sonnet le seu pedido e gera o HTML completo com design e conteudo.</p></div>
+      <div class="step reveal"><div class="step-n">3</div><h3>Publique</h3><p>Veja ao vivo, ajuste com novos prompts e publique online com um clique.</p></div>
     </div>
   </div>
 </section>
 
-<div class="section-divider"></div>
-
-<!-- DEMO -->
-<section id="demo">
-  <div class="container" style="padding-top:120px;padding-bottom:120px;">
-    <div class="demo-layout">
-      <div>
-        <div class="section-label">Demo</div>
-        <h2 class="section-title reveal">Veja o poder na pratica</h2>
-        <p style="font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:32px;font-weight:300;" class="reveal">Qualquer pessoa cria resultados profissionais. Sem saber programar, sem contratar designer.</p>
-        <ul class="demo-list">
-          <li class="reveal"><span class="check">✓</span>Landing page completa com todas as secoes</li>
-          <li class="reveal"><span class="check">✓</span>Design responsivo — funciona no celular</li>
-          <li class="reveal"><span class="check">✓</span>Codigo limpo exportavel — e seu pra sempre</li>
-          <li class="reveal"><span class="check">✓</span>Deploy automatico com URL real</li>
-        </ul>
-        <a href="#" onclick="startApp();return false;" class="btn btn-primary btn-lg reveal">Criar agora — de graca</a>
-      </div>
-      <div class="demo-visual reveal">
-        <div class="demo-visual-bar">
-          <div class="terminal-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
-          <div class="demo-tabs"><div class="demo-tab active">landing-page.html</div><div class="demo-tab">preview</div></div>
-        </div>
-        <div class="demo-code">
-          <span style="color:#4B6079">// Zero Preview · gerado em 4s</span><br/>
-          <span style="color:#C792EA">&lt;!DOCTYPE html&gt;</span><br/>
-          <span style="color:#89DDFF">&lt;section</span> <span style="color:#FFCB6B">id</span>=<span style="color:#C3E88D">"hero"</span><span style="color:#89DDFF">&gt;</span><br/>
-          &nbsp;&nbsp;<span style="color:#89DDFF">&lt;h1&gt;</span><span style="color:#E4EAF4">Transforme seu negocio</span><span style="color:#89DDFF">&lt;/h1&gt;</span><br/>
-          &nbsp;&nbsp;<span style="color:#89DDFF">&lt;button&gt;</span><span style="color:#C3E88D">Comecar agora</span><span style="color:#89DDFF">&lt;/button&gt;</span><br/>
-          <span style="color:#89DDFF">&lt;/section&gt;</span><br/>
-          <span style="color:#89DDFF">&lt;section</span> <span style="color:#FFCB6B">id</span>=<span style="color:#C3E88D">"features"</span><span style="color:#89DDFF">&gt;</span><br/>
-          &nbsp;&nbsp;<span style="color:#4B6079">/* 6 cards de beneficios */</span><br/>
-          <span style="color:#89DDFF">&lt;/section&gt;</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
+<div class="sdiv"></div>
 
 <!-- ROADMAP -->
-<section id="roadmap" style="background:linear-gradient(180deg,transparent,rgba(168,85,247,.02) 50%,transparent);">
-  <div class="container" style="padding-top:100px;padding-bottom:100px;">
-    <div style="text-align:center;margin-bottom:64px;">
-      <div class="section-label" style="justify-content:center;">Roadmap</div>
-      <h2 class="section-title reveal" style="max-width:100%;text-align:center;">O que ja tem e o que vem por ai</h2>
-      <p class="section-sub reveal" style="max-width:500px;margin:16px auto 0;text-align:center;">Estamos construindo a plataforma de criacao com IA mais completa do Brasil.</p>
+<section id="roadmap" style="background:linear-gradient(180deg,transparent,rgba(45,107,228,.03) 50%,transparent);">
+  <div class="container" style="padding-top:72px;padding-bottom:72px;">
+    <div style="text-align:center;margin-bottom:44px;">
+      <div class="stag" style="justify-content:center;">Roadmap</div>
+      <h2 class="sh reveal" style="max-width:100%;text-align:center;">O que ja tem e o que vem por ai</h2>
     </div>
-    <div class="roadmap-grid">
-      <div class="roadmap-item ri-done reveal"><span class="ri-status rs-done">Disponivel</span><span class="ri-icon">📄</span><div class="ri-title">Componentes React</div><p class="ri-desc">Gere qualquer componente com preview ao vivo</p></div>
-      <div class="roadmap-item ri-done reveal"><span class="ri-status rs-done">Disponivel</span><span class="ri-icon">🚀</span><div class="ri-title">Landing Pages</div><p class="ri-desc">Paginas completas de vendas e captura</p></div>
-      <div class="roadmap-item ri-next reveal"><span class="ri-status rs-next">Proximo</span><span class="ri-icon">🌐</span><div class="ri-title">Sites Completos</div><p class="ri-desc">Multi-pagina com navegacao e rotas</p></div>
-      <div class="roadmap-item ri-soon reveal"><span class="ri-status rs-soon">Em breve</span><span class="ri-icon">🎨</span><div class="ri-title">Imagens com IA</div><p class="ri-desc">Banners, capas e artes geradas por IA</p></div>
-      <div class="roadmap-item ri-future reveal"><span class="ri-status rs-soon">Futuro</span><span class="ri-icon">🎬</span><div class="ri-title">Videos com IA</div><p class="ri-desc">Anuncios e apresentacoes em video</p></div>
+    <div class="rg">
+      <div class="rm rm-done reveal"><span class="rmbg rbd">Disponivel</span><span class="rm-icon">📄</span><div class="rm-t">Componentes</div><p class="rm-d">Gere qualquer componente com preview</p></div>
+      <div class="rm rm-done reveal"><span class="rmbg rbd">Disponivel</span><span class="rm-icon">🚀</span><div class="rm-t">Landing Pages</div><p class="rm-d">Paginas completas de vendas</p></div>
+      <div class="rm rm-next reveal"><span class="rmbg rbn">Proximo</span><span class="rm-icon">🌐</span><div class="rm-t">Sites completos</div><p class="rm-d">Multi-secao com navegacao</p></div>
+      <div class="rm rm-soon reveal"><span class="rmbg rbs">Em breve</span><span class="rm-icon">🎨</span><div class="rm-t">Imagens com IA</div><p class="rm-d">Banners e artes geradas por IA</p></div>
+      <div class="rm rm-fut reveal"><span class="rmbg rbs">Futuro</span><span class="rm-icon">🎬</span><div class="rm-t">Videos com IA</div><p class="rm-d">Anuncios e apresentacoes</p></div>
     </div>
   </div>
 </section>
 
-<div class="section-divider"></div>
+<div class="sdiv"></div>
 
 <!-- PRICING -->
 <section id="pricing">
-  <div class="container" style="padding-top:120px;padding-bottom:120px;">
-    <div style="text-align:center;margin-bottom:64px;">
-      <div class="section-label" style="justify-content:center;">Precos</div>
-      <h2 class="section-title reveal" style="max-width:100%;text-align:center;">Comece gratis. Escale quando precisar.</h2>
-      <p class="section-sub reveal" style="max-width:520px;margin:16px auto 0;text-align:center;">Sem cartao de credito pra comecar. Cancele quando quiser.</p>
+  <div class="container" style="padding-top:96px;padding-bottom:96px;">
+    <div style="text-align:center;margin-bottom:48px;">
+      <div class="stag" style="justify-content:center;">Precos</div>
+      <h2 class="sh reveal" style="max-width:100%;text-align:center;">Comece gratis. Escale quando precisar.</h2>
+      <p class="ss reveal" style="max-width:420px;margin:10px auto 0;text-align:center;">Sem cartao de credito pra comecar.</p>
     </div>
-    <div class="pricing-grid">
-      <div class="price-card reveal">
-        <div class="price-plan">Gratuito</div><div class="price-value">R$0</div><div class="price-period">para sempre</div>
-        <div class="price-sep"></div>
-        <ul class="price-features"><li>10 criacoes por mes</li><li>Preview em tempo real</li><li>3 projetos ativos</li><li>Export do codigo</li></ul>
-        <a href="#" onclick="startApp();return false;" class="btn btn-outline" style="width:100%;justify-content:center;">Comecar gratis</a>
-      </div>
-      <div class="price-card featured reveal">
-        <div class="price-badge">MAIS POPULAR</div>
-        <div class="price-plan">Pro</div><div class="price-value">R$49</div><div class="price-period">por mes</div>
-        <div class="price-sep"></div>
-        <ul class="price-features"><li>Criacoes ilimitadas</li><li>Todos os modos (LP, Site, App)</li><li>Projetos ilimitados</li><li>Deploy automatico Vercel</li><li>Acesso antecipado as novas features</li><li>Suporte prioritario</li></ul>
-        <a href="#" onclick="startApp();return false;" class="btn btn-primary" style="width:100%;justify-content:center;">Assinar Pro</a>
-      </div>
-      <div class="price-card reveal">
-        <div class="price-plan">Business</div><div class="price-value">R$149</div><div class="price-period">por mes</div>
-        <div class="price-sep"></div>
-        <ul class="price-features"><li>Tudo do Pro</li><li>Ate 5 usuarios</li><li>API Key propria</li><li>Workspace compartilhado</li><li>Imagens e Videos IA (beta)</li><li>Suporte dedicado + SLA</li></ul>
-        <a href="#" class="btn btn-outline" style="width:100%;justify-content:center;">Falar com vendas</a>
-      </div>
+    <div class="pg2">
+      <div class="pc reveal"><div class="pplan">Gratuito</div><div class="pval">R$0</div><div class="pper">para sempre</div><div class="psep"></div><ul class="plist"><li>10 criacoes por mes</li><li>Preview ao vivo</li><li>3 projetos ativos</li><li>Download do HTML</li></ul><a href="#" class="pbtn pbo" onclick="startApp();return false;">Comecar gratis</a></div>
+      <div class="pc feat reveal"><div class="pbadge">MAIS POPULAR</div><div class="pplan">Pro</div><div class="pval">R$49</div><div class="pper">por mes</div><div class="psep"></div><ul class="plist"><li>Criacoes ilimitadas</li><li>Gemini + Claude</li><li>Projetos ilimitados</li><li>Deploy automatico Vercel</li><li>Acesso antecipado</li><li>Suporte prioritario</li></ul><a href="#" class="pbtn pby" onclick="startApp();return false;">Assinar Pro</a></div>
+      <div class="pc reveal"><div class="pplan">Business</div><div class="pval">R$149</div><div class="pper">por mes</div><div class="psep"></div><ul class="plist"><li>Tudo do Pro</li><li>Ate 5 usuarios</li><li>API Key propria</li><li>Workspace compartilhado</li><li>Imagens e Videos IA (beta)</li><li>Suporte dedicado</li></ul><a href="#" class="pbtn pbo" onclick="startApp();return false;">Falar com vendas</a></div>
     </div>
   </div>
 </section>
 
 <!-- REFERRAL -->
-<section id="referral" style="padding:80px 0;">
+<section id="referral">
   <div class="container">
-    <div class="referral-box reveal">
-      <div class="referral-left">
-        <span class="ref-emoji">🤝</span>
-        <div>
-          <h3 class="ref-title">Conhece alguem que precisa criar sites ou landing pages?</h3>
-          <p class="ref-sub">Manda o Zero Preview pra um amigo pelo WhatsApp e ajuda ele a criar do jeito certo — com IA.</p>
-        </div>
-      </div>
-      <button class="btn-whatsapp" onclick="openWhatsApp(event)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.526 5.845L.057 23.882l6.198-1.625A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.51-5.179-1.401l-.371-.22-3.681.965.982-3.586-.242-.382A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    <div class="refbox reveal">
+      <div class="refleft"><span class="refem">🤝</span><div><h3 class="reft">Conhece alguem que precisa criar sites ou landing pages?</h3><p class="refs">Manda o Zero Preview pelo WhatsApp e ajuda ele a criar com IA.</p></div></div>
+      <button class="bwpp" onclick="openWhatsApp(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.526 5.845L.057 23.882l6.198-1.625A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.51-5.179-1.401l-.371-.22-3.681.965.982-3.586-.242-.382A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         Indicar pelo WhatsApp
       </button>
     </div>
@@ -433,17 +401,16 @@ footer{padding:48px 0 40px;border-top:1px solid var(--border);}
 </section>
 
 <!-- CTA FINAL -->
-<section style="padding:100px 0;">
+<section id="cta">
   <div class="container">
-    <div class="cta-box reveal">
+    <div class="ctabox reveal">
       <div style="position:relative;z-index:1;">
-        <h2 style="font-family:var(--font-head);font-size:clamp(2rem,4vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;text-align:center;margin-bottom:16px;">
-          Pronto pra criar<br/>
-          <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">qualquer coisa com IA?</span>
-        </h2>
-        <p style="font-size:1.1rem;color:var(--muted);text-align:center;max-width:500px;margin:0 auto 32px;font-weight:300;line-height:1.7;">Crie seu primeiro site, landing page ou app em menos de 5 minutos. De graca.</p>
-        <div style="display:flex;justify-content:center;"><a href="#" onclick="startApp();return false;" class="btn btn-primary btn-lg">Comecar agora — e gratis</a></div>
-        <p style="font-size:.82rem;color:var(--muted);text-align:center;margin-top:16px;">Sem cartao de credito · Cancele quando quiser · Suporte em portugues</p>
+        <h2 class="ctat">Pronto pra criar<br/><span>qualquer coisa com IA?</span></h2>
+        <p class="ctas">Crie seu primeiro site, landing page ou app em menos de 5 minutos. De graca.</p>
+        <div style="display:flex;justify-content:center;">
+          <a href="#" class="btn btn-yellow btn-lg" onclick="startApp();return false;">Comecar agora — e gratis</a>
+        </div>
+        <p class="ctan">Sem cartao · Cancele quando quiser · Suporte em portugues</p>
       </div>
     </div>
   </div>
@@ -452,44 +419,38 @@ footer{padding:48px 0 40px;border-top:1px solid var(--border);}
 <!-- FOOTER -->
 <footer>
   <div class="container">
-    <div class="footer-inner">
-      <a class="nav-logo" href="#" style="text-decoration:none;"><div class="logo-icon">ZP</div>Zero Preview</a>
-      <ul class="footer-links"><li><a href="#">Termos</a></li><li><a href="#">Privacidade</a></li><li><a href="#">Documentacao</a></li><li><a href="#">Contato</a></li></ul>
-      <p class="footer-note">2026 Zero Preview · Feito no Brasil</p>
+    <div class="fi2">
+      <a class="nav-logo" href="#" style="text-decoration:none;"><div class="logo-mark">ZP</div>Zero Preview</a>
+      <ul class="flinks"><li><a href="#">Termos</a></li><li><a href="#">Privacidade</a></li><li><a href="#">Docs</a></li><li><a href="#">Contato</a></li></ul>
+      <p class="fn">2026 Zero Preview · Feito no Brasil</p>
     </div>
   </div>
 </footer>
 
 </div><!-- /landing -->
 
+<div id="root" style="position:fixed;inset:0;z-index:1;background:#060F1E;"></div>
+<script type="module" src="/src/main.jsx"></script>
+
 <script>
 function startApp(){
-  var landing = document.getElementById('landing');
-  landing.style.opacity = '0';
-  landing.style.transform = 'translateY(-12px)';
-  setTimeout(function(){ landing.style.display = 'none'; }, 360);
+  var l=document.getElementById('landing');
+  l.style.transition='opacity .3s ease,transform .3s ease';
+  l.style.opacity='0';l.style.transform='translateY(-10px)';
+  setTimeout(function(){l.style.display='none';},320);
 }
 function openWhatsApp(e){
-  e.preventDefault();
-  var msg=encodeURIComponent('Cara, voce precisa conhecer o Zero Preview!\n\nVoce escreve o que quer criar — tipo "um site pra minha barbearia" ou "uma pagina de vendas do meu curso" — e a Inteligencia Artificial monta tudo pra voce em segundos. Da pra ver o resultado na hora, sem precisar entender nada de programacao.\n\nTotalmente gratis pra comecar\nQualquer pessoa consegue usar\nSite, landing page ou app — do zero ao ar em minutos\n\nAcessa agora: https://zero-preview-six.vercel.app');
+  if(e)e.preventDefault();
+  var msg=encodeURIComponent('Cara, voce precisa conhecer o Zero Preview!\n\nVoce escreve o que quer criar — tipo "um site pra minha barbearia" — e a IA monta tudo em segundos. Da pra ver o resultado na hora.\n\nGratis pra comecar: https://zero-preview-six.vercel.app');
   window.open('https://wa.me/?text='+msg,'_blank');
 }
-var prompts=[
-  'Crie uma landing page para minha academia com planos e depoimentos...',
-  'Faca um site para meu restaurante com cardapio e reservas...',
-  'Gere uma pagina de vendas para meu curso online com precos...',
-  'Crie um dashboard de gestao com graficos e relatorios...',
-  'Monte um portfolio para fotografo com galeria de fotos...',
-];
-var pi=0,ci=0,del=false,pause=0;
-var el=document.getElementById('typed-text');
-function type(){var cur=prompts[pi];if(pause>0){pause--;setTimeout(type,60);return;}if(!del){el.textContent=cur.slice(0,ci+1);ci++;if(ci===cur.length){pause=30;del=true;}setTimeout(type,42);}else{el.textContent=cur.slice(0,ci-1);ci--;if(ci===0){del=false;pi=(pi+1)%prompts.length;pause=8;}setTimeout(type,22);}}
+var prompts=['Landing page para academia com planos e depoimentos...','Site para restaurante com cardapio e reservas...','Dashboard de vendas com KPIs e graficos...','Pagina de vendas para meu curso online...','Portfolio para fotografo com galeria...'];
+var pi=0,ci=0,del=false,pause=0,el=document.getElementById('typed-text');
+function type(){var cur=prompts[pi];if(pause>0){pause--;setTimeout(type,55);return;}if(!del){el.textContent=cur.slice(0,ci+1);ci++;if(ci===cur.length){pause=28;del=true;}setTimeout(type,38);}else{el.textContent=cur.slice(0,ci-1);ci--;if(ci===0){del=false;pi=(pi+1)%prompts.length;pause=6;}setTimeout(type,18);}}
 type();
-var obs=new IntersectionObserver(function(entries){entries.forEach(function(e,i){if(e.isIntersecting){setTimeout(function(){e.target.classList.add('visible');},i*80);obs.unobserve(e.target);}});},{threshold:0.1});
+var obs=new IntersectionObserver(function(en){en.forEach(function(e,i){if(e.isIntersecting){setTimeout(function(){e.target.classList.add('visible');},i*70);obs.unobserve(e.target);}});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
-window.addEventListener('scroll',function(){document.getElementById('main-nav').style.borderBottomColor=window.scrollY>10?'rgba(31,43,62,.9)':'rgba(31,43,62,.6)';});
+window.addEventListener('scroll',function(){document.getElementById('main-nav').style.borderBottomColor=window.scrollY>8?'rgba(255,255,255,.14)':'rgba(255,255,255,.08)';});
 </script>
-<div id="root" style="position:fixed;inset:0;z-index:1;background:var(--bg);"></div>
-<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
