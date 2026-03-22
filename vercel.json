@@ -1,0 +1,1 @@
+{\n  "headers": [\n    {\n      "source": "/(.*)",\n      "headers": [\n        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },\n        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }\n      ]\n    }\n  ]\n}

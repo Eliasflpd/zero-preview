@@ -1,898 +1,858 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import Logo from './Logo'
-import PromptInput from './components/PromptInput'
-import CodePreview from './components/CodePreview'
+import { useState, useEffect, useRef } from "react";
 
-// ─── SYSTEM PROMPTS ───────────────────────────────────────────────────────────
-const SYSTEM_LANDING = `Voce e um designer e desenvolvedor especialista em landing pages de alta conversao.
-Gere um arquivo HTML COMPLETO e LINDO para a landing page descrita.
-Regras obrigatorias:
-- HTML completo com <!DOCTYPE html>, <head> e <body>
-- Google Fonts via <link> — use Syne + DM Sans ou Inter
-- CSS inline no <head> com variaveis CSS — SEM frameworks externos
-- Design PROFISSIONAL e MODERNO: cores coesas, tipografia forte, espacamento generoso
-- Secoes: Hero com headline forte + CTA, Beneficios (3+ cards), Depoimentos ou Prova social, Preco ou CTA final
-- Gradientes, sombras, bordas arredondadas — visual rico
-- Responsivo com media queries
-- Animacoes de entrada suaves com @keyframes (fade-up nos elementos ao carregar)
-- Paleta coerente com o nicho descrito (ex: saude = verde/branco, tech = azul escuro, etc)
-- Botoes com hover effects
-- RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const COLORS = {
+  bg: "#060F1E",
+  surface: "#0D1B2E",
+  surfaceHover: "#112238",
+  border: "#1A2E45",
+  borderHover: "#243F5E",
+  yellow: "#FFD050",
+  yellowDim: "#CC9F20",
+  yellowGlow: "rgba(255, 208, 80, 0.15)",
+  yellowGlow2: "rgba(255, 208, 80, 0.08)",
+  text: "#E8F0F8",
+  textMuted: "#6B8BAA",
+  textDim: "#3A5470",
+  success: "#34D399",
+  error: "#F87171",
+  purple: "#7C3AED",
+};
 
-const SYSTEM_SITE = `Voce e um designer e desenvolvedor especialista em sites institucionais.
-Gere um arquivo HTML COMPLETO e LINDO para o site descrito.
-Regras obrigatorias:
-- HTML completo com <!DOCTYPE html>, <head> e <body>
-- Google Fonts via <link> — use Syne + Inter ou DM Sans
-- CSS inline no <head> com variaveis CSS — SEM frameworks externos
-- Design PROFISSIONAL e MODERNO
-- Secoes: Navbar fixa com logo + links, Hero impactante, Sobre, Servicos/Produtos com cards, Galeria ou Portfolio, Contato com formulario, Footer
-- Paleta de cores coerente com o nicho
-- Responsivo com media queries
-- Animacoes suaves de entrada
-- Efeitos hover nos links e botoes
-- RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
+const SYNE = "'Syne', sans-serif";
+const DM = "'DM Sans', sans-serif";
 
-const SYSTEM_DASHBOARD = `Voce e um designer e desenvolvedor especialista em dashboards e interfaces de gestao.
-Gere um arquivo HTML COMPLETO e LINDO para o dashboard descrito.
-Regras obrigatorias:
-- HTML completo com <!DOCTYPE html>, <head> e <body>
-- Google Fonts via <link> — use Inter ou DM Sans
-- CSS inline no <head> — SEM frameworks externos
-- Design escuro e profissional estilo SaaS moderno
-- Sidebar de navegacao lateral com icones (usando caracteres unicode) e labels
-- Header com titulo, busca e avatar
-- Cards de KPIs no topo com numeros grandes e variacao percentual colorida
-- Grafico de barras simulado com divs e dados realistas
-- Tabela com dados, badges de status coloridos
-- Responsive
-- RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
+const SYSTEM_PROMPT = `Você é um gerador de aplicações web de nível PROFISSIONAL. Crie APENAS código HTML completo e funcional em um único arquivo.
 
-const SYSTEM_COMPONENT = `Voce e um designer senior e engenheiro frontend de nivel mundial. Sua missao e gerar apps web IDENTICOS em qualidade ao Lovable, Linear e Notion.
+OBRIGATÓRIO em toda geração:
+- Sidebar lateral real com navegação entre páginas (Dashboard, Relatórios, Clientes, Configurações etc.)
+- KPIs no topo com números animados ao carregar (countUp em JS puro)
+- Pelo menos 2 gráficos animados com CSS ou Chart.js via CDN
+- Navegação FUNCIONAL — cada item da sidebar troca o conteúdo principal
+- Dados mockados realistas (nomes, valores, datas brasileiras)
+- Design escuro premium (fundo #0A0F1E, cards com glassmorphism, bordas sutis)
+- Tipografia: fonte do Google Fonts carregada via @import
+- Micro-animações: hover nos cards, transições suaves, loading states
+- Tabelas com dados reais e paginação visual
+- Qualidade igual ao Lovable, Linear, Vercel Dashboard
 
-Gere um arquivo HTML COMPLETO e IMPRESSIONANTE para o app descrito. O resultado deve parecer um SaaS real pronto para producao.
+PROIBIDO:
+- Código placeholder ou comentários "adicione aqui"
+- Componentes vazios ou sem dados
+- Design genérico sem personalidade
+- Sidebar sem funcionalidade real
 
-ESTRUTURA OBRIGATORIA — app completo com navegacao:
-- SIDEBAR FIXA (220px): logo do app, menu de navegacao em secoes com icones unicode, usuario no rodape
-- TOPBAR: titulo da pagina atual, acoes contextuais (botao principal de acao)
-- DASHBOARD PRINCIPAL com:
-  * Banner de boas-vindas com nome mockado, hora atual (JavaScript setInterval)
-  * 4 cards KPI: numero grande, label, icone colorido, variacao percentual
-  * Grafico de barras animado (CSS @keyframes scaleY) com dados dos ultimos 7 dias
-  * Tabela de dados mockados e realistas com badges de status coloridos
-  * Cards de acesso rapido para acoes frequentes
-- PELO MENOS 2 PAGINAS ADICIONAIS funcionais via click na sidebar (ex: lista completa, configuracoes)
-- MODAL funcional para adicionar/criar novo item (abre com botao de acao)
+Retorne SOMENTE o código HTML completo, começando com <!DOCTYPE html>. Sem explicações, sem markdown, sem backticks.`;
 
-DESIGN NIVEL LOVABLE/LINEAR:
-- Google Fonts: Plus Jakarta Sans ou Inter — import no head
-- Variaveis CSS :root completas para toda a paleta
-- Cores coerentes com o nicho descrito pelo usuario
-- Cards com sombra sutil, borda fina rgba, border-radius 10-12px
-- Hover effects em tudo que e clicavel (transform translateY, shadow)
-- Animacoes de entrada @keyframes fadeUp em todos os cards ao carregar
-- Graficos de barra animados: altura vai de 0% ao valor real com transition
-- Tabelas com linhas alternadas, hover highlight, acoes visiveis no hover
-- Badges pill com cores semanticas (verde=ativo, amarelo=pendente, vermelho=cancelado)
-- TODOS OS DADOS SAO MOCKADOS E REALISTAS para o nicho especificado
-- Responsivo — sidebar some em mobile, menu hamburger aparece
-
-INTERATIVIDADE JAVASCRIPT:
-- Hora e data atualizadas a cada segundo
-- Navegacao real entre paginas (hide/show sections)
-- Modal de criacao com formulario e validacao
-- Grafico anima automaticamente ao carregar
-
-RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
-
-// ─── MODOS ────────────────────────────────────────────────────────────────────
-const MODES = [
-  {
-    id: 'landing', label: 'Criar sua Landing Page', icon: '🚀',
-    color: '#FFD050', colorBg: 'rgba(255,208,80,.12)',
-    description: 'Pagina de vendas completa', system: SYSTEM_LANDING,
-    examples: [
-      'Landing page para academia de musculacao com planos e depoimentos',
-      'Pagina de vendas para curso online de marketing digital com contador regressivo',
-      'Landing page para clinica estetica com servicos, fotos e agendamento',
-    ],
-  },
-  {
-    id: 'site', label: 'Criar seu Site', icon: '🌐',
-    color: '#4A8FF0', colorBg: 'rgba(74,143,240,.12)',
-    description: 'Site institucional multipagina', system: SYSTEM_SITE,
-    examples: [
-      'Site para barbearia moderna com servicos, galeria e agendamento',
-      'Site institucional para escritorio de advocacia premium',
-      'Site para restaurante com cardapio, fotos e reservas online',
-    ],
-  },
-  {
-    id: 'dashboard', label: 'Criar seu Dashboard', icon: '📊',
-    color: '#22D3A0', colorBg: 'rgba(34,211,160,.1)',
-    description: 'Painel de gestao com metricas', system: SYSTEM_DASHBOARD,
-    examples: [
-      'Dashboard de vendas com KPIs, grafico mensal e tabela de pedidos recentes',
-      'Painel financeiro com receita, despesas e fluxo de caixa do mes',
-      'Dashboard de RH com headcount, faltas, contratacoes e produtividade',
-    ],
-  },
-  {
-    id: 'component', label: 'Criar seu App', icon: '⚡',
-    color: '#A855F7', colorBg: 'rgba(168,85,247,.1)',
-    description: 'Componente web interativo', system: SYSTEM_COMPONENT,
-    examples: [
-      'Card de produto com imagem, preco, rating e botao adicionar ao carrinho',
-      'Modal de confirmacao moderno com animacao de entrada e saida',
-      'Formulario de login com validacao visual e efeitos de foco',
-    ],
-  },
-  {
-    id: 'image', label: 'Criar Imagem com IA', icon: '🎨',
-    color: '#FF8C42', colorBg: 'rgba(255,140,66,.1)',
-    description: 'Imagens com Gemini gratis',
-    badge: 'em breve', system: null,
-    examples: [
-      'Foto profissional de um hamburguer artesanal, fundo escuro, iluminacao dramatica',
-      'Logo moderno para academia de musculacao, minimalista, fundo preto e dourado',
-      'Foto de produto: perfume luxuoso em fundo branco com reflexos suaves',
-      'Banner para clinica estetica, tons rosados, flores, elegante e feminino',
-    ],
-  },
-  {
-    id: 'video', label: 'Criar Video com IA', icon: '🎬',
-    color: '#FF6BFF', colorBg: 'rgba(255,107,255,.1)',
-    description: 'Videos com Sora 2',
-    badge: 'em breve', system: null,
-    examples: [
-      'Drone voando sobre uma praia paradisiaca ao por do sol, cinematografico',
-      'Cafe sendo despejado em slow motion, vapor subindo, iluminacao quente',
-      'Cidade futurista a noite com carros voadores e luzes neon',
-      'Produto de beleza girando elegantemente sobre fundo branco com luz suave',
-    ],
-  },
-]
-
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-const PROJ_KEY = 'zp_projects_v4'
-const USER_KEY = 'zp_user'
-const GEMINI_KEY = 'zp_gemini_key'
-
-const loadProjects = () => { try { return JSON.parse(localStorage.getItem(PROJ_KEY)) || [] } catch { return [] } }
-const saveProjects = (p) => { try { localStorage.setItem(PROJ_KEY, JSON.stringify(p)) } catch {} }
-const loadUser = () => { try { return JSON.parse(localStorage.getItem(USER_KEY)) || null } catch { return null } }
-const saveUser = (u) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)) } catch {} }
-const loadGeminiKey = () => { try { return localStorage.getItem(GEMINI_KEY) || '' } catch { return '' } }
-const saveGeminiKey = (k) => { try { localStorage.setItem(GEMINI_KEY, k) } catch {} }
-
-// ─── API CALLS ────────────────────────────────────────────────────────────────
-// BUG 3 FIX: Claude vai pelo backend Railway (evita CORS)
-const BACKEND = 'https://zero-backend-production.up.railway.app'
-
-async function callGemini(system, prompt, key) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 300_000) // 5 min
-  let lastError
-  for (let attempt = 0; attempt < 2; attempt++) {
+// ─── HOOKS ───────────────────────────────────────────────────────────────────
+function useLocalStorage(key, initial) {
+  const [val, setVal] = useState(() => {
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: system }] },
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 65536, temperature: 0.7 },
-          }),
-        }
-      )
-      const data = await res.json()
-      if (data.error) {
-        const msg = data.error.message || 'Erro desconhecido'
-        if ((data.error.code === 429 || data.error.code === 503) && attempt === 0) {
-          lastError = new Error(msg)
-          await new Promise(r => setTimeout(r, 2000))
-          continue
-        }
-        if (msg.toLowerCase().includes('api key not valid')) {
-          throw new Error('Chave Gemini invalida. Verifique em aistudio.google.com/apikey')
-        }
-        throw new Error(msg)
-      }
-      const finishReason = data.candidates?.[0]?.finishReason
-      if (finishReason && finishReason !== 'STOP') {
-        console.warn(`[Gemini] finishReason: ${finishReason}`)
-      }
-      clearTimeout(timeoutId)
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    } catch (err) {
-      clearTimeout(timeoutId)
-      if (err.name === 'AbortError') throw new Error('Tempo limite excedido. Tente novamente.')
-      if (attempt === 1 || !lastError) throw err
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : initial;
+    } catch {
+      return initial;
     }
-  }
-  throw lastError
+  });
+  const set = (v) => {
+    const next = typeof v === "function" ? v(val) : v;
+    setVal(next);
+    localStorage.setItem(key, JSON.stringify(next));
+  };
+  return [val, set];
 }
 
-async function callClaude(system, prompt) {
-  // rota pelo backend Railway para evitar CORS
-  const res = await fetch(`${BACKEND}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system, prompt, model: 'claude-sonnet-4-20250514', max_tokens: 8000 }),
-  })
-  const data = await res.json()
-  if (data.error) throw new Error(data.error)
-  return data.content || ''
-}
+// ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [mode, setMode] = useState("welcome"); // welcome | login | register
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
-// ─── SAUDAÇÃO DINÂMICA ────────────────────────────────────────────────────────
-function greeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia'
-  if (h < 18) return 'Boa tarde'
-  return 'Boa noite'
-}
+  const handleSubmit = () => {
+    if (!name.trim()) { setError("Digite seu nome"); return; }
+    onLogin({ name: name.trim(), email: email.trim() || `${name.toLowerCase().replace(/\s/g,"")}@zero.app` });
+  };
 
-// ─── ESTILOS ──────────────────────────────────────────────────────────────────
-const S = {
-  root: { display: 'flex', height: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', overflow: 'hidden' },
-  sidebar: { width: '256px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border)', overflow: 'hidden' },
-  sideHead: { padding: '14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' },
-  logoArea: { flex: 1, minWidth: 0 },
-  newBtn: { width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', fontSize: '1.15rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1, fontWeight: 700 },
-  searchWrap: { padding: '8px 10px', borderBottom: '1px solid var(--border)' },
-  searchInput: { width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--text)', fontSize: '1.05rem', fontFamily: 'var(--font-body)', outline: 'none' },
-  projList: { flex: 1, overflowY: 'auto', padding: '6px' },
-  projEmpty: { padding: '24px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '1.05rem', lineHeight: 1.7 },
-  projItem: { padding: '9px 10px', borderRadius: '8px', cursor: 'pointer', marginBottom: '2px', transition: 'all .15s', display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative' },
-  projIcon: { width: '28px', height: '28px', borderRadius: '7px', display: 'grid', placeItems: 'center', fontSize: '1.05rem', flexShrink: 0, marginTop: '1px' },
-  projInfo: { flex: 1, minWidth: 0 },
-  projName: { fontSize: '.94rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 },
-  projMeta: { fontSize: '1.05rem', color: 'var(--muted)', marginTop: '2px' },
-  projDel: { width: '20px', height: '20px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '1.05rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: 0, transition: 'all .15s' },
-  sideFooter: { borderTop: '1px solid var(--border)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  usageRow: { display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: 'var(--muted)', marginBottom: '5px' },
-  usageBar: { height: '3px', borderRadius: '2px', background: 'var(--border)', overflow: 'hidden' },
-  usageFill: { height: '100%', width: '30%', background: 'linear-gradient(90deg,var(--accent),var(--yellow))', borderRadius: '2px' },
-  userRow: { display: 'flex', alignItems: 'center', gap: '10px' },
-  avatar: { width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', display: 'grid', placeItems: 'center', fontSize: '1.05rem', fontWeight: 700, color: 'white', flexShrink: 0 },
-  userName: { fontSize: '.94rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' },
-  userPlan: { fontSize: '1.05rem', color: 'var(--accent)', fontWeight: 600 },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
-  topbar: { height: '52px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 20px', gap: '10px', background: 'var(--bg)', flexShrink: 0 },
-  topTitle: { fontSize: '.98rem', fontWeight: 600, flex: 1, color: 'var(--text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' },
-  topBtn: { padding: '6px 14px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: '.98rem', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .15s', whiteSpace: 'nowrap', fontWeight: 500 },
-  topBtnAccent: { background: 'var(--accent)', border: '1px solid var(--accent)', color: 'white', fontWeight: 600 },
-  modeBar: { padding: '0 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flexShrink: 0, background: 'var(--bg)', height: '44px' },
-  modeBtn: { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '6px', border: '1px solid transparent', background: 'transparent', color: 'var(--muted)', fontSize: '1.05rem', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', transition: 'all .15s', flexShrink: 0, fontWeight: 500 },
-  modeBtnActive: { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)' },
-  modeBadge: { fontSize: '.6rem', padding: '1px 6px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)' },
-  content: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  previewArea: { flex: 1, overflow: 'hidden', position: 'relative' },
-  inputArea: { borderTop: '1px solid var(--border)', background: 'var(--bg)', flexShrink: 0 },
-  welcome: { height: '100%', overflowY: 'auto', background: 'var(--bg)' },
-  cs: { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px', padding: '48px', background: 'var(--bg)' },
-  csIcon: { width: '72px', height: '72px', borderRadius: '18px', display: 'grid', placeItems: 'center', fontSize: '2rem' },
-  csTitle: { fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 700, textAlign: 'center', color: 'var(--text)' },
-  csSub: { fontSize: '1.05rem', color: 'var(--muted)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6 },
-  csBadge: { padding: '6px 18px', borderRadius: '999px', border: '1px solid var(--border)', fontSize: '.98rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', background: 'var(--bg2)' },
-  csFeats: { display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '360px' },
-  csFeat: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '1.05rem', color: 'var(--text2)', fontWeight: 500 },
-  modalBg: { position: 'fixed', inset: 0, background: 'rgba(6,15,30,.5)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { background: 'white', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px', width: '380px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 40px 80px rgba(0,0,0,.12)' },
-  modalTitle: { fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-.02em' },
-  modalSub: { fontSize: '1.05rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '-12px' },
-  modalInput: { padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: '1.05rem', fontFamily: 'var(--font-body)', outline: 'none', width: '100%' },
-  modalBtn: { padding: '13px', borderRadius: '10px', background: 'var(--accent)', color: 'white', fontFamily: 'var(--font-head)', fontSize: '1.05rem', fontWeight: 700, border: 'none', cursor: 'pointer' },
-}
-
-
-// ─── APP ──────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [projects, setProjects] = useState(loadProjects)
-  const [activeId, setActiveId] = useState(null)
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState('landing')
-  const [search, setSearch] = useState('')
-  const [hovered, setHovered] = useState(null)
-  const [api, setApi] = useState('gemini')
-  const [geminiKey, setGeminiKey] = useState(() => loadGeminiKey())
-  const [showKeyInput, setShowKeyInput] = useState(false)
-  const [apiError, setApiError] = useState('')
-  const [lastImageSrc, setLastImageSrc] = useState(null)
-  const [showSettings, setShowSettings] = useState(false)
-  const [user, setUser] = useState(() => loadUser())
-  const [nameInput, setNameInput] = useState('')
-
-  // BUG 1 FIX: refs para valores mais recentes dentro do useCallback
-  const projectsRef = useRef(projects)
-  const activeIdRef = useRef(activeId)
-  const modeRef = useRef(mode)
-  useEffect(() => { projectsRef.current = projects }, [projects])
-  useEffect(() => { activeIdRef.current = activeId }, [activeId])
-  useEffect(() => { modeRef.current = mode }, [mode])
-
-  // BUG 2 FIX: pendingPrompt para clickExample sem setTimeout frágil
-  const pendingPromptRef = useRef(null)
-  useEffect(() => {
-    if (pendingPromptRef.current) {
-      const prompt = pendingPromptRef.current
-      pendingPromptRef.current = null
-      generate(prompt)
-    }
-  }, [mode])
-
-  const activeMode = MODES.find(m => m.id === mode)
-  const activeProject = projects.find(p => p.id === activeId)
-  const filtered = search.trim()
-    ? projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-    : projects
-
-  // BUG 1 FIX: createProject usa ref para não ficar stale no useCallback
-  function createProject(m) {
-    const id = Date.now().toString()
-    const proj = {
-      id, name: 'Novo projeto', code: '', mode: m,
-      created: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    }
-    const updated = [proj, ...projectsRef.current]
-    projectsRef.current = updated
-    setProjects(updated)
-    saveProjects(updated)
-    setActiveId(id)
-    activeIdRef.current = id
-    setCode('')
-    setMode(m)
-    modeRef.current = m
-    return id
-  }
-
-  function selectProject(proj) {
-    setActiveId(proj.id)
-    activeIdRef.current = proj.id
-    setCode(proj.code || '')
-    setMode(proj.mode || 'landing')
-    modeRef.current = proj.mode || 'landing'
-  }
-
-  function deleteProject(e, id) {
-    e.stopPropagation()
-    const updated = projectsRef.current.filter(p => p.id !== id)
-    projectsRef.current = updated
-    setProjects(updated)
-    saveProjects(updated)
-    if (activeIdRef.current === id) {
-      setActiveId(null)
-      activeIdRef.current = null
-      setCode('')
-    }
-  }
-
-  // BUG 1 + 3 FIX: generate usa refs, Claude via backend
-  const generate = useCallback(async (prompt, imageBase64) => {
-    const currentMode = MODES.find(m => m.id === modeRef.current)
-    if (!currentMode?.system) return
-    // Re-sync key from storage in case of remount
-    const currentKey = geminiKey.trim() || loadGeminiKey().trim()
-    if (api === 'gemini' && !currentKey) {
-      setShowKeyInput(true)
-      setApiError('Cole sua chave do Gemini para continuar')
-      return
-    }
-    setApiError('')
-    const currentId = activeIdRef.current || createProject(modeRef.current)
-    setLoading(true)
-    try {
-      const raw = api === 'gemini'
-        ? await callGemini(currentMode.system, imageBase64 ? prompt + '\n\n[O usuario colou uma imagem de referencia visual. Use-a como inspiracao para o design, cores e estilo.]' : prompt, (geminiKey.trim() || loadGeminiKey().trim()))
-        : await callClaude(currentMode.system, prompt)
-      const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
-      setCode(clean)
-      const name = prompt.length > 48 ? prompt.slice(0, 48) + '...' : prompt
-      const updated = projectsRef.current.map(p =>
-        p.id === currentId ? { ...p, code: clean, name, mode: modeRef.current } : p
-      )
-      projectsRef.current = updated
-      setProjects(updated)
-      saveProjects(updated)
-    } catch (e) {
-      setApiError(e.message || 'Erro ao gerar. Tente novamente.')
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }, [api, geminiKey])
-
-  // BUG 2 FIX: troca modo primeiro, dispara geração quando modo confirmar
-  function clickExample(ex, exMode) {
-    if (exMode !== 'image') setLastImageSrc(null)
-    if (modeRef.current !== exMode) {
-      pendingPromptRef.current = ex
-      setMode(exMode)
-    } else {
-      generate(ex)
-    }
-  }
-
-  function downloadHtml() {
-    if (!code) return
-    const blob = new Blob([code], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    const proj = projectsRef.current.find(p => p.id === activeIdRef.current)
-    a.download = `${(proj?.name || 'projeto').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.html`
-    a.href = url
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  function saveUserName() {
-    if (!nameInput.trim()) return
-    const u = { name: nameInput.trim(), initial: nameInput.trim()[0].toUpperCase() }
-    saveUser(u)
-    setUser(u)
-  }
-
-  const placeholders = {
-    landing: 'Ex: Landing page para academia com planos e depoimentos...',
-    site: 'Ex: Site para barbearia moderna com servicos e agendamento...',
-    dashboard: 'Ex: Dashboard de vendas com KPIs e grafico mensal...',
-    component: 'Ex: Card de produto com imagem, preco e botao de compra...',
-  }
-
-  if (!user) {
-    return (
-      <div style={S.modalBg}>
-        <div style={S.modal} className="animate-in">
-          <div>
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>👋</div>
-            <div style={S.modalTitle}>Bem-vindo ao Zero Preview</div>
-            <div style={S.modalSub}>Como podemos te chamar?</div>
-          </div>
-          <input
-            style={S.modalInput}
-            placeholder="Seu nome..."
-            value={nameInput}
-            onChange={e => setNameInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && saveUserName()}
-            autoFocus
-          />
-          <button style={S.modalBtn} onClick={saveUserName}>
-            Entrar no Zero Preview →
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── welcome ─────────────────────────────────────────────────────────────────
-  function renderWelcome() {
-    const modeColors = {
-      landing:   { bg: '#FFF8E6', border: '#FFE08A', text: '#7A5000', accent: '#F59E0B' },
-      site:      { bg: '#EFF6FF', border: '#BFDBFE', text: '#1E40AF', accent: '#3B82F6' },
-      dashboard: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', accent: '#10B981' },
-      component: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', accent: '#7C3AED' },
-      image:     { bg: '#FFF4EE', border: '#FEC89A', text: '#7C2D12', accent: '#FF8C42' },
-      video:     { bg: '#FDF4FF', border: '#E9D5FF', text: '#6B21A8', accent: '#FF6BFF' },
-    }
-
-    return (
-      <div style={S.welcome} className="animate-in">
-
-        {/* HERO BANNER */}
-        <div style={{ background: 'linear-gradient(135deg,#060F1E 0%,#0F2040 100%)', padding: '32px 36px', marginBottom: '0', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '280px', height: '280px', borderRadius: '50%', background: 'rgba(255,208,80,.08)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: '-80px', left: '20%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(45,107,228,.1)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 800, color: 'white', letterSpacing: '-.03em', lineHeight: 1.2, marginBottom: '8px' }}>
-                {greeting()},{' '}
-                <span style={{ color: '#FFD050' }}>{user.name}!</span>
-              </div>
-              <div style={{ fontSize: '.98rem', color: 'rgba(255,255,255,.55)', fontWeight: 300, lineHeight: 1.5 }}>
-                Escolha um modo abaixo ou descreva o que quer criar. A IA gera o resultado completo.
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#FFD050', lineHeight: 1 }}>{projects.length}</div>
-                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>projetos</div>
-              </div>
-              <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#5A90F0', lineHeight: 1 }}>65k</div>
-                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>tokens</div>
-              </div>
-              <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#22D3A0', lineHeight: 1 }}>Pro</div>
-                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>plano</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* MODO CARDS — coloridos, grandes, convidativos */}
-        <div style={{ padding: '24px 36px 20px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '1.05rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
-            Escolha o que criar
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
-            {MODES.filter(m => !m.badge).map(m => {
-              const c = modeColors[m.id] || modeColors.landing
-              const isActive = mode === m.id
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => setMode(m.id)}
-                  style={{
-                    background: isActive ? c.bg : 'white',
-                    border: `1.5px solid ${isActive ? c.border : 'var(--border)'}`,
-                    borderRadius: '10px', padding: '16px 14px',
-                    cursor: 'pointer', transition: 'all .18s',
-                    boxShadow: isActive ? `0 4px 16px ${c.accent}22` : 'none',
-                    transform: isActive ? 'translateY(-1px)' : 'none',
-                  }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bg } }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'white' } }}
-                >
-                  <div style={{ fontSize: '1.85rem', marginBottom: '8px' }}>{m.icon}</div>
-                  <div style={{ fontFamily: 'var(--font-head)', fontSize: '.98rem', fontWeight: 700, color: isActive ? c.text : 'var(--text)', marginBottom: '3px' }}>{m.label}</div>
-                  <div style={{ fontSize: '1.05rem', color: isActive ? c.text : 'var(--muted)', opacity: .75, lineHeight: 1.4 }}>{m.description}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* EXEMPLOS como chips clicaveis */}
-        <div style={{ padding: '20px 36px 28px' }}>
-          <div style={{ fontSize: '1.05rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
-            Exemplos para comecar — clique para gerar
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {MODES.filter(m => !m.badge && m.id === mode).flatMap(m =>
-              m.examples.map((ex, i) => {
-                const c = modeColors[m.id] || modeColors.landing
-                const isHov = hovered === `ex-${i}`
-                return (
-                  <div
-                    key={i}
-                    onClick={() => clickExample(ex, m.id)}
-                    onMouseEnter={() => setHovered(`ex-${i}`)}
-                    onMouseLeave={() => setHovered(null)}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '13px 16px', borderRadius: '10px',
-                      border: `1.5px solid ${isHov ? c.border : 'var(--border)'}`,
-                      background: isHov ? c.bg : 'white',
-                      cursor: 'pointer', transition: 'all .18s',
-                      boxShadow: isHov ? `0 2px 12px ${c.accent}18` : 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', fontSize: '1.05rem', flexShrink: 0 }}>{m.icon}</div>
-                      <span style={{ fontSize: '1.05rem', color: 'var(--text)', fontWeight: 400 }}>{ex}</span>
-                    </div>
-                    <span style={{ fontSize: '1.05rem', color: isHov ? c.accent : 'var(--muted)', fontWeight: 600, flexShrink: 0, marginLeft: '12px' }}>
-                      {isHov ? 'Gerar →' : '→'}
-                    </span>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-
-      </div>
-    )
-  }
-
-  function renderComingSoon(m) {
-    const feats = { image: ['Banners para sites', 'Capas redes sociais', 'Thumbnails', 'Ilustracoes'], video: ['Videos de apresentacao', 'Anuncios animados', 'Reels e Shorts', 'Vinhetas'] }
-    return (
-      <div style={S.cs}>
-        <div style={{ ...S.csIcon, background: m.colorBg, border: `1px solid ${m.color}33` }}>{m.icon}</div>
-        <div style={S.csTitle}>{m.label}</div>
-        <div style={S.csSub}>Em construcao. Em breve disponivel para todos os planos Pro e Business.</div>
-        <div style={S.csBadge}>em breve</div>
-        <div style={S.csFeats}>{(feats[m.id] || []).map((f, i) => <div key={i} style={S.csFeat}>{f}</div>)}</div>
-      </div>
-    )
-  }
-
-  // ── render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={S.root}>
+    <div style={{
+      minHeight: "100vh", background: COLORS.bg, display: "flex",
+      alignItems: "center", justifyContent: "center",
+      fontFamily: DM, position: "relative", overflow: "hidden",
+    }}>
+      {/* Background grid */}
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: `linear-gradient(${COLORS.border} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.border} 1px, transparent 1px)`,
+        backgroundSize: "48px 48px", opacity: 0.3,
+      }} />
+      {/* Glow blobs */}
+      <div style={{
+        position: "absolute", width: 600, height: 600,
+        borderRadius: "50%", background: "radial-gradient(circle, rgba(255,208,80,0.06) 0%, transparent 70%)",
+        top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+        pointerEvents: "none",
+      }} />
 
-      {/* SIDEBAR */}
-      <div style={S.sidebar}>
-
-        {/* LOGO */}
-        <div style={S.sideHead}>
-          <div style={S.logoArea}><Logo /></div>
-          <button style={S.newBtn} onClick={() => { setActiveId(null); activeIdRef.current = null; setCode('') }} title="Novo projeto">+</button>
+      <div style={{
+        position: "relative", zIndex: 1, width: "100%", maxWidth: 420,
+        padding: "0 24px",
+      }}>
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            marginBottom: 24,
+          }}>
+            <div style={{
+              width: 44, height: 44, background: COLORS.yellow,
+              borderRadius: 10, display: "flex", alignItems: "center",
+              justifyContent: "center", boxShadow: `0 0 32px ${COLORS.yellowGlow}`,
+            }}>
+              <span style={{ fontSize: 22, fontWeight: 900, fontFamily: SYNE, color: COLORS.bg }}>Z</span>
+            </div>
+            <span style={{ fontSize: 28, fontWeight: 800, fontFamily: SYNE, color: COLORS.text, letterSpacing: -1 }}>
+              Zero<span style={{ color: COLORS.yellow }}>.</span>
+            </span>
+          </div>
+          <h1 style={{
+            fontSize: 38, fontWeight: 800, fontFamily: SYNE,
+            color: COLORS.text, margin: "0 0 12px", letterSpacing: -1.5,
+            lineHeight: 1.1,
+          }}>
+            Zero Preview
+          </h1>
+          <p style={{ fontSize: 16, color: COLORS.textMuted, margin: 0, lineHeight: 1.6 }}>
+            Crie aplicações reais com IA.<br />Do prompt ao produto.
+          </p>
         </div>
 
-        {/* MODOS — empilhados verticalmente */}
-        <div style={{ padding: '10px 10px 0', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '.98rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px', fontWeight: 600 }}>O que criar</div>
-          {MODES.map(m => {
-            const isActive = mode === m.id && !m.badge
-            const modeColorMap = {
-              landing:   { bg: '#FFF8E6', border: '#FFE08A', text: '#7A5000', dot: '#F59E0B' },
-              site:      { bg: '#EFF6FF', border: '#BFDBFE', text: '#1E40AF', dot: '#3B82F6' },
-              dashboard: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', dot: '#10B981' },
-              component: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', dot: '#7C3AED' },
-            }
-            const c = modeColorMap[m.id]
-            return (
+        {/* Card */}
+        <div style={{
+          background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+          borderRadius: 20, padding: 32,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+        }}>
+          {mode === "welcome" ? (
+            <>
+              <p style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", marginBottom: 24, marginTop: 0 }}>
+                Comece a construir seu próximo projeto
+              </p>
               <button
-                key={m.id}
-                onClick={() => !m.badge && setMode(m.id)}
+                onClick={() => setMode("login")}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '9px',
-                  width: '100%', padding: '8px 10px', marginBottom: '3px',
-                  borderRadius: '8px', border: isActive ? `1.5px solid ${c?.border || 'var(--border)'}` : '1.5px solid transparent',
-                  background: isActive ? (c?.bg || 'var(--bg2)') : 'transparent',
-                  color: isActive ? (c?.text || 'var(--text)') : 'var(--muted)',
-                  fontSize: '1.05rem', fontWeight: isActive ? 600 : 500,
-                  fontFamily: 'var(--font-body)', cursor: m.badge ? 'not-allowed' : 'pointer',
-                  opacity: m.badge ? .45 : 1, transition: 'all .15s', textAlign: 'left',
+                  width: "100%", padding: "14px 0", background: COLORS.yellow,
+                  border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700,
+                  fontFamily: DM, color: COLORS.bg, cursor: "pointer", marginBottom: 12,
+                  transition: "all 0.2s", letterSpacing: 0.2,
+                }}
+                onMouseEnter={e => { e.target.style.background = "#FFD966"; e.target.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.target.style.background = COLORS.yellow; e.target.style.transform = "translateY(0)"; }}
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => setMode("register")}
+                style={{
+                  width: "100%", padding: "14px 0",
+                  background: "transparent", border: `1px solid ${COLORS.border}`,
+                  borderRadius: 12, fontSize: 15, fontWeight: 600,
+                  fontFamily: DM, color: COLORS.text, cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.target.style.borderColor = COLORS.yellow; e.target.style.color = COLORS.yellow; }}
+                onMouseLeave={e => { e.target.style.borderColor = COLORS.border; e.target.style.color = COLORS.text; }}
+              >
+                Criar conta
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 style={{
+                fontFamily: SYNE, fontSize: 18, fontWeight: 700,
+                color: COLORS.text, margin: "0 0 24px",
+              }}>
+                {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
+              </h3>
+              <label style={{ display: "block", marginBottom: 16 }}>
+                <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Seu nome
+                </span>
+                <input
+                  value={name}
+                  onChange={e => { setName(e.target.value); setError(""); }}
+                  onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                  placeholder="Como podemos te chamar?"
+                  style={{
+                    display: "block", width: "100%", marginTop: 8,
+                    padding: "12px 14px", background: COLORS.bg,
+                    border: `1px solid ${error ? COLORS.error : COLORS.border}`,
+                    borderRadius: 10, fontSize: 14, color: COLORS.text,
+                    fontFamily: DM, outline: "none", boxSizing: "border-box",
+                  }}
+                  onFocus={e => e.target.style.borderColor = COLORS.yellow}
+                  onBlur={e => e.target.style.borderColor = error ? COLORS.error : COLORS.border}
+                  autoFocus
+                />
+              </label>
+              {error && <p style={{ color: COLORS.error, fontSize: 12, margin: "-8px 0 12px" }}>{error}</p>}
+              <button
+                onClick={handleSubmit}
+                style={{
+                  width: "100%", padding: "14px 0", background: COLORS.yellow,
+                  border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700,
+                  fontFamily: DM, color: COLORS.bg, cursor: "pointer", marginBottom: 12,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.target.style.background = "#FFD966"; e.target.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.target.style.background = COLORS.yellow; e.target.style.transform = "translateY(0)"; }}
+              >
+                {mode === "login" ? "Entrar" : "Criar conta"}
+              </button>
+              <button
+                onClick={() => { setMode("welcome"); setError(""); }}
+                style={{
+                  width: "100%", background: "none", border: "none",
+                  color: COLORS.textMuted, fontSize: 13, cursor: "pointer",
+                  fontFamily: DM, padding: "8px 0",
                 }}
               >
-                <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{m.icon}</span>
-                <span style={{ flex: 1, lineHeight: 1.3 }}>{m.label}</span>
-                {m.badge && <span style={{ fontSize: '.58rem', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)', whiteSpace: 'nowrap' }}>{m.badge}</span>}
-                {isActive && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c?.dot || 'var(--accent)', flexShrink: 0 }} />}
+                ← Voltar
               </button>
-            )
-          })}
-          <div style={{ height: '8px' }} />
-        </div>
-
-        {/* PROJETOS */}
-        <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
-          <div style={{ fontSize: '.98rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '6px', fontWeight: 600 }}>Projetos</div>
-          <input style={S.searchInput} placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-
-        <div style={S.projList}>
-          {filtered.length === 0 && (
-            <div style={S.projEmpty}>{search ? 'Nenhum resultado' : 'Nenhum projeto ainda.'}</div>
-          )}
-          {filtered.map(proj => {
-            const pm = MODES.find(m => m.id === (proj.mode || 'landing')) || MODES[0]
-            const isActive = proj.id === activeId
-            const isHov = hovered === proj.id
-            return (
-              <div
-                key={proj.id}
-                style={{ ...S.projItem, background: isActive ? pm.colorBg : isHov ? 'var(--bg3)' : 'transparent' }}
-                onClick={() => selectProject(proj)}
-                onMouseEnter={() => setHovered(proj.id)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <div style={{ ...S.projIcon, background: pm.colorBg }}>{pm.icon}</div>
-                <div style={S.projInfo}>
-                  <div style={{ ...S.projName, color: isActive ? 'var(--text)' : 'var(--text2)' }}>{proj.name || 'Sem titulo'}</div>
-                  <div style={S.projMeta}>{pm.label} · {proj.created}</div>
-                </div>
-                <button
-                  style={{ ...S.projDel, opacity: isHov ? 1 : 0 }}
-                  onClick={e => deleteProject(e, proj.id)}
-                  title="Deletar"
-                >✕</button>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* PROMPT INPUT + API NA SIDEBAR */}
-        {!activeMode?.badge && (
-          <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-
-            {/* seletor de API — compacto */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg2)' }}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[
-                  { id: 'gemini', label: 'Gemini', tag: 'gratis' },
-                  { id: 'claude', label: 'Claude', tag: 'pago' },
-                ].map(a => (
-                  <button
-                    key={a.id}
-                    onClick={() => { setApi(a.id); setApiError('') }}
-                    style={{ padding: '3px 9px', borderRadius: '5px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 500, transition: 'all .15s', background: api === a.id ? 'var(--accent)' : 'white', color: api === a.id ? 'white' : 'var(--muted)' }}
-                  >{a.label}</button>
-                ))}
-              </div>
-              {api === 'gemini' && (
-                <button
-                  onClick={() => setShowKeyInput(v => !v)}
-                  style={{ fontSize: '1.05rem', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', color: geminiKey ? 'var(--green)' : '#D97706', fontWeight: 600 }}
-                >
-                  {geminiKey ? '✓ chave ok' : '⚠ sem chave'}
-                </button>
-              )}
-            </div>
-
-            {/* painel chave gemini */}
-            {showKeyInput && api === 'gemini' && (
-              <div style={{ padding: '8px 12px', background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '1.05rem', color: '#92400E', fontWeight: 600 }}>Chave do Gemini (gratuita)</div>
-                <input
-                  type="password"
-                  placeholder="Cole sua chave aqui..."
-                  value={geminiKey}
-                  onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
-                  style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid #FDE68A', fontSize: '1.05rem', fontFamily: 'var(--font-mono)', outline: 'none', width: '100%', background: 'white' }}
-                />
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '1.05rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
-                  <button onClick={() => setShowKeyInput(false)} style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: '5px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '1.05rem', fontWeight: 600 }}>Ok</button>
-                </div>
-              </div>
-            )}
-
-            {/* erro */}
-            {apiError && (
-              <div style={{ padding: '7px 12px', background: '#FEF2F2', borderBottom: '1px solid #FECACA', fontSize: '1.05rem', color: '#DC2626', fontWeight: 500 }}>
-                ⚠ {apiError}
-              </div>
-            )}
-
-            <PromptInput onSubmit={(text, img) => generate(text, img)} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} compact />
-          </div>
-        )}
-
-        {/* FOOTER */}
-        <div style={{ borderTop: '1px solid var(--border)', padding: '10px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={S.avatar}>{user.initial}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={S.userName}>{user.name}</div>
-            <div style={S.userPlan}>Zero Preview Pro</div>
-          </div>
-          <button
-            onClick={() => setShowSettings(true)}
-            title="Configuracoes"
-            style={{ width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '1rem', color: 'var(--muted)', transition: 'all .15s', flexShrink: 0 }}
-          >⚙</button>
-        </div>
-      </div>
-
-      {/* MODAL CONFIGURACOES */}
-      {showSettings && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500 }}
-          onClick={e => e.target === e.currentTarget && setShowSettings(false)}
-        >
-          <div style={{ background: 'white', borderRadius: '16px', width: '480px', maxWidth: '95vw', boxShadow: '0 24px 60px rgba(0,0,0,.15)', border: '1px solid var(--border)', overflow: 'hidden' }} className="animate-in">
-
-            {/* header */}
-            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>Configuracoes</div>
-                <div style={{ fontSize: '.82rem', color: 'var(--muted)', marginTop: '2px' }}>Gerencie suas APIs e preferencias</div>
-              </div>
-              <button onClick={() => setShowSettings(false)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', cursor: 'pointer', fontSize: '1rem', color: 'var(--muted)' }}>✕</button>
-            </div>
-
-            {/* body */}
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-              {/* API ativa */}
-              <div>
-                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>API de geracao</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
-                  {[
-                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia', color: '#2D6BE4', icon: '✦' },
-                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · via backend', color: '#F59E0B', icon: '◆' },
-                  ].map(a => (
-                    <div
-                      key={a.id}
-                      onClick={() => { setApi(a.id); setApiError('') }}
-                      style={{
-                        flex: 1, padding: '12px 14px', borderRadius: '10px', cursor: 'pointer',
-                        border: api === a.id ? `2px solid ${a.color}` : '2px solid var(--border)',
-                        background: api === a.id ? `${a.color}10` : 'var(--bg2)',
-                        transition: 'all .18s',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span style={{ color: a.color, fontWeight: 700 }}>{a.icon}</span>
-                        <span style={{ fontWeight: 700, fontSize: '.88rem', color: 'var(--text)' }}>{a.label}</span>
-                        {api === a.id && <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: a.color, flexShrink: 0 }} />}
-                      </div>
-                      <div style={{ fontSize: '.75rem', color: 'var(--muted)' }}>{a.tag}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chave Gemini */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>Chave Gemini</div>
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.75rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="password"
-                    placeholder="Cole sua chave aqui: AIzaSy..."
-                    value={geminiKey}
-                    onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
-                    style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid var(--border)', fontSize: '.85rem', fontFamily: 'var(--font-mono)', outline: 'none', background: 'var(--bg2)', color: 'var(--text)' }}
-                  />
-                  {geminiKey && <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', borderRadius: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', fontSize: '.8rem', color: '#065F46', fontWeight: 600, whiteSpace: 'nowrap' }}>✓ Ok</div>}
-                </div>
-                <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '6px' }}>Gratis em aistudio.google.com — 1500 geracoes por dia</div>
-              </div>
-
-              {/* Chave Claude (info) */}
-              <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--bg2)', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>Claude Sonnet — via Backend</div>
-                <div style={{ fontSize: '.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>O Claude roda pelo backend Railway seguro. Nenhuma chave necessaria aqui — ja configurado.</div>
-              </div>
-
-              {/* Usuario */}
-              <div>
-                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>Seu nome</div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    defaultValue={user.name}
-                    id="settings-name-input"
-                    style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid var(--border)', fontSize: '.88rem', fontFamily: 'var(--font-body)', outline: 'none', background: 'var(--bg2)', color: 'var(--text)' }}
-                  />
-                  <button
-                    onClick={() => {
-                      const val = document.getElementById('settings-name-input').value.trim()
-                      if (val) { const u = { name: val, initial: val[0].toUpperCase() }; saveUser(u); setUser(u) }
-                    }}
-                    style={{ padding: '10px 16px', borderRadius: '8px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '.85rem', fontWeight: 600, fontFamily: 'var(--font-body)' }}
-                  >Salvar</button>
-                </div>
-              </div>
-            </div>
-
-            {/* footer */}
-            <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg2)', display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowSettings(false)} style={{ padding: '9px 22px', borderRadius: '8px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', fontFamily: 'var(--font-head)' }}>Fechar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MAIN */}
-      <div style={S.main}>
-        <div style={S.topbar}>
-          <div style={S.topTitle}>{activeProject ? activeProject.name : 'Zero Preview'}</div>
-
-          {/* download */}
-          {code && !loading && (
-            <button style={{ ...S.topBtn, color: 'var(--green)' }} onClick={downloadHtml}>↓ Download HTML</button>
-          )}
-
-          {activeId && (
-            <button style={S.topBtn} onClick={() => { setActiveId(null); activeIdRef.current = null; setCode('') }}>+ Novo</button>
+            </>
           )}
         </div>
-
-        <div style={S.content}>
-          <div style={S.previewArea}>
-            {activeMode?.badge
-              ? renderComingSoon(activeMode)
-              : activeId
-                ? <CodePreview code={code} loading={loading} />
-                : renderWelcome()
-            }
-          </div>
-
-        </div>
+        <p style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: COLORS.textDim }}>
+          Powered by Gemini 2.5 Flash · Zero Preview
+        </p>
       </div>
     </div>
-  )
+  );
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function Sidebar({ user, projects, activeProject, onSelectProject, onNewProject, onLogout, onOpenSettings }) {
+  return (
+    <div style={{
+      width: 240, minWidth: 240, background: COLORS.surface,
+      borderRight: `1px solid ${COLORS.border}`, display: "flex",
+      flexDirection: "column", height: "100vh", overflow: "hidden",
+    }}>
+      {/* Logo */}
+      <div style={{
+        padding: "20px 16px 16px", borderBottom: `1px solid ${COLORS.border}`,
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{
+          width: 32, height: 32, background: COLORS.yellow,
+          borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: `0 0 16px ${COLORS.yellowGlow}`,
+        }}>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: SYNE, color: COLORS.bg }}>Z</span>
+        </div>
+        <span style={{ fontSize: 16, fontWeight: 800, fontFamily: SYNE, color: COLORS.text, letterSpacing: -0.5 }}>
+          Zero<span style={{ color: COLORS.yellow }}>.</span>
+        </span>
+      </div>
+
+      {/* User */}
+      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${COLORS.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: `linear-gradient(135deg, ${COLORS.yellow}, ${COLORS.yellowDim})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, fontWeight: 700, color: COLORS.bg, fontFamily: SYNE,
+          }}>
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, truncate: true, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user.name}
+            </div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted }}>Free Plan</div>
+          </div>
+        </div>
+      </div>
+
+      {/* New project button */}
+      <div style={{ padding: "12px 12px 8px" }}>
+        <button
+          onClick={onNewProject}
+          style={{
+            width: "100%", padding: "10px 14px",
+            background: COLORS.yellowGlow2, border: `1px solid rgba(255,208,80,0.2)`,
+            borderRadius: 10, fontSize: 13, fontWeight: 600, color: COLORS.yellow,
+            cursor: "pointer", fontFamily: DM, display: "flex", alignItems: "center",
+            gap: 8, transition: "all 0.2s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = COLORS.yellowGlow; e.currentTarget.style.borderColor = "rgba(255,208,80,0.4)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = COLORS.yellowGlow2; e.currentTarget.style.borderColor = "rgba(255,208,80,0.2)"; }}
+        >
+          <span style={{ fontSize: 16 }}>+</span> Novo Projeto
+        </button>
+      </div>
+
+      {/* Projects list */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "4px 12px" }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: COLORS.textDim, letterSpacing: 1, textTransform: "uppercase", padding: "8px 4px 6px" }}>
+          Projetos ({projects.length})
+        </div>
+        {projects.length === 0 && (
+          <div style={{ fontSize: 12, color: COLORS.textDim, padding: "8px 4px", fontStyle: "italic" }}>
+            Nenhum projeto ainda
+          </div>
+        )}
+        {projects.map(p => (
+          <button
+            key={p.id}
+            onClick={() => onSelectProject(p.id)}
+            style={{
+              width: "100%", textAlign: "left", padding: "9px 10px",
+              background: activeProject === p.id ? COLORS.yellowGlow2 : "transparent",
+              border: activeProject === p.id ? `1px solid rgba(255,208,80,0.2)` : "1px solid transparent",
+              borderRadius: 8, cursor: "pointer", marginBottom: 2, transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { if (activeProject !== p.id) e.currentTarget.style.background = COLORS.surfaceHover; }}
+            onMouseLeave={e => { if (activeProject !== p.id) e.currentTarget.style.background = "transparent"; }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 500, color: activeProject === p.id ? COLORS.yellow : COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: DM }}>
+              {p.name}
+            </div>
+            <div style={{ fontSize: 10, color: COLORS.textDim, marginTop: 2 }}>
+              {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Bottom actions */}
+      <div style={{ padding: "12px", borderTop: `1px solid ${COLORS.border}` }}>
+        <button
+          onClick={onOpenSettings}
+          style={{
+            width: "100%", padding: "9px 12px", background: "transparent",
+            border: `1px solid ${COLORS.border}`, borderRadius: 8, fontSize: 12,
+            color: COLORS.textMuted, cursor: "pointer", fontFamily: DM,
+            marginBottom: 6, transition: "all 0.2s", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 8,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = COLORS.borderHover; e.currentTarget.style.color = COLORS.text; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = COLORS.border; e.currentTarget.style.color = COLORS.textMuted; }}
+        >
+          ⚙ Configurações
+        </button>
+        <button
+          onClick={onLogout}
+          style={{
+            width: "100%", padding: "9px 12px", background: "transparent",
+            border: "1px solid transparent", borderRadius: 8, fontSize: 12,
+            color: COLORS.textMuted, cursor: "pointer", fontFamily: DM,
+            transition: "all 0.2s", textAlign: "left",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = COLORS.error; }}
+          onMouseLeave={e => { e.currentTarget.style.color = COLORS.textMuted; }}
+        >
+          ↩ Sair
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
+function SettingsModal({ onClose }) {
+  const [key, setKey] = useLocalStorage("zp_gemini_key", "");
+  const [inputKey, setInputKey] = useState(key);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setKey(inputKey.trim());
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(6,15,30,0.85)",
+      backdropFilter: "blur(8px)", display: "flex", alignItems: "center",
+      justifyContent: "center", zIndex: 1000,
+    }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{
+        background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+        borderRadius: 20, padding: 32, width: 460, boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <h2 style={{ fontFamily: SYNE, fontSize: 20, fontWeight: 700, color: COLORS.text, margin: 0 }}>
+            Configurações
+          </h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: COLORS.textMuted, fontSize: 20, cursor: "pointer" }}>×</button>
+        </div>
+
+        <label>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
+            Chave Gemini API
+          </div>
+          <input
+            type="password"
+            value={inputKey}
+            onChange={e => setInputKey(e.target.value)}
+            placeholder="AIza..."
+            style={{
+              display: "block", width: "100%", padding: "12px 14px",
+              background: COLORS.bg, border: `1px solid ${COLORS.border}`,
+              borderRadius: 10, fontSize: 14, color: COLORS.text,
+              fontFamily: DM, outline: "none", boxSizing: "border-box", marginBottom: 8,
+            }}
+            onFocus={e => e.target.style.borderColor = COLORS.yellow}
+            onBlur={e => e.target.style.borderColor = COLORS.border}
+          />
+          <p style={{ fontSize: 11, color: COLORS.textDim, margin: "0 0 20px" }}>
+            Sua chave fica salva localmente. Obtenha em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: COLORS.yellow }}>aistudio.google.com</a>
+          </p>
+        </label>
+
+        <button
+          onClick={handleSave}
+          style={{
+            padding: "12px 24px", background: saved ? COLORS.success : COLORS.yellow,
+            border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700,
+            fontFamily: DM, color: COLORS.bg, cursor: "pointer", transition: "all 0.3s",
+          }}
+        >
+          {saved ? "✓ Salvo!" : "Salvar chave"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
+function Dashboard({ user, onLogout }) {
+  const [projects, setProjects] = useLocalStorage("zp_projects", []);
+  const [activeProjectId, setActiveProjectId] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [image, setImage] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedHTML, setGeneratedHTML] = useState("");
+  const [error, setError] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [geminiKey] = useLocalStorage("zp_gemini_key", "");
+  const [thinkingMsg, setThinkingMsg] = useState("");
+  const fileInputRef = useRef();
+  const textareaRef = useRef();
+
+  const THINKING_MSGS = [
+    "Analisando seu prompt...",
+    "Construindo a estrutura da aplicação...",
+    "Gerando componentes e navegação...",
+    "Criando dados mockados realistas...",
+    "Aplicando animações e micro-interações...",
+    "Finalizando o design...",
+  ];
+
+  useEffect(() => {
+    let i = 0;
+    if (!isGenerating) return;
+    const iv = setInterval(() => {
+      i = (i + 1) % THINKING_MSGS.length;
+      setThinkingMsg(THINKING_MSGS[i]);
+    }, 2200);
+    setThinkingMsg(THINKING_MSGS[0]);
+    return () => clearInterval(iv);
+  }, [isGenerating]);
+
+  const activeProject = projects.find(p => p.id === activeProjectId);
+
+  const handleNewProject = () => {
+    setActiveProjectId(null);
+    setGeneratedHTML("");
+    setPrompt("");
+    setImage(null);
+    setError("");
+    setTimeout(() => textareaRef.current?.focus(), 100);
+  };
+
+  const handleSelectProject = (id) => {
+    const p = projects.find(x => x.id === id);
+    if (p) {
+      setActiveProjectId(id);
+      setGeneratedHTML(p.html || "");
+      setPrompt(p.lastPrompt || "");
+      setError("");
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setImage({ base64: ev.target.result.split(",")[1], type: file.type, name: file.name });
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) { setError("Digite um prompt para começar."); return; }
+    const key = geminiKey || localStorage.getItem("zp_gemini_key")?.replace(/"/g, "");
+    if (!key) { setShowSettings(true); setError("Configure sua chave Gemini primeiro."); return; }
+    setError("");
+    setIsGenerating(true);
+    setGeneratedHTML("");
+
+    try {
+      const userContent = [];
+      if (image) {
+        userContent.push({ inlineData: { mimeType: image.type, data: image.base64 } });
+      }
+      userContent.push({ text: prompt });
+
+      const body = {
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: userContent }],
+        generationConfig: { temperature: 0.9, maxOutputTokens: 65536 },
+      };
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${key}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error?.message || `Erro ${res.status}`);
+      }
+
+      const data = await res.json();
+      let html = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      // Clean markdown fences
+      html = html.replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+
+      if (!html.includes("<!DOCTYPE") && !html.includes("<html")) {
+        throw new Error("A IA não retornou HTML válido. Tente reformular o prompt.");
+      }
+
+      setGeneratedHTML(html);
+
+      // Save or update project
+      const now = Date.now();
+      const projectName = prompt.slice(0, 40).trim() + (prompt.length > 40 ? "…" : "");
+
+      if (activeProjectId) {
+        setProjects(prev => prev.map(p => p.id === activeProjectId
+          ? { ...p, html, lastPrompt: prompt, updatedAt: now }
+          : p
+        ));
+      } else {
+        const newProject = { id: `p_${now}`, name: projectName, html, lastPrompt: prompt, createdAt: now, updatedAt: now };
+        setProjects(prev => [newProject, ...prev]);
+        setActiveProjectId(newProject.id);
+      }
+    } catch (e) {
+      setError(e.message || "Erro ao gerar. Verifique sua chave e tente novamente.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") handleGenerate();
+  };
+
+  const handleExport = () => {
+    if (!generatedHTML) return;
+    const blob = new Blob([generatedHTML], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${activeProject?.name || "app"}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const hasPreview = !!generatedHTML;
+
+  return (
+    <div style={{ display: "flex", height: "100vh", background: COLORS.bg, fontFamily: DM, overflow: "hidden" }}>
+      <Sidebar
+        user={user}
+        projects={projects}
+        activeProject={activeProjectId}
+        onSelectProject={handleSelectProject}
+        onNewProject={handleNewProject}
+        onLogout={onLogout}
+        onOpenSettings={() => setShowSettings(true)}
+      />
+
+      {/* Main area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+        {/* Topbar */}
+        <div style={{
+          height: 56, background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 24px", flexShrink: 0,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.text, fontFamily: SYNE }}>
+              {activeProject ? activeProject.name : "Novo Projeto"}
+            </span>
+            {activeProject && (
+              <span style={{ fontSize: 11, color: COLORS.textDim, background: COLORS.bg, padding: "2px 8px", borderRadius: 20, border: `1px solid ${COLORS.border}` }}>
+                Atualizado {new Date(activeProject.updatedAt).toLocaleDateString("pt-BR")}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {generatedHTML && (
+              <button
+                onClick={handleExport}
+                style={{
+                  padding: "7px 16px", background: "transparent",
+                  border: `1px solid ${COLORS.border}`, borderRadius: 8,
+                  fontSize: 12, color: COLORS.textMuted, cursor: "pointer", fontFamily: DM,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = COLORS.yellow; e.currentTarget.style.color = COLORS.yellow; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = COLORS.border; e.currentTarget.style.color = COLORS.textMuted; }}
+              >
+                ↓ Exportar HTML
+              </button>
+            )}
+            {!geminiKey && (
+              <button
+                onClick={() => setShowSettings(true)}
+                style={{
+                  padding: "7px 16px", background: "rgba(248,113,113,0.1)",
+                  border: `1px solid ${COLORS.error}`, borderRadius: 8,
+                  fontSize: 12, color: COLORS.error, cursor: "pointer", fontFamily: DM,
+                }}
+              >
+                ⚠ Configurar API Key
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+          {/* Left: Prompt area */}
+          <div style={{
+            width: hasPreview ? 400 : "100%", flexShrink: 0,
+            display: "flex", flexDirection: "column",
+            borderRight: hasPreview ? `1px solid ${COLORS.border}` : "none",
+            transition: "width 0.3s ease",
+          }}>
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              justifyContent: hasPreview ? "flex-start" : "center",
+              padding: hasPreview ? "24px" : "0 40px 60px",
+              overflow: "auto",
+            }}>
+              {!hasPreview && (
+                <div style={{ textAlign: "center", marginBottom: 40 }}>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: COLORS.yellowGlow2, border: `1px solid rgba(255,208,80,0.2)`,
+                    borderRadius: 20, padding: "6px 16px", marginBottom: 20,
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: COLORS.yellow, display: "inline-block" }} />
+                    <span style={{ fontSize: 12, color: COLORS.yellow, fontWeight: 600 }}>Gemini 2.5 Flash</span>
+                  </div>
+                  <h2 style={{
+                    fontSize: 32, fontWeight: 800, fontFamily: SYNE,
+                    color: COLORS.text, margin: "0 0 10px", letterSpacing: -1,
+                  }}>
+                    O que vamos construir?
+                  </h2>
+                  <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>
+                    Descreva sua aplicação e a IA gera o código completo
+                  </p>
+                </div>
+              )}
+
+              {/* Prompt input card */}
+              <div style={{
+                background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+                borderRadius: 16, overflow: "hidden",
+                boxShadow: hasPreview ? "none" : "0 8px 48px rgba(0,0,0,0.3)",
+              }}>
+                <textarea
+                  ref={textareaRef}
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isGenerating}
+                  placeholder={`Ex: Crie um dashboard financeiro completo com:\n• Sidebar com navegação entre Visão Geral, Transações, Relatórios, Clientes\n• KPIs animados: faturamento, despesas, lucro, ticket médio\n• Gráfico de barras mensal e pizza de categorias\n• Tabela de últimas transações com filtros\n• Tema escuro premium`}
+                  style={{
+                    width: "100%", minHeight: hasPreview ? 200 : 240,
+                    padding: "18px 20px", background: "transparent",
+                    border: "none", outline: "none", resize: "none",
+                    fontSize: 14, color: COLORS.text, fontFamily: DM,
+                    lineHeight: 1.7, boxSizing: "border-box",
+                  }}
+                />
+
+                {/* Image preview */}
+                {image && (
+                  <div style={{ padding: "0 16px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "6px 12px",
+                      background: COLORS.bg, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                    }}>
+                      <span style={{ fontSize: 14 }}>🖼</span>
+                      <span style={{ fontSize: 12, color: COLORS.textMuted }}>{image.name}</span>
+                      <button onClick={() => setImage(null)} style={{ background: "none", border: "none", color: COLORS.textDim, cursor: "pointer", fontSize: 14 }}>×</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode badge + actions */}
+                <div style={{
+                  padding: "12px 16px", borderTop: `1px solid ${COLORS.border}`,
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  background: COLORS.bg,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      background: COLORS.yellowGlow2, border: `1px solid rgba(255,208,80,0.25)`,
+                      borderRadius: 8, padding: "5px 12px",
+                    }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: COLORS.yellow, display: "inline-block" }} />
+                      <span style={{ fontSize: 12, color: COLORS.yellow, fontWeight: 600, fontFamily: SYNE }}>Criar App</span>
+                    </div>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        padding: "5px 12px", background: "transparent",
+                        border: `1px solid ${COLORS.border}`, borderRadius: 8,
+                        fontSize: 12, color: COLORS.textMuted, cursor: "pointer",
+                        fontFamily: DM, transition: "all 0.2s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = COLORS.borderHover; e.currentTarget.style.color = COLORS.text; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = COLORS.border; e.currentTarget.style.color = COLORS.textMuted; }}
+                    >
+                      📎 Imagem
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
+                  </div>
+
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !prompt.trim()}
+                    style={{
+                      padding: "8px 20px",
+                      background: isGenerating || !prompt.trim() ? "rgba(255,208,80,0.3)" : COLORS.yellow,
+                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700,
+                      fontFamily: DM, color: COLORS.bg, cursor: isGenerating || !prompt.trim() ? "not-allowed" : "pointer",
+                      transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: 14 }}>◌</span>
+                        Gerando...
+                      </>
+                    ) : "⚡ Gerar"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Hint */}
+              {!hasPreview && (
+                <p style={{ textAlign: "center", fontSize: 11, color: COLORS.textDim, marginTop: 14 }}>
+                  ⌘ Enter para gerar · Suporta imagens de referência
+                </p>
+              )}
+
+              {/* Thinking state */}
+              {isGenerating && (
+                <div style={{
+                  marginTop: 20, padding: "14px 18px",
+                  background: COLORS.yellowGlow2, border: `1px solid rgba(255,208,80,0.2)`,
+                  borderRadius: 12, display: "flex", alignItems: "center", gap: 12,
+                }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: "50%", background: COLORS.yellow,
+                    animation: "pulse 1.4s ease-in-out infinite",
+                  }} />
+                  <span style={{ fontSize: 13, color: COLORS.yellow, fontFamily: DM }}>{thinkingMsg}</span>
+                </div>
+              )}
+
+              {/* Error */}
+              {error && (
+                <div style={{
+                  marginTop: 16, padding: "12px 16px",
+                  background: "rgba(248,113,113,0.08)", border: `1px solid rgba(248,113,113,0.3)`,
+                  borderRadius: 10,
+                }}>
+                  <span style={{ fontSize: 13, color: COLORS.error }}>{error}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Preview */}
+          {hasPreview && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{
+                padding: "10px 16px", borderBottom: `1px solid ${COLORS.border}`,
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: COLORS.surface, flexShrink: 0,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 5 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#F87171" }} />
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FBBF24" }} />
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#34D399" }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: COLORS.textDim, marginLeft: 4 }}>Preview</span>
+                </div>
+                <button
+                  onClick={() => { setGeneratedHTML(""); setActiveProjectId(null); }}
+                  style={{ background: "none", border: "none", color: COLORS.textDim, cursor: "pointer", fontSize: 18 }}
+                >
+                  ×
+                </button>
+              </div>
+              <iframe
+                srcDoc={generatedHTML}
+                style={{ flex: 1, border: "none", background: "#fff" }}
+                title="preview"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${COLORS.border}; border-radius: 2px; }
+        textarea::placeholder { color: ${COLORS.textDim}; }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [user, setUser] = useLocalStorage("zp_user", null);
+
+  if (!user) {
+    return <LoginScreen onLogin={(u) => setUser(u)} />;
+  }
+
+  return <Dashboard user={user} onLogout={() => setUser(null)} />;
 }
