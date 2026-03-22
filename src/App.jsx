@@ -205,32 +205,32 @@ const S = {
   sidebar: { width: '256px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg2)', borderRight: '1px solid var(--border)', overflow: 'hidden' },
   sideHead: { padding: '14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' },
   logoArea: { flex: 1, minWidth: 0 },
-  newBtn: { width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', fontSize: '1.1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1, fontWeight: 700 },
+  newBtn: { width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--accent)', fontSize: '1.15rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, transition: 'all .15s', lineHeight: 1, fontWeight: 700 },
   searchWrap: { padding: '8px 10px', borderBottom: '1px solid var(--border)' },
-  searchInput: { width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--text)', fontSize: '.82rem', fontFamily: 'var(--font-body)', outline: 'none' },
+  searchInput: { width: '100%', padding: '7px 10px', borderRadius: '7px', border: '1px solid var(--border)', background: 'white', color: 'var(--text)', fontSize: '1.05rem', fontFamily: 'var(--font-body)', outline: 'none' },
   projList: { flex: 1, overflowY: 'auto', padding: '6px' },
-  projEmpty: { padding: '24px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '.82rem', lineHeight: 1.7 },
+  projEmpty: { padding: '24px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '1.05rem', lineHeight: 1.7 },
   projItem: { padding: '9px 10px', borderRadius: '8px', cursor: 'pointer', marginBottom: '2px', transition: 'all .15s', display: 'flex', alignItems: 'flex-start', gap: '8px', position: 'relative' },
-  projIcon: { width: '28px', height: '28px', borderRadius: '7px', display: 'grid', placeItems: 'center', fontSize: '.9rem', flexShrink: 0, marginTop: '1px' },
+  projIcon: { width: '28px', height: '28px', borderRadius: '7px', display: 'grid', placeItems: 'center', fontSize: '1.05rem', flexShrink: 0, marginTop: '1px' },
   projInfo: { flex: 1, minWidth: 0 },
-  projName: { fontSize: '.84rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 },
-  projMeta: { fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' },
-  projDel: { width: '20px', height: '20px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '.75rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: 0, transition: 'all .15s' },
+  projName: { fontSize: '.94rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 },
+  projMeta: { fontSize: '1.05rem', color: 'var(--muted)', marginTop: '2px' },
+  projDel: { width: '20px', height: '20px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '1.05rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: 0, transition: 'all .15s' },
   sideFooter: { borderTop: '1px solid var(--border)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  usageRow: { display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '5px' },
+  usageRow: { display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: 'var(--muted)', marginBottom: '5px' },
   usageBar: { height: '3px', borderRadius: '2px', background: 'var(--border)', overflow: 'hidden' },
   usageFill: { height: '100%', width: '30%', background: 'linear-gradient(90deg,var(--accent),var(--yellow))', borderRadius: '2px' },
   userRow: { display: 'flex', alignItems: 'center', gap: '10px' },
-  avatar: { width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', display: 'grid', placeItems: 'center', fontSize: '.72rem', fontWeight: 700, color: 'white', flexShrink: 0 },
-  userName: { fontSize: '.84rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' },
-  userPlan: { fontSize: '.7rem', color: 'var(--accent)', fontWeight: 600 },
+  avatar: { width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent),var(--yellow))', display: 'grid', placeItems: 'center', fontSize: '1.05rem', fontWeight: 700, color: 'white', flexShrink: 0 },
+  userName: { fontSize: '.94rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text)' },
+  userPlan: { fontSize: '1.05rem', color: 'var(--accent)', fontWeight: 600 },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
   topbar: { height: '52px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 20px', gap: '10px', background: 'var(--bg)', flexShrink: 0 },
-  topTitle: { fontSize: '.88rem', fontWeight: 600, flex: 1, color: 'var(--text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' },
-  topBtn: { padding: '6px 14px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: '.78rem', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .15s', whiteSpace: 'nowrap', fontWeight: 500 },
+  topTitle: { fontSize: '.98rem', fontWeight: 600, flex: 1, color: 'var(--text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' },
+  topBtn: { padding: '6px 14px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: '.98rem', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .15s', whiteSpace: 'nowrap', fontWeight: 500 },
   topBtnAccent: { background: 'var(--accent)', border: '1px solid var(--accent)', color: 'white', fontWeight: 600 },
   modeBar: { padding: '0 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flexShrink: 0, background: 'var(--bg)', height: '44px' },
-  modeBtn: { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '6px', border: '1px solid transparent', background: 'transparent', color: 'var(--muted)', fontSize: '.8rem', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', transition: 'all .15s', flexShrink: 0, fontWeight: 500 },
+  modeBtn: { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '6px', border: '1px solid transparent', background: 'transparent', color: 'var(--muted)', fontSize: '1.05rem', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', transition: 'all .15s', flexShrink: 0, fontWeight: 500 },
   modeBtnActive: { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)' },
   modeBadge: { fontSize: '.6rem', padding: '1px 6px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)' },
   content: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
@@ -239,17 +239,17 @@ const S = {
   welcome: { height: '100%', overflowY: 'auto', background: 'var(--bg)' },
   cs: { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '18px', padding: '48px', background: 'var(--bg)' },
   csIcon: { width: '72px', height: '72px', borderRadius: '18px', display: 'grid', placeItems: 'center', fontSize: '2rem' },
-  csTitle: { fontFamily: 'var(--font-head)', fontSize: '1.4rem', fontWeight: 700, textAlign: 'center', color: 'var(--text)' },
-  csSub: { fontSize: '.9rem', color: 'var(--muted)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6 },
-  csBadge: { padding: '6px 18px', borderRadius: '999px', border: '1px solid var(--border)', fontSize: '.78rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', background: 'var(--bg2)' },
+  csTitle: { fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 700, textAlign: 'center', color: 'var(--text)' },
+  csSub: { fontSize: '1.05rem', color: 'var(--muted)', textAlign: 'center', maxWidth: '340px', lineHeight: 1.6 },
+  csBadge: { padding: '6px 18px', borderRadius: '999px', border: '1px solid var(--border)', fontSize: '.98rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', background: 'var(--bg2)' },
   csFeats: { display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '360px' },
-  csFeat: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '.8rem', color: 'var(--text2)', fontWeight: 500 },
+  csFeat: { padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '1.05rem', color: 'var(--text2)', fontWeight: 500 },
   modalBg: { position: 'fixed', inset: 0, background: 'rgba(6,15,30,.5)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   modal: { background: 'white', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px', width: '380px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 40px 80px rgba(0,0,0,.12)' },
-  modalTitle: { fontFamily: 'var(--font-head)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-.02em' },
-  modalSub: { fontSize: '.9rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '-12px' },
-  modalInput: { padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', width: '100%' },
-  modalBtn: { padding: '13px', borderRadius: '10px', background: 'var(--accent)', color: 'white', fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700, border: 'none', cursor: 'pointer' },
+  modalTitle: { fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-.02em' },
+  modalSub: { fontSize: '1.05rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '-12px' },
+  modalInput: { padding: '12px 14px', borderRadius: '10px', border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: '1.05rem', fontFamily: 'var(--font-body)', outline: 'none', width: '100%' },
+  modalBtn: { padding: '13px', borderRadius: '10px', background: 'var(--accent)', color: 'white', fontFamily: 'var(--font-head)', fontSize: '1.05rem', fontWeight: 700, border: 'none', cursor: 'pointer' },
 }
 
 
@@ -446,28 +446,28 @@ export default function App() {
           <div style={{ position: 'absolute', bottom: '-80px', left: '20%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(45,107,228,.1)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.7rem', fontWeight: 800, color: 'white', letterSpacing: '-.03em', lineHeight: 1.2, marginBottom: '8px' }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.85rem', fontWeight: 800, color: 'white', letterSpacing: '-.03em', lineHeight: 1.2, marginBottom: '8px' }}>
                 {greeting()},{' '}
                 <span style={{ color: '#FFD050' }}>{user.name}!</span>
               </div>
-              <div style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.55)', fontWeight: 300, lineHeight: 1.5 }}>
+              <div style={{ fontSize: '.98rem', color: 'rgba(255,255,255,.55)', fontWeight: 300, lineHeight: 1.5 }}>
                 Escolha um modo abaixo ou descreva o que quer criar. A IA gera o resultado completo.
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#FFD050', lineHeight: 1 }}>{projects.length}</div>
-                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>projetos</div>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#FFD050', lineHeight: 1 }}>{projects.length}</div>
+                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>projetos</div>
               </div>
               <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#5A90F0', lineHeight: 1 }}>65k</div>
-                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>tokens</div>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#5A90F0', lineHeight: 1 }}>65k</div>
+                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>tokens</div>
               </div>
               <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,.1)' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', fontWeight: 800, color: '#22D3A0', lineHeight: 1 }}>Pro</div>
-                <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>plano</div>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '2rem', fontWeight: 800, color: '#22D3A0', lineHeight: 1 }}>Pro</div>
+                <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'var(--font-mono)' }}>plano</div>
               </div>
             </div>
           </div>
@@ -475,7 +475,7 @@ export default function App() {
 
         {/* MODO CARDS — coloridos, grandes, convidativos */}
         <div style={{ padding: '24px 36px 20px', background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '.72rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
+          <div style={{ fontSize: '1.05rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
             Escolha o que criar
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
@@ -497,9 +497,9 @@ export default function App() {
                   onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bg } }}
                   onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'white' } }}
                 >
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{m.icon}</div>
-                  <div style={{ fontFamily: 'var(--font-head)', fontSize: '.88rem', fontWeight: 700, color: isActive ? c.text : 'var(--text)', marginBottom: '3px' }}>{m.label}</div>
-                  <div style={{ fontSize: '.72rem', color: isActive ? c.text : 'var(--muted)', opacity: .75, lineHeight: 1.4 }}>{m.description}</div>
+                  <div style={{ fontSize: '1.85rem', marginBottom: '8px' }}>{m.icon}</div>
+                  <div style={{ fontFamily: 'var(--font-head)', fontSize: '.98rem', fontWeight: 700, color: isActive ? c.text : 'var(--text)', marginBottom: '3px' }}>{m.label}</div>
+                  <div style={{ fontSize: '1.05rem', color: isActive ? c.text : 'var(--muted)', opacity: .75, lineHeight: 1.4 }}>{m.description}</div>
                 </div>
               )
             })}
@@ -508,7 +508,7 @@ export default function App() {
 
         {/* EXEMPLOS como chips clicaveis */}
         <div style={{ padding: '20px 36px 28px' }}>
-          <div style={{ fontSize: '.72rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
+          <div style={{ fontSize: '1.05rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', fontWeight: 600 }}>
             Exemplos para comecar — clique para gerar
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -532,10 +532,10 @@ export default function App() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', fontSize: '1rem', flexShrink: 0 }}>{m.icon}</div>
-                      <span style={{ fontSize: '.85rem', color: 'var(--text)', fontWeight: 400 }}>{ex}</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', fontSize: '1.05rem', flexShrink: 0 }}>{m.icon}</div>
+                      <span style={{ fontSize: '1.05rem', color: 'var(--text)', fontWeight: 400 }}>{ex}</span>
                     </div>
-                    <span style={{ fontSize: '.75rem', color: isHov ? c.accent : 'var(--muted)', fontWeight: 600, flexShrink: 0, marginLeft: '12px' }}>
+                    <span style={{ fontSize: '1.05rem', color: isHov ? c.accent : 'var(--muted)', fontWeight: 600, flexShrink: 0, marginLeft: '12px' }}>
                       {isHov ? 'Gerar →' : '→'}
                     </span>
                   </div>
@@ -577,7 +577,7 @@ export default function App() {
 
         {/* MODOS — empilhados verticalmente */}
         <div style={{ padding: '10px 10px 0', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '.68rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px', fontWeight: 600 }}>O que criar</div>
+          <div style={{ fontSize: '.98rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', padding: '0 4px', marginBottom: '6px', fontWeight: 600 }}>O que criar</div>
           {MODES.map(m => {
             const isActive = mode === m.id && !m.badge
             const modeColorMap = {
@@ -597,12 +597,12 @@ export default function App() {
                   borderRadius: '8px', border: isActive ? `1.5px solid ${c?.border || 'var(--border)'}` : '1.5px solid transparent',
                   background: isActive ? (c?.bg || 'var(--bg2)') : 'transparent',
                   color: isActive ? (c?.text || 'var(--text)') : 'var(--muted)',
-                  fontSize: '.8rem', fontWeight: isActive ? 600 : 500,
+                  fontSize: '1.05rem', fontWeight: isActive ? 600 : 500,
                   fontFamily: 'var(--font-body)', cursor: m.badge ? 'not-allowed' : 'pointer',
                   opacity: m.badge ? .45 : 1, transition: 'all .15s', textAlign: 'left',
                 }}
               >
-                <span style={{ fontSize: '1rem', flexShrink: 0 }}>{m.icon}</span>
+                <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{m.icon}</span>
                 <span style={{ flex: 1, lineHeight: 1.3 }}>{m.label}</span>
                 {m.badge && <span style={{ fontSize: '.58rem', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255,192,0,.15)', color: '#996600', border: '1px solid rgba(255,192,0,.3)', whiteSpace: 'nowrap' }}>{m.badge}</span>}
                 {isActive && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c?.dot || 'var(--accent)', flexShrink: 0 }} />}
@@ -614,7 +614,7 @@ export default function App() {
 
         {/* PROJETOS */}
         <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
-          <div style={{ fontSize: '.68rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '6px', fontWeight: 600 }}>Projetos</div>
+          <div style={{ fontSize: '.98rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: '6px', fontWeight: 600 }}>Projetos</div>
           <input style={S.searchInput} placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
@@ -663,14 +663,14 @@ export default function App() {
                   <button
                     key={a.id}
                     onClick={() => { setApi(a.id); setApiError('') }}
-                    style={{ padding: '3px 9px', borderRadius: '5px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '.72rem', fontWeight: 500, transition: 'all .15s', background: api === a.id ? 'var(--accent)' : 'white', color: api === a.id ? 'white' : 'var(--muted)' }}
+                    style={{ padding: '3px 9px', borderRadius: '5px', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 500, transition: 'all .15s', background: api === a.id ? 'var(--accent)' : 'white', color: api === a.id ? 'white' : 'var(--muted)' }}
                   >{a.label}</button>
                 ))}
               </div>
               {api === 'gemini' && (
                 <button
                   onClick={() => setShowKeyInput(v => !v)}
-                  style={{ fontSize: '.7rem', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', color: geminiKey ? 'var(--green)' : '#D97706', fontWeight: 600 }}
+                  style={{ fontSize: '1.05rem', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', color: geminiKey ? 'var(--green)' : '#D97706', fontWeight: 600 }}
                 >
                   {geminiKey ? '✓ chave ok' : '⚠ sem chave'}
                 </button>
@@ -680,24 +680,24 @@ export default function App() {
             {/* painel chave gemini */}
             {showKeyInput && api === 'gemini' && (
               <div style={{ padding: '8px 12px', background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '.72rem', color: '#92400E', fontWeight: 600 }}>Chave do Gemini (gratuita)</div>
+                <div style={{ fontSize: '1.05rem', color: '#92400E', fontWeight: 600 }}>Chave do Gemini (gratuita)</div>
                 <input
                   type="password"
                   placeholder="Cole sua chave aqui..."
                   value={geminiKey}
                   onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
-                  style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid #FDE68A', fontSize: '.75rem', fontFamily: 'var(--font-mono)', outline: 'none', width: '100%', background: 'white' }}
+                  style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid #FDE68A', fontSize: '1.05rem', fontFamily: 'var(--font-mono)', outline: 'none', width: '100%', background: 'white' }}
                 />
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.7rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
-                  <button onClick={() => setShowKeyInput(false)} style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: '5px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '.72rem', fontWeight: 600 }}>Ok</button>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '1.05rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
+                  <button onClick={() => setShowKeyInput(false)} style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: '5px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '1.05rem', fontWeight: 600 }}>Ok</button>
                 </div>
               </div>
             )}
 
             {/* erro */}
             {apiError && (
-              <div style={{ padding: '7px 12px', background: '#FEF2F2', borderBottom: '1px solid #FECACA', fontSize: '.75rem', color: '#DC2626', fontWeight: 500 }}>
+              <div style={{ padding: '7px 12px', background: '#FEF2F2', borderBottom: '1px solid #FECACA', fontSize: '1.05rem', color: '#DC2626', fontWeight: 500 }}>
                 ⚠ {apiError}
               </div>
             )}
