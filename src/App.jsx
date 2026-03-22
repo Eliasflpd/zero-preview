@@ -510,69 +510,58 @@ export default function App() {
 
   if (!user) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#060F1E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', sans-serif", zIndex: 9999, overflow: 'auto' }}>
-        {/* bg decoration */}
-        <div style={{ position: 'fixed', top: '-100px', left: '-100px', width: '500px', height: '500px', borderRadius: '50%', background: 'rgba(45,107,228,.08)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'fixed', bottom: '-100px', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,208,80,.06)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-
-        <div style={{ width: '420px', maxWidth: '92vw', position: 'relative', zIndex: 1 }} className="animate-in">
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: '#060F1E',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'sans-serif',
+      }}>
+        <div style={{ width: '380px', maxWidth: '92vw' }}>
 
           {/* logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px', justifyContent: 'center' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: '#FFD050', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-mono)', fontSize: '.75rem', fontWeight: 700, color: '#060F1E' }}>ZP</div>
-            <span style={{ fontFamily: 'var(--font-head)', fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>Zero Preview</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '32px' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#FFD050', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.7rem', fontWeight: 700, color: '#060F1E' }}>ZP</div>
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>Zero Preview</span>
           </div>
 
-          {/* card */}
-          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '20px', padding: '36px', backdropFilter: 'blur(20px)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.6rem', fontWeight: 800, color: 'white', letterSpacing: '-.02em', marginBottom: '8px' }}>
-                Bem-vindo! 👋
-              </div>
-              <div style={{ fontSize: '.9rem', color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>
-                Entre com sua conta Puter para usar<br/>IA gratis e ilimitada no Zero Preview
+          {/* card solido sem backdrop */}
+          <div style={{ background: '#0C1929', border: '1px solid rgba(255,255,255,.12)', borderRadius: '16px', padding: '32px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Bem-vindo! 👋</div>
+              <div style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>
+                Entre com Puter para usar IA gratis e ilimitada
               </div>
             </div>
 
-            {/* beneficios */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
               {[
-                { icon: '✦', label: 'Sites, landing pages e apps com IA', color: '#5A90F0' },
-                { icon: '🎨', label: 'Imagens com GPT Image 1.5', color: '#FF8C42' },
-                { icon: '🎬', label: 'Videos com Sora 2', color: '#FF6BFF' },
-                { icon: '★', label: 'Gratis e ilimitado via Puter', color: '#22D3A0' },
-              ].map((b, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
-                  <span style={{ color: b.color, fontSize: '1rem', flexShrink: 0 }}>{b.icon}</span>
-                  <span style={{ fontSize: '.85rem', color: 'rgba(255,255,255,.7)' }}>{b.label}</span>
+                ['✦', 'Sites, landing pages e apps com IA', '#5A90F0'],
+                ['🎨', 'Imagens com GPT Image 1.5', '#FF8C42'],
+                ['🎬', 'Videos com Sora 2', '#FF6BFF'],
+                ['★', 'Gratis e ilimitado', '#22D3A0'],
+              ].map(([icon, label, color], i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '8px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+                  <span style={{ color, fontSize: '.95rem', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: '.83rem', color: 'rgba(255,255,255,.7)' }}>{label}</span>
                 </div>
               ))}
             </div>
 
-            {/* botao login */}
             <button
               onClick={loginWithPuter}
               style={{
-                width: '100%', padding: '14px', borderRadius: '10px',
+                width: '100%', padding: '13px', borderRadius: '9px',
                 background: '#FFD050', color: '#060F1E',
-                fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 800,
-                border: 'none', cursor: 'pointer', transition: 'all .2s',
-                boxShadow: '0 4px 24px rgba(255,208,80,.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                fontSize: '.95rem', fontWeight: 800,
+                border: 'none', cursor: 'pointer',
               }}
-              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseOut={e => e.currentTarget.style.transform = 'none'}
             >
               Entrar com Puter — e gratis →
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '.75rem', color: 'rgba(255,255,255,.25)', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '.72rem', color: 'rgba(255,255,255,.2)' }}>
               Sem cartao de credito · Gratis para sempre
             </div>
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '.75rem', color: 'rgba(255,255,255,.2)' }}>
-            Ao entrar voce concorda com os termos do Puter
           </div>
         </div>
       </div>
