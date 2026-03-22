@@ -575,6 +575,8 @@ export default function App() {
       site:      { bg: '#EFF6FF', border: '#BFDBFE', text: '#1E40AF', accent: '#3B82F6' },
       dashboard: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', accent: '#10B981' },
       component: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', accent: '#7C3AED' },
+      image:     { bg: '#FFF4EE', border: '#FEC89A', text: '#7C2D12', accent: '#FF8C42' },
+      video:     { bg: '#FDF4FF', border: '#E9D5FF', text: '#6B21A8', accent: '#FF6BFF' },
     }
 
     return (
