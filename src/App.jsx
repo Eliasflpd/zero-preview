@@ -301,10 +301,6 @@ export default function App() {
     }
   }, [mode])
 
-      saveUser(u); setUser(u); setApi('puter')
-    } catch(e) { console.error(e) }
-  }
-
   const activeMode = MODES.find(m => m.id === mode)
   const activeProject = projects.find(p => p.id === activeId)
   const filtered = search.trim()
