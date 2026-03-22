@@ -61,14 +61,105 @@ const VITE_CONFIG = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 export default defineConfig({ plugins: [react()] });`;
 
-// ─── WEBCONTAINER SINGLETON ───────────────────────────────────────────────────
-let wcInstance = null;
-async function getWC() {
-  if (!wcInstance) {
-    wcInstance = await WebContainer.boot();
+// ─── WEBCONTAINER MANAGER — BLINDADO ─────────────────────────────────────────
+// Estado global do WC — uma instância, nunca reinicia
+const WCManager = {
+  instance: null,
+  devProcess: null,
+  lastPkgJson: null,
+  serverReadyUrl: null,
+  status: "idle", // idle | booting | ready
+  listeners: [],
+
+  notify(event, data) {
+    this.listeners.forEach(fn => fn(event, data));
+  },
+
+  on(fn) {
+    this.listeners.push(fn);
+    return () => { this.listeners = this.listeners.filter(f => f !== fn); };
+  },
+
+  async boot() {
+    if (this.instance) return this.instance;
+    if (this.status === "booting") {
+      // Aguarda boot em andamento
+      await new Promise(resolve => {
+        const unsub = this.on((ev) => { if (ev === "booted") { unsub(); resolve(); } });
+      });
+      return this.instance;
+    }
+    this.status = "booting";
+    this.instance = await WebContainer.boot();
+    this.status = "ready";
+    this.notify("booted");
+    return this.instance;
+  },
+
+  async killDev() {
+    if (this.devProcess) {
+      try { this.devProcess.kill(); } catch {}
+      this.devProcess = null;
+      this.serverReadyUrl = null;
+      await new Promise(r => setTimeout(r, 500));
+    }
+  },
+
+  async mountAndRun(files, onLog, onUrl) {
+    const wc = await this.boot();
+
+    // Matar dev anterior
+    await this.killDev();
+    onLog("Montando arquivos...", "info");
+
+    // Converter para FileSystemTree
+    const fsTree = {};
+    for (const [path, contents] of Object.entries(files)) {
+      const parts = path.split("/");
+      if (parts.length === 1) {
+        fsTree[path] = { file: { contents } };
+      } else {
+        const dir = parts[0];
+        if (!fsTree[dir]) fsTree[dir] = { directory: {} };
+        fsTree[dir].directory[parts.slice(1).join("/")] = { file: { contents } };
+      }
+    }
+    fsTree["vite.config.js"] = { file: { contents: VITE_CONFIG } };
+    await wc.mount(fsTree);
+    onLog("Arquivos montados!", "success");
+
+    // Verificar se precisa rodar npm install
+    const newPkg = files["package.json"] || "";
+    const needsInstall = newPkg !== this.lastPkgJson;
+
+    if (needsInstall) {
+      onLog("Instalando dependências...", "info");
+      const install = await wc.spawn("npm", ["install"]);
+      install.output.pipeTo(new WritableStream({
+        write(data) { onLog(data); }
+      }));
+      const code = await install.exit;
+      if (code !== 0) throw new Error(`npm install falhou (exit ${code})`);
+      this.lastPkgJson = newPkg;
+      onLog("Dependências instaladas!", "success");
+    } else {
+      onLog("Dependências em cache — pulando install ⚡", "success");
+    }
+
+    onLog("Iniciando Vite...", "info");
+    this.devProcess = await wc.spawn("npm", ["run", "dev"]);
+    this.devProcess.output.pipeTo(new WritableStream({
+      write(data) { onLog(data); }
+    }));
+
+    // Aguardar server-ready
+    wc.on("server-ready", (port, url) => {
+      this.serverReadyUrl = url;
+      onLog(`Servidor pronto → ${url}`, "success");
+      onUrl(url);
+    });
   }
-  return wcInstance;
-}
+};
 
 // ─── HOOKS ───────────────────────────────────────────────────────────────────
 function useLS(key, init) {
@@ -370,14 +461,16 @@ function Terminal({ logs }) {
   );
 }
 
-// ─── PREVIEW PANEL (WebContainer) ────────────────────────────────────────────
+// ─── PREVIEW PANEL (WebContainer Blindado) ───────────────────────────────────
 function PreviewPanel({ files, onClose }) {
   const [status, setStatus] = useState("booting");
   const [logs, setLogs] = useState([]);
   const [previewUrl, setPreviewUrl] = useState("");
 
   const addLog = useCallback((text, type = "default") => {
-    setLogs(prev => [...prev.slice(-300), { text: String(text).trim(), type }]);
+    const clean = String(text).trim();
+    if (!clean) return;
+    setLogs(prev => [...prev.slice(-400), { text: clean, type }]);
   }, []);
 
   useEffect(() => {
@@ -385,55 +478,14 @@ function PreviewPanel({ files, onClose }) {
 
     async function run() {
       try {
+        setStatus("booting");
         addLog("Iniciando WebContainer...", "info");
 
-        const wc = await getWC();
-        if (!active) return;
-        addLog("Montando arquivos do projeto...", "info");
-
-        const fsTree = {};
-        for (const [path, contents] of Object.entries(files)) {
-          const parts = path.split("/");
-          if (parts.length === 1) {
-            fsTree[path] = { file: { contents } };
-          } else {
-            const dir = parts[0];
-            if (!fsTree[dir]) fsTree[dir] = { directory: {} };
-            fsTree[dir].directory[parts.slice(1).join("/")] = { file: { contents } };
-          }
-        }
-        fsTree["vite.config.js"] = { file: { contents: VITE_CONFIG } };
-
-        await wc.mount(fsTree);
-        if (!active) return;
-        addLog("Arquivos montados!", "success");
-
-        setStatus("installing");
-        addLog("Rodando npm install...", "info");
-
-        const install = await wc.spawn("npm", ["install"]);
-        install.output.pipeTo(new WritableStream({
-          write(data) { if (active) addLog(data); }
-        }));
-        const code = await install.exit;
-        if (code !== 0) throw new Error(`npm install falhou (exit ${code})`);
-        if (!active) return;
-        addLog("Dependências instaladas!", "success");
-
-        setStatus("running");
-        addLog("Iniciando vite dev server...", "info");
-
-        const dev = await wc.spawn("npm", ["run", "dev"]);
-        dev.output.pipeTo(new WritableStream({
-          write(data) { if (active) addLog(data); }
-        }));
-
-        wc.on("server-ready", (port, url) => {
-          if (!active) return;
-          addLog(`Servidor pronto → ${url}`, "success");
-          setPreviewUrl(url);
-          setStatus("ready");
-        });
+        await WCManager.mountAndRun(
+          files,
+          (text, type) => { if (active) { addLog(text, type); setStatus("installing"); } },
+          (url) => { if (active) { setPreviewUrl(url); setStatus("ready"); } }
+        );
 
       } catch (e) {
         if (active) {
@@ -445,7 +497,7 @@ function PreviewPanel({ files, onClose }) {
 
     run();
     return () => { active = false; };
-  }, [files, addLog]);
+  }, [files]);
 
   const statusInfo = {
     booting: { label: "Iniciando WebContainer...", color: C.info },
@@ -613,9 +665,14 @@ function Dashboard({ user, onLogout }) {
       try {
         parsed = JSON.parse(raw);
       } catch {
-        const match = raw.match(/\{[\s\S]*\}/);
-        if (match) { try { parsed = JSON.parse(match[0]); } catch { throw new Error("JSON inválido na resposta da IA."); } }
-        else throw new Error("A IA não retornou JSON. Reformule o prompt.");
+        // Tenta extrair JSON do meio do texto
+        const match = raw.match(/\{[\s\S]*"files"[\s\S]*\}/);
+        if (match) {
+          try { parsed = JSON.parse(match[0]); }
+          catch { throw new Error("JSON inválido. Tente reformular o prompt."); }
+        } else {
+          throw new Error("A IA não retornou JSON válido. Tente novamente.");
+        }
       }
 
       if (!parsed?.files?.["src/App.jsx"]) throw new Error("Arquivo src/App.jsx não gerado. Tente novamente.");
