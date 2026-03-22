@@ -46,6 +46,7 @@ src/App.jsx — QUALIDADE OBRIGATÓRIA:
 - Sidebar lateral real com navegação funcional entre pelo menos 4 páginas
 - KPIs com números animados usando useState + useEffect contador
 - Pelo menos 2 gráficos com SVG puro (barras, linhas ou pizza)
+- SVG OBRIGATÓRIO: SEMPRE com viewBox e dimensões FIXAS em px. Ex: <svg viewBox="0 0 400 200" width="400" height="200">. NUNCA use height="100%" ou width="100%" em SVG.
 - Dados mockados realistas brasileiros (nomes, R$, datas, porcentagens)
 - Design escuro premium: fundo #0A0F1E, cards com border rgba(255,255,255,0.06)
 - Micro-animações com CSS transitions nos hovers
