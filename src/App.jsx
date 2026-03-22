@@ -779,7 +779,7 @@ function Dashboard({ user, onLogout }) {
             </div>
 
             {/* Campo de input — fixo embaixo */}
-            <div style={{ padding: "8px 16px 16px", flexShrink: 0 }}>
+            <div style={{ padding: hasPreview ? "8px 16px 16px" : "8px 40px 40px", flexShrink: 0, maxWidth: hasPreview ? "100%" : 720, margin: "0 auto", width: "100%" }}>
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
                 <textarea
                   ref={textareaRef}
@@ -792,13 +792,13 @@ function Dashboard({ user, onLogout }) {
                     }
                   }}
                   disabled={generating}
-                  placeholder={history.length === 0 ? `Ex: Crie um dashboard financeiro com sidebar, KPIs animados e gráficos SVG...` : "Descreva uma alteração ou novo app..."}
+                  placeholder={history.length === 0 ? `Descreva seu app... Ex: CRM de vendas com sidebar, KPIs animados e gráficos` : "Descreva uma alteração..."}
                   style={{
-                    width: "100%", minHeight: 80, maxHeight: 160,
+                    width: "100%", minHeight: 56, maxHeight: 160,
                     padding: "14px 16px", background: "transparent",
                     border: "none", outline: "none", resize: "none",
-                    fontSize: 13, color: C.text, fontFamily: DM,
-                    lineHeight: 1.7, boxSizing: "border-box",
+                    fontSize: 14, color: C.text, fontFamily: DM,
+                    lineHeight: 1.6, boxSizing: "border-box",
                   }}
                 />
                 <div style={{
@@ -815,7 +815,7 @@ function Dashboard({ user, onLogout }) {
                     <span style={{ fontSize: 11, color: C.yellow, fontWeight: 600, fontFamily: SYNE }}>Criar App React</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 10, color: C.textDim }}>Enter para gerar · Shift+Enter nova linha</span>
+                    <span style={{ fontSize: 10, color: C.textDim }}>Enter · Shift+Enter nova linha</span>
                     <button
                       onClick={handleGenerate}
                       disabled={generating || !prompt.trim()}
@@ -830,7 +830,7 @@ function Dashboard({ user, onLogout }) {
                     >
                       {generating
                         ? <><span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span></>
-                        : "⚡"}
+                        : "⚡ Gerar"}
                     </button>
                   </div>
                 </div>
