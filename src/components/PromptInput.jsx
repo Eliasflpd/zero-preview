@@ -30,18 +30,8 @@ export default function PromptInput({ onSubmit, loading, placeholder, compact })
     return (
       <div style={{ display: 'flex', flexDirection: 'column', background: 'white' }}>
         <textarea
+          id="zp-prompt-input"
           ref={textareaRef}
-          value={value}
-          onChange={handleInput}
-          onKeyDown={handleKey}
-          placeholder={placeholder}
-          disabled={loading}
-          rows={3}
-          style={{
-            width: '100%', resize: 'none', border: 'none', outline: 'none',
-            padding: '10px 12px', fontSize: '.82rem', fontFamily: 'var(--font-body)',
-            color: 'var(--text)', background: 'white', lineHeight: 1.5,
-            minHeight: '70px', maxHeight: '120px',
           }}
         />
         <button
