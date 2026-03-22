@@ -191,6 +191,22 @@ async function callClaude(system, prompt) {
   return data.content || ''
 }
 
+// ─── PUTER.JS CALL — gratis, ilimitado, sem chave ────────────────────────────
+async function callPuter(system, prompt) {
+  // Puter.js precisa estar carregado no window
+  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
+  const messages = [
+    { role: 'system', content: system },
+    { role: 'user', content: prompt },
+  ]
+  const response = await window.puter.ai.chat(messages, {
+    model: 'claude-sonnet-4-5',
+  })
+  // response pode ser string ou objeto dependendo do modelo
+  if (typeof response === 'string') return response
+  return response?.message?.content?.[0]?.text || response?.message?.content || String(response)
+}
+
 // ─── SAUDAÇÃO DINÂMICA ────────────────────────────────────────────────────────
 function greeting() {
   const h = new Date().getHours()
@@ -262,7 +278,7 @@ export default function App() {
   const [mode, setMode] = useState('landing')
   const [search, setSearch] = useState('')
   const [hovered, setHovered] = useState(null)
-  const [api, setApi] = useState('gemini')
+  const [api, setApi] = useState('puter')
   const [geminiKey, setGeminiKey] = useState(loadGeminiKey)
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [apiError, setApiError] = useState('')
@@ -343,13 +359,19 @@ export default function App() {
       setApiError('Cole sua chave do Gemini para continuar')
       return
     }
+    if (api === 'puter' && !window.puter) {
+      setApiError('Puter.js nao carregado. Recarregue a pagina.')
+      return
+    }
     setApiError('')
     const currentId = activeIdRef.current || createProject(modeRef.current)
     setLoading(true)
     try {
-      const raw = api === 'gemini'
-        ? await callGemini(currentMode.system, prompt, geminiKey.trim())
-        : await callClaude(currentMode.system, prompt)
+      const raw = api === 'puter'
+        ? await callPuter(currentMode.system, prompt)
+        : api === 'gemini'
+          ? await callGemini(currentMode.system, prompt, geminiKey.trim())
+          : await callClaude(currentMode.system, prompt)
       const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
       setCode(clean)
       const name = prompt.length > 48 ? prompt.slice(0, 48) + '...' : prompt
@@ -658,7 +680,8 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg2)' }}>
               <div style={{ display: 'flex', gap: '4px' }}>
                 {[
-                  { id: 'gemini', label: 'Gemini', tag: 'gratis' },
+                  { id: 'puter', label: 'Puter', tag: 'gratis' },
+                  { id: 'gemini', label: 'Gemini', tag: 'chave' },
                   { id: 'claude', label: 'Claude', tag: 'pago' },
                 ].map(a => (
                   <button
@@ -746,8 +769,9 @@ export default function App() {
                 <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>API de geracao</div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {[
-                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia', color: '#2D6BE4', icon: '✦' },
-                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · ilimitado', color: '#F59E0B', icon: '◆' },
+                    { id: 'puter', label: 'Puter.js', tag: 'Gratis · ilimitado · sem chave', color: '#16A34A', icon: '★' },
+                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia · chave propria', color: '#2D6BE4', icon: '✦' },
+                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · ilimitado · via backend', color: '#F59E0B', icon: '◆' },
                   ].map(a => (
                     <div
                       key={a.id}
