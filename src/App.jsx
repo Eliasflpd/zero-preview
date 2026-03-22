@@ -133,21 +133,50 @@ const saveGeminiKey = (k) => { try { localStorage.setItem(GEMINI_KEY, k) } catch
 const BACKEND = 'https://zero-backend-production.up.railway.app'
 
 async function callGemini(system, prompt, key) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 8192 },
-      }),
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 60_000)
+  let lastError
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 65536, temperature: 0.7 },
+          }),
+        }
+      )
+      const data = await res.json()
+      if (data.error) {
+        const msg = data.error.message || 'Erro desconhecido'
+        if ((data.error.code === 429 || data.error.code === 503) && attempt === 0) {
+          lastError = new Error(msg)
+          await new Promise(r => setTimeout(r, 2000))
+          continue
+        }
+        if (msg.toLowerCase().includes('api key not valid')) {
+          throw new Error('Chave Gemini invalida. Verifique em aistudio.google.com/apikey')
+        }
+        throw new Error(msg)
+      }
+      const finishReason = data.candidates?.[0]?.finishReason
+      if (finishReason && finishReason !== 'STOP') {
+        console.warn(`[Gemini] finishReason: ${finishReason}`)
+      }
+      clearTimeout(timeoutId)
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    } catch (err) {
+      clearTimeout(timeoutId)
+      if (err.name === 'AbortError') throw new Error('Tempo limite excedido (60s). Tente um prompt menor.')
+      if (attempt === 1 || !lastError) throw err
     }
-  )
-  const data = await res.json()
-  if (data.error) throw new Error(data.error.message)
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  }
+  throw lastError
 }
 
 async function callClaude(system, prompt) {
