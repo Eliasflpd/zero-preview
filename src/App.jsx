@@ -518,6 +518,7 @@ function Dashboard({ user, onLogout }) {
   const [projects, setProjects] = useLS("zp_projects", []);
   const [activeId, setActiveId] = useState(null);
   const [prompt, setPrompt] = useState("");
+  const [history, setHistory] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [generatedFiles, setGeneratedFiles] = useState(null);
   const [error, setError] = useState("");
@@ -551,6 +552,7 @@ function Dashboard({ user, onLogout }) {
     setActiveId(null);
     setGeneratedFiles(null);
     setPrompt("");
+    setHistory([]);
     setError("");
     setTimeout(() => textareaRef.current?.focus(), 100);
   };
@@ -561,6 +563,7 @@ function Dashboard({ user, onLogout }) {
       setActiveId(null);
       setGeneratedFiles(null);
       setPrompt("");
+      setHistory([]);
     }
   };
 
@@ -630,6 +633,8 @@ function Dashboard({ user, onLogout }) {
       }
 
       setGeneratedFiles(files);
+      setHistory(prev => [...prev, { prompt }]);
+      setPrompt(""); // limpa o campo após gerar
     } catch (e) {
       setError(e.message || "Erro ao gerar. Verifique sua chave e tente novamente.");
     } finally {
@@ -681,14 +686,14 @@ function Dashboard({ user, onLogout }) {
             width: hasPreview ? 360 : "100%", flexShrink: 0,
             display: "flex", flexDirection: "column",
             borderRight: hasPreview ? `1px solid ${C.border}` : "none",
-            overflow: "auto",
+            overflow: "hidden",
           }}>
+            {/* Histórico de prompts — rola para cima */}
             <div style={{
-              flex: 1, display: "flex", flexDirection: "column",
-              justifyContent: hasPreview ? "flex-start" : "center",
-              padding: hasPreview ? "20px" : "0 40px 60px",
+              flex: 1, overflowY: "auto", padding: hasPreview ? "16px 16px 8px" : "40px 40px 8px",
+              display: "flex", flexDirection: "column", justifyContent: history.length === 0 && !hasPreview ? "center" : "flex-start",
             }}>
-              {!hasPreview && (
+              {history.length === 0 && !hasPreview && (
                 <div style={{ textAlign: "center", marginBottom: 36 }}>
                   <div style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
@@ -707,80 +712,129 @@ function Dashboard({ user, onLogout }) {
                 </div>
               )}
 
+              {/* Mensagens do histórico */}
+              {history.map((h, i) => (
+                <div key={i} style={{ marginBottom: 12 }}>
+                  {/* Prompt do usuário */}
+                  <div style={{
+                    display: "flex", justifyContent: "flex-end", marginBottom: 6,
+                  }}>
+                    <div style={{
+                      background: C.surface2, border: `1px solid ${C.border}`,
+                      borderRadius: "12px 12px 2px 12px", padding: "10px 14px",
+                      fontSize: 13, color: C.text, maxWidth: "90%", lineHeight: 1.6,
+                      fontFamily: DM, whiteSpace: "pre-wrap",
+                    }}>
+                      {h.prompt}
+                    </div>
+                  </div>
+                  {/* Resposta da IA */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{
+                      width: 22, height: 22, background: C.yellow, borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <span style={{ fontSize: 10, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
+                    </div>
+                    <div style={{
+                      background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.15)`,
+                      borderRadius: "2px 12px 12px 12px", padding: "8px 12px",
+                      fontSize: 12, color: C.yellow, fontFamily: DM,
+                    }}>
+                      ✓ App gerado com sucesso
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {generating && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <div style={{
+                    width: 22, height: 22, background: C.yellow, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
+                  </div>
+                  <div style={{
+                    background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.15)`,
+                    borderRadius: "2px 12px 12px 12px", padding: "8px 12px",
+                    fontSize: 12, color: C.yellow, fontFamily: DM,
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.yellow, animation: "pulse 1.4s ease-in-out infinite" }} />
+                    {thinkMsg}
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div style={{
+                  marginBottom: 12, padding: "10px 14px",
+                  background: "rgba(248,113,113,0.08)", border: `1px solid rgba(248,113,113,0.3)`,
+                  borderRadius: 10,
+                }}>
+                  <span style={{ fontSize: 12, color: C.error }}>{error}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Campo de input — fixo embaixo */}
+            <div style={{ padding: "8px 16px 16px", flexShrink: 0 }}>
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
                 <textarea
                   ref={textareaRef}
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
-                  onKeyDown={e => (e.metaKey || e.ctrlKey) && e.key === "Enter" && handleGenerate()}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleGenerate();
+                    }
+                  }}
                   disabled={generating}
-                  placeholder={`Ex: Crie um dashboard financeiro com:\n• Sidebar: Visão Geral, Transações, Clientes, Relatórios\n• KPIs animados: faturamento, despesas, lucro\n• Gráficos SVG de barras mensais e pizza\n• Tabela de transações com dados reais\n• Tema escuro premium`}
+                  placeholder={history.length === 0 ? `Ex: Crie um dashboard financeiro com sidebar, KPIs animados e gráficos SVG...` : "Descreva uma alteração ou novo app..."}
                   style={{
-                    width: "100%", minHeight: hasPreview ? 180 : 220,
-                    padding: "16px 18px", background: "transparent",
+                    width: "100%", minHeight: 80, maxHeight: 160,
+                    padding: "14px 16px", background: "transparent",
                     border: "none", outline: "none", resize: "none",
                     fontSize: 13, color: C.text, fontFamily: DM,
                     lineHeight: 1.7, boxSizing: "border-box",
                   }}
                 />
                 <div style={{
-                  padding: "10px 14px", borderTop: `1px solid ${C.border}`,
+                  padding: "8px 12px", borderTop: `1px solid ${C.border}`,
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   background: C.bg,
                 }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: 6,
                     background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.2)`,
-                    borderRadius: 7, padding: "4px 10px",
+                    borderRadius: 7, padding: "3px 10px",
                   }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.yellow, display: "inline-block" }} />
                     <span style={{ fontSize: 11, color: C.yellow, fontWeight: 600, fontFamily: SYNE }}>Criar App React</span>
                   </div>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={generating || !prompt.trim()}
-                    style={{
-                      padding: "8px 18px",
-                      background: generating || !prompt.trim() ? "rgba(255,208,80,0.25)" : C.yellow,
-                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700,
-                      fontFamily: DM, color: C.bg,
-                      cursor: generating || !prompt.trim() ? "not-allowed" : "pointer",
-                      transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
-                    }}
-                  >
-                    {generating
-                      ? <><span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span> Gerando...</>
-                      : "⚡ Gerar"}
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 10, color: C.textDim }}>Enter para gerar · Shift+Enter nova linha</span>
+                    <button
+                      onClick={handleGenerate}
+                      disabled={generating || !prompt.trim()}
+                      style={{
+                        padding: "7px 16px",
+                        background: generating || !prompt.trim() ? "rgba(255,208,80,0.25)" : C.yellow,
+                        border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700,
+                        fontFamily: DM, color: C.bg,
+                        cursor: generating || !prompt.trim() ? "not-allowed" : "pointer",
+                        transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6,
+                      }}
+                    >
+                      {generating
+                        ? <><span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span></>
+                        : "⚡"}
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {!hasPreview && (
-                <p style={{ textAlign: "center", fontSize: 11, color: C.textDim, marginTop: 12 }}>
-                  ⌘ Enter para gerar · Preview ao vivo via WebContainer
-                </p>
-              )}
-
-              {generating && (
-                <div style={{
-                  marginTop: 16, padding: "12px 16px",
-                  background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.2)`,
-                  borderRadius: 10, display: "flex", alignItems: "center", gap: 10,
-                }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.yellow, animation: "pulse 1.4s ease-in-out infinite" }} />
-                  <span style={{ fontSize: 12, color: C.yellow }}>{thinkMsg}</span>
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  marginTop: 14, padding: "11px 14px",
-                  background: "rgba(248,113,113,0.08)", border: `1px solid rgba(248,113,113,0.3)`,
-                  borderRadius: 9,
-                }}>
-                  <span style={{ fontSize: 12, color: C.error }}>{error}</span>
-                </div>
-              )}
             </div>
           </div>
 
