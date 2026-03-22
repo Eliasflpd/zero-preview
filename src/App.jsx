@@ -245,7 +245,7 @@ function Sidebar({ user, projects, activeId, onSelect, onNew, onLogout, onSettin
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 13, fontWeight: 700, color: C.bg, fontFamily: SYNE, flexShrink: 0,
         }}>
-          {user.charAt(0).toUpperCase()}
+          {String(user).charAt(0).toUpperCase()}
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user}</div>
@@ -778,7 +778,7 @@ function Dashboard({ user, onLogout }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [user, setUser] = useLS("zp_user", null);
+  const [user, setUser] = useLS("zp_user", null); if (user && typeof user === "object") { localStorage.removeItem("zp_user"); window.location.reload(); }
   if (!user) return <Login onLogin={setUser} />;
   return <Dashboard user={user} onLogout={() => setUser(null)} />;
 }
