@@ -483,10 +483,10 @@ export default function App() {
 
   if (!user) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#060F1E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-body)' }}>
+      <div style={{ position: 'fixed', inset: 0, background: '#060F1E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', sans-serif", zIndex: 9999, overflow: 'auto' }}>
         {/* bg decoration */}
-        <div style={{ position: 'absolute', top: '-100px', left: '-100px', width: '500px', height: '500px', borderRadius: '50%', background: 'rgba(45,107,228,.08)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,208,80,.06)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'fixed', top: '-100px', left: '-100px', width: '500px', height: '500px', borderRadius: '50%', background: 'rgba(45,107,228,.08)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'fixed', bottom: '-100px', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,208,80,.06)', filter: 'blur(80px)', pointerEvents: 'none' }} />
 
         <div style={{ width: '420px', maxWidth: '92vw', position: 'relative', zIndex: 1 }} className="animate-in">
 
