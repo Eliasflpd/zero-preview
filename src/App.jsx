@@ -266,6 +266,7 @@ export default function App() {
   const [geminiKey, setGeminiKey] = useState(loadGeminiKey)
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [apiError, setApiError] = useState('')
+  const [showSettings, setShowSettings] = useState(false)
   const [user, setUser] = useState(loadUser)
   const [nameInput, setNameInput] = useState('')
 
@@ -707,14 +708,121 @@ export default function App() {
         )}
 
         {/* FOOTER */}
-        <div style={{ borderTop: '1px solid var(--border)', padding: '10px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ borderTop: '1px solid var(--border)', padding: '10px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={S.avatar}>{user.initial}</div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={S.userName}>{user.name}</div>
             <div style={S.userPlan}>Zero Preview Pro</div>
           </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            title="Configuracoes"
+            style={{ width: '28px', height: '28px', borderRadius: '7px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: '1rem', color: 'var(--muted)', transition: 'all .15s', flexShrink: 0 }}
+          >⚙</button>
         </div>
       </div>
+
+      {/* MODAL CONFIGURACOES */}
+      {showSettings && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500 }}
+          onClick={e => e.target === e.currentTarget && setShowSettings(false)}
+        >
+          <div style={{ background: 'white', borderRadius: '16px', width: '480px', maxWidth: '95vw', boxShadow: '0 24px 60px rgba(0,0,0,.15)', border: '1px solid var(--border)', overflow: 'hidden' }} className="animate-in">
+
+            {/* header */}
+            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>Configuracoes</div>
+                <div style={{ fontSize: '.82rem', color: 'var(--muted)', marginTop: '2px' }}>Gerencie suas APIs e preferencias</div>
+              </div>
+              <button onClick={() => setShowSettings(false)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg2)', cursor: 'pointer', fontSize: '1rem', color: 'var(--muted)' }}>✕</button>
+            </div>
+
+            {/* body */}
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* API ativa */}
+              <div>
+                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>API de geracao</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[
+                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia', color: '#2D6BE4', icon: '✦' },
+                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · ilimitado', color: '#F59E0B', icon: '◆' },
+                  ].map(a => (
+                    <div
+                      key={a.id}
+                      onClick={() => { setApi(a.id); setApiError('') }}
+                      style={{
+                        flex: 1, padding: '12px 14px', borderRadius: '10px', cursor: 'pointer',
+                        border: api === a.id ? `2px solid ${a.color}` : '2px solid var(--border)',
+                        background: api === a.id ? `${a.color}10` : 'var(--bg2)',
+                        transition: 'all .18s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ color: a.color, fontWeight: 700 }}>{a.icon}</span>
+                        <span style={{ fontWeight: 700, fontSize: '.88rem', color: 'var(--text)' }}>{a.label}</span>
+                        {api === a.id && <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: a.color, flexShrink: 0 }} />}
+                      </div>
+                      <div style={{ fontSize: '.75rem', color: 'var(--muted)' }}>{a.tag}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chave Gemini */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>Chave Gemini</div>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '.75rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Obter chave gratis →</a>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="password"
+                    placeholder="Cole sua chave aqui: AIzaSy..."
+                    value={geminiKey}
+                    onChange={e => { setGeminiKey(e.target.value); saveGeminiKey(e.target.value) }}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid var(--border)', fontSize: '.85rem', fontFamily: 'var(--font-mono)', outline: 'none', background: 'var(--bg2)', color: 'var(--text)' }}
+                  />
+                  {geminiKey && <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', borderRadius: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', fontSize: '.8rem', color: '#065F46', fontWeight: 600, whiteSpace: 'nowrap' }}>✓ Ok</div>}
+                </div>
+                <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '6px' }}>Gratis em aistudio.google.com — 1500 geracoes por dia</div>
+              </div>
+
+              {/* Chave Claude (info) */}
+              <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>Claude Sonnet — via Backend</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>O Claude roda pelo backend Railway seguro. Nenhuma chave necessaria aqui — ja configurado.</div>
+              </div>
+
+              {/* Usuario */}
+              <div>
+                <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>Seu nome</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    defaultValue={user.name}
+                    id="settings-name-input"
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid var(--border)', fontSize: '.88rem', fontFamily: 'var(--font-body)', outline: 'none', background: 'var(--bg2)', color: 'var(--text)' }}
+                  />
+                  <button
+                    onClick={() => {
+                      const val = document.getElementById('settings-name-input').value.trim()
+                      if (val) { const u = { name: val, initial: val[0].toUpperCase() }; saveUser(u); setUser(u) }
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: '8px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '.85rem', fontWeight: 600, fontFamily: 'var(--font-body)' }}
+                  >Salvar</button>
+                </div>
+              </div>
+            </div>
+
+            {/* footer */}
+            <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg2)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSettings(false)} style={{ padding: '9px 22px', borderRadius: '8px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', fontFamily: 'var(--font-head)' }}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MAIN */}
       <div style={S.main}>

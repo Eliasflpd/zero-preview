@@ -42,7 +42,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .nav-wpp{color:var(--wpp) !important;font-weight:500;}
 .nav-actions{display:flex;align-items:center;gap:10px;}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:7px;font-size:.85rem;font-weight:500;cursor:pointer;text-decoration:none;transition:all .18s;font-family:var(--fb);border:none;white-space:nowrap;}
-.btn-ghost{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.18);}.btn-ghost:hover{color:#fff;border-color:rgba(255,255,255,.4);}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.45);font-weight:600;}.btn-ghost:hover{background:rgba(255,255,255,.18);border-color:#fff;}
 .btn-yellow{background:#FFD050;color:#060F1E;font-weight:700;}.btn-yellow:hover{background:#ffe066;transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,208,80,.35);}
 .btn-lg{padding:14px 28px;font-size:.95rem;border-radius:9px;}
 .btn-ow{background:transparent;color:var(--white);border:1.5px solid var(--border2);}.btn-ow:hover{border-color:var(--w50);background:var(--w06);}
@@ -432,15 +432,20 @@ footer{padding:36px 0;border-top:1px solid var(--border);}
 
 </div><!-- /landing -->
 
-<div id="root" style="position:fixed;inset:0;z-index:1;background:#060F1E;"></div>
+<div id="root" style="position:fixed;inset:0;z-index:1;"></div>
 <script type="module" src="/src/main.jsx"></script>
 
 <script>
 function startApp(){
   var l=document.getElementById('landing');
+  var n=document.querySelector('nav');
   l.style.transition='opacity .3s ease,transform .3s ease';
   l.style.opacity='0';l.style.transform='translateY(-10px)';
-  setTimeout(function(){l.style.display='none';},320);
+  if(n){n.style.transition='opacity .3s ease';n.style.opacity='0';}
+  setTimeout(function(){
+    l.style.display='none';
+    if(n){n.style.display='none';}
+  },320);
 }
 function openWhatsApp(e){
   if(e)e.preventDefault();
