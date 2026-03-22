@@ -83,7 +83,7 @@ INTERATIVIDADE JAVASCRIPT:
 - Modal de criacao com formulario e validacao
 - Grafico anima automaticamente ao carregar
 
-RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.\`
+RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
 
 // ─── MODOS ────────────────────────────────────────────────────────────────────
 const MODES = [
