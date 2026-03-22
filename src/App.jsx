@@ -105,8 +105,8 @@ const MODES = [
   {
     id: 'image', label: 'Criar Imagem com IA', icon: '🎨',
     color: '#FF8C42', colorBg: 'rgba(255,140,66,.1)',
-    description: 'Imagens com GPT Image 1.5',
-    system: 'IMAGE_MODE',
+    description: 'Imagens com Gemini gratis',
+    badge: 'em breve', system: null,
     examples: [
       'Foto profissional de um hamburguer artesanal, fundo escuro, iluminacao dramatica',
       'Logo moderno para academia de musculacao, minimalista, fundo preto e dourado',
@@ -118,7 +118,7 @@ const MODES = [
     id: 'video', label: 'Criar Video com IA', icon: '🎬',
     color: '#FF6BFF', colorBg: 'rgba(255,107,255,.1)',
     description: 'Videos com Sora 2',
-    system: 'VIDEO_MODE',
+    badge: 'em breve', system: null,
     examples: [
       'Drone voando sobre uma praia paradisiaca ao por do sol, cinematografico',
       'Cafe sendo despejado em slow motion, vapor subindo, iluminacao quente',
@@ -203,77 +203,6 @@ async function callClaude(system, prompt) {
   return data.content || ''
 }
 
-// ─── PUTER.JS CALL — gratis, ilimitado, sem chave ────────────────────────────
-async function callPuter(system, prompt) {
-  // Puter.js precisa estar carregado no window
-  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
-  const messages = [
-    { role: 'system', content: system },
-    { role: 'user', content: prompt },
-  ]
-  const response = await window.puter.ai.chat(messages, {
-    model: 'claude-sonnet-4-5',
-  })
-  // response pode ser string ou objeto dependendo do modelo
-  if (typeof response === 'string') return response
-  return response?.message?.content?.[0]?.text || response?.message?.content || String(response)
-}
-
-// ─── PUTER IMAGE ──────────────────────────────────────────────────────────────
-async function callPuterImage(prompt, existingImageSrc) {
-  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
-
-  // Detect "improve" intent
-  const improveWords = ['melhore', 'melhora', 'melhorar', 'refine', 'refina', 'melhor', 'improve', 'enhance', 'ajuste', 'ajusta']
-  const isImprove = improveWords.some(w => prompt.toLowerCase().trim().startsWith(w))
-
-  // If user wants to improve AND we have a previous image — use Gemini image-to-image
-  if (isImprove && existingImageSrc) {
-    try {
-      // Convert data URL to base64
-      const base64 = existingImageSrc.split(',')[1] || existingImageSrc
-      const mimeType = existingImageSrc.startsWith('data:image/png') ? 'image/png' : 'image/jpeg'
-      const improvePrompt = prompt.toLowerCase().includes('melhore') || prompt.toLowerCase().includes('melhora')
-        ? 'Melhore esta imagem: torne-a mais profissional, com melhor iluminacao, maior detalhamento e qualidade fotografica superior.'
-        : prompt
-
-      const image = await window.puter.ai.txt2img(improvePrompt, {
-        model: 'gemini-2.5-flash-image-preview',
-        input_image: base64,
-        input_image_mime_type: mimeType,
-      })
-      return image.src || image.getAttribute?.('src') || ''
-    } catch (e) {
-      console.warn('Image-to-image failed, generating new:', e)
-      // fallback to new generation
-    }
-  }
-
-  // Normal generation
-  try {
-    const image = await window.puter.ai.txt2img(prompt, {
-      model: 'gpt-image-1-mini',
-      quality: 'low',
-    })
-    return image.src || image.getAttribute?.('src') || ''
-  } catch (e1) {
-    const image = await window.puter.ai.txt2img(prompt)
-    return image.src || image.getAttribute?.('src') || ''
-  }
-}
-
-// ─── PUTER VIDEO ──────────────────────────────────────────────────────────────
-async function callPuterVideo(prompt) {
-  if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
-  const video = await window.puter.ai.txt2vid(prompt, {
-    model: 'sora-2',
-    seconds: 8,
-    size: '1280x720',
-  })
-  // Returns HTMLVideoElement — get src
-  return video.src || video.getAttribute('data-source') || ''
-}
-
 // ─── SAUDAÇÃO DINÂMICA ────────────────────────────────────────────────────────
 function greeting() {
   const h = new Date().getHours()
@@ -345,14 +274,13 @@ export default function App() {
   const [mode, setMode] = useState('landing')
   const [search, setSearch] = useState('')
   const [hovered, setHovered] = useState(null)
-  const [api, setApi] = useState('puter')
-  const [geminiKey, setGeminiKey] = useState(loadGeminiKey)
+  const [api, setApi] = useState('gemini')
+  const [geminiKey, setGeminiKey] = useState(() => loadGeminiKey())
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [apiError, setApiError] = useState('')
   const [lastImageSrc, setLastImageSrc] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [user, setUser] = useState(null)
-  const [authLoading, setAuthLoading] = useState(false)
+  const [user, setUser] = useState(() => loadUser())
   const [nameInput, setNameInput] = useState('')
 
   // BUG 1 FIX: refs para valores mais recentes dentro do useCallback
@@ -373,28 +301,6 @@ export default function App() {
     }
   }, [mode])
 
-  // AUTH — check Puter on mount
-  useEffect(() => {
-    async function tryAuth() {
-      if (!window.puter) return
-      try {
-        const signedIn = window.puter.auth.isSignedIn()
-        if (signedIn) {
-          const pu = await window.puter.auth.getUser()
-          const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
-          saveUser(u); setUser(u)
-        }
-      } catch(e) { console.warn('tryAuth', e) }
-    }
-    if (window.puter) { tryAuth() }
-    else { const t = setInterval(() => { if (window.puter) { clearInterval(t); tryAuth() } }, 200); setTimeout(() => clearInterval(t), 4000) }
-  }, [])
-
-  async function loginWithPuter() {
-    try {
-      await window.puter.auth.signIn()
-      const pu = await window.puter.auth.getUser()
-      const u = { name: pu.username || 'Usuario', initial: (pu.username || 'U')[0].toUpperCase(), puter: true }
       saveUser(u); setUser(u); setApi('puter')
     } catch(e) { console.error(e) }
   }
@@ -449,34 +355,20 @@ export default function App() {
   const generate = useCallback(async (prompt) => {
     const currentMode = MODES.find(m => m.id === modeRef.current)
     if (!currentMode?.system) return
-    if (api === 'gemini' && !geminiKey.trim()) {
+    // Re-sync key from storage in case of remount
+    const currentKey = geminiKey.trim() || loadGeminiKey().trim()
+    if (api === 'gemini' && !currentKey) {
       setShowKeyInput(true)
       setApiError('Cole sua chave do Gemini para continuar')
-      return
-    }
-    if (api === 'puter' && !window.puter) {
-      setApiError('Puter.js nao carregado. Recarregue a pagina.')
       return
     }
     setApiError('')
     const currentId = activeIdRef.current || createProject(modeRef.current)
     setLoading(true)
     try {
-      let raw = ''
-      if (currentMode.system === 'IMAGE_MODE') {
-        const imgSrc = await callPuterImage(prompt, lastImageSrc)
-        setLastImageSrc(imgSrc)
-        raw = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;}img{max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);}a{color:#FFD050;font-size:.85rem;text-decoration:none;padding:8px 18px;border:1px solid rgba(255,208,80,.4);border-radius:6px;}a:hover{background:rgba(255,208,80,.1);}</style></head><body><img src="${imgSrc}" alt="Imagem gerada"/><a href="${imgSrc}" download="imagem-ia.png">↓ Baixar imagem</a></body></html>`
-      } else if (currentMode.system === 'VIDEO_MODE') {
-        const vidSrc = await callPuterVideo(prompt)
-        raw = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;}video{max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);}a{color:#FFD050;font-size:.85rem;text-decoration:none;padding:8px 18px;border:1px solid rgba(255,208,80,.4);border-radius:6px;}a:hover{background:rgba(255,208,80,.1);}</style></head><body><video src="${vidSrc}" controls autoplay loop></video><a href="${vidSrc}" download="video-ia.mp4">↓ Baixar video</a></body></html>`
-      } else {
-        raw = api === 'puter'
-          ? await callPuter(currentMode.system, prompt)
-          : api === 'gemini'
-            ? await callGemini(currentMode.system, prompt, geminiKey.trim())
-            : await callClaude(currentMode.system, prompt)
-      }
+      const raw = api === 'gemini'
+        ? await callGemini(currentMode.system, prompt, (geminiKey.trim() || loadGeminiKey().trim()))
+        : await callClaude(currentMode.system, prompt)
       const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
       setCode(clean)
       const name = prompt.length > 48 ? prompt.slice(0, 48) + '...' : prompt
@@ -531,73 +423,26 @@ export default function App() {
     component: 'Ex: Card de produto com imagem, preco e botao de compra...',
   }
 
-  // ── tela de login ────────────────────────────────────────────────────────────
-  if (authLoading) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: '#060F1E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '36px', height: '36px', border: '3px solid rgba(255,255,255,.1)', borderTopColor: '#FFD050', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 16px' }} />
-          <div style={{ color: 'rgba(255,255,255,.4)', fontSize: '.85rem', fontFamily: 'var(--font-mono)' }}>Carregando...</div>
-        </div>
-      </div>
-    )
-  }
-
   if (!user) {
     return (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: '#060F1E',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'sans-serif',
-      }}>
-        <div style={{ width: '380px', maxWidth: '92vw' }}>
-
-          {/* logo */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '32px' }}>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#FFD050', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.7rem', fontWeight: 700, color: '#060F1E' }}>ZP</div>
-            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>Zero Preview</span>
+      <div style={S.modalBg}>
+        <div style={S.modal} className="animate-in">
+          <div>
+            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>👋</div>
+            <div style={S.modalTitle}>Bem-vindo ao Zero Preview</div>
+            <div style={S.modalSub}>Como podemos te chamar?</div>
           </div>
-
-          {/* card solido sem backdrop */}
-          <div style={{ background: '#0C1929', border: '1px solid rgba(255,255,255,.12)', borderRadius: '16px', padding: '32px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Bem-vindo! 👋</div>
-              <div style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>
-                Entre com Puter para usar IA gratis e ilimitada
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-              {[
-                ['✦', 'Sites, landing pages e apps com IA', '#5A90F0'],
-                ['🎨', 'Imagens com GPT Image 1.5', '#FF8C42'],
-                ['🎬', 'Videos com Sora 2', '#FF6BFF'],
-                ['★', 'Gratis e ilimitado', '#22D3A0'],
-              ].map(([icon, label, color], i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '8px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
-                  <span style={{ color, fontSize: '.95rem', flexShrink: 0 }}>{icon}</span>
-                  <span style={{ fontSize: '.83rem', color: 'rgba(255,255,255,.7)' }}>{label}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={loginWithPuter}
-              style={{
-                width: '100%', padding: '13px', borderRadius: '9px',
-                background: '#FFD050', color: '#060F1E',
-                fontSize: '.95rem', fontWeight: 800,
-                border: 'none', cursor: 'pointer',
-              }}
-            >
-              Entrar com Puter — e gratis →
-            </button>
-
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '.72rem', color: 'rgba(255,255,255,.2)' }}>
-              Sem cartao de credito · Gratis para sempre
-            </div>
-          </div>
+          <input
+            style={S.modalInput}
+            placeholder="Seu nome..."
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveUserName()}
+            autoFocus
+          />
+          <button style={S.modalBtn} onClick={saveUserName}>
+            Entrar no Zero Preview →
+          </button>
         </div>
       </div>
     )
@@ -834,8 +679,7 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg2)' }}>
               <div style={{ display: 'flex', gap: '4px' }}>
                 {[
-                  { id: 'puter', label: 'Puter', tag: 'gratis' },
-                  { id: 'gemini', label: 'Gemini', tag: 'chave' },
+                  { id: 'gemini', label: 'Gemini', tag: 'gratis' },
                   { id: 'claude', label: 'Claude', tag: 'pago' },
                 ].map(a => (
                   <button
@@ -923,9 +767,8 @@ export default function App() {
                 <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: 'var(--font-mono)' }}>API de geracao</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
                   {[
-                    { id: 'puter', label: 'Puter.js', tag: 'Gratis ilimitado', color: '#16A34A', icon: '★' },
-                    { id: 'gemini', label: 'Gemini', tag: 'Gratis 1500/dia', color: '#2D6BE4', icon: '✦' },
-                    { id: 'claude', label: 'Claude', tag: 'Pago premium', color: '#F59E0B', icon: '◆' },
+                    { id: 'gemini', label: 'Gemini 2.5 Flash', tag: 'Gratis · 1500/dia', color: '#2D6BE4', icon: '✦' },
+                    { id: 'claude', label: 'Claude Sonnet', tag: 'Pago · via backend', color: '#F59E0B', icon: '◆' },
                   ].map(a => (
                     <div
                       key={a.id}
