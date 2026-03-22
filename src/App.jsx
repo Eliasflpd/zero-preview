@@ -61,6 +61,15 @@ const VITE_CONFIG = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 export default defineConfig({ plugins: [react()] });`;
 
+// ─── WEBCONTAINER SINGLETON ───────────────────────────────────────────────────
+let wcInstance = null;
+async function getWC() {
+  if (!wcInstance) {
+    wcInstance = await WebContainer.boot();
+  }
+  return wcInstance;
+}
+
 // ─── HOOKS ───────────────────────────────────────────────────────────────────
 function useLS(key, init) {
   const [v, setV] = useState(() => {
@@ -219,7 +228,7 @@ function SettingsModal({ onClose }) {
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
-function Sidebar({ user, projects, activeId, onSelect, onNew, onLogout, onSettings }) {
+function Sidebar({ user, projects, activeId, onSelect, onNew, onLogout, onSettings, onDelete }) {
   return (
     <div style={{
       width: 240, minWidth: 240, background: C.surface,
@@ -277,22 +286,37 @@ function Sidebar({ user, projects, activeId, onSelect, onNew, onLogout, onSettin
           <div style={{ fontSize: 12, color: C.textDim, padding: "8px 4px", fontStyle: "italic" }}>Nenhum projeto ainda</div>
         )}
         {projects.map(p => (
-          <button key={p.id} onClick={() => onSelect(p.id)} style={{
-            width: "100%", textAlign: "left", padding: "9px 10px",
-            background: activeId === p.id ? C.yellowGlow2 : "transparent",
-            border: activeId === p.id ? `1px solid rgba(255,208,80,0.2)` : "1px solid transparent",
-            borderRadius: 8, cursor: "pointer", marginBottom: 2, transition: "all 0.15s",
-          }}
-            onMouseEnter={e => { if (activeId !== p.id) e.currentTarget.style.background = C.surface2; }}
-            onMouseLeave={e => { if (activeId !== p.id) e.currentTarget.style.background = "transparent"; }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 500, color: activeId === p.id ? C.yellow : C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: DM }}>
-              {p.name}
-            </div>
-            <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-              {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
-            </div>
-          </button>
+          <div key={p.id} style={{ position: "relative", marginBottom: 2 }}>
+            <button onClick={() => onSelect(p.id)} style={{
+              width: "100%", textAlign: "left", padding: "9px 32px 9px 10px",
+              background: activeId === p.id ? C.yellowGlow2 : "transparent",
+              border: activeId === p.id ? `1px solid rgba(255,208,80,0.2)` : "1px solid transparent",
+              borderRadius: 8, cursor: "pointer", transition: "all 0.15s",
+            }}
+              onMouseEnter={e => { if (activeId !== p.id) e.currentTarget.style.background = C.surface2; }}
+              onMouseLeave={e => { if (activeId !== p.id) e.currentTarget.style.background = "transparent"; }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 500, color: activeId === p.id ? C.yellow : C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: DM }}>
+                {p.name}
+              </div>
+              <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                {new Date(p.updatedAt).toLocaleDateString("pt-BR")}
+              </div>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
+              style={{
+                position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", color: C.textDim, cursor: "pointer",
+                fontSize: 14, padding: "2px 4px", borderRadius: 4, transition: "color 0.2s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = C.error}
+              onMouseLeave={e => e.currentTarget.style.color = C.textDim}
+              title="Deletar projeto"
+            >
+              ×
+            </button>
+          </div>
         ))}
       </div>
 
@@ -351,7 +375,6 @@ function PreviewPanel({ files, onClose }) {
   const [status, setStatus] = useState("booting");
   const [logs, setLogs] = useState([]);
   const [previewUrl, setPreviewUrl] = useState("");
-  const wcRef = useRef(null);
 
   const addLog = useCallback((text, type = "default") => {
     setLogs(prev => [...prev.slice(-300), { text: String(text).trim(), type }]);
@@ -364,15 +387,10 @@ function PreviewPanel({ files, onClose }) {
       try {
         addLog("Iniciando WebContainer...", "info");
 
-        if (!wcRef.current) {
-          wcRef.current = await WebContainer.boot();
-        }
-        const wc = wcRef.current;
-
+        const wc = await getWC();
         if (!active) return;
         addLog("Montando arquivos do projeto...", "info");
 
-        // Converter paths para FileSystemTree
         const fsTree = {};
         for (const [path, contents] of Object.entries(files)) {
           const parts = path.split("/");
@@ -537,6 +555,15 @@ function Dashboard({ user, onLogout }) {
     setTimeout(() => textareaRef.current?.focus(), 100);
   };
 
+  const handleDelete = (id) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (activeId === id) {
+      setActiveId(null);
+      setGeneratedFiles(null);
+      setPrompt("");
+    }
+  };
+
   const handleSelect = (id) => {
     if (id === activeId) return; // já está selecionado
     const p = projects.find(x => x.id === id);
@@ -616,6 +643,7 @@ function Dashboard({ user, onLogout }) {
         user={user} projects={projects} activeId={activeId}
         onSelect={handleSelect} onNew={handleNew}
         onLogout={onLogout} onSettings={() => setShowSettings(true)}
+        onDelete={handleDelete}
       />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -758,7 +786,6 @@ function Dashboard({ user, onLogout }) {
 
           {hasPreview && (
             <PreviewPanel
-              key={activeId || "new"}
               files={generatedFiles}
               onClose={() => setGeneratedFiles(null)}
             />
