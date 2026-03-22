@@ -220,14 +220,46 @@ async function callPuter(system, prompt) {
 }
 
 // ─── PUTER IMAGE ──────────────────────────────────────────────────────────────
-async function callPuterImage(prompt) {
+async function callPuterImage(prompt, existingImageSrc) {
   if (!window.puter) throw new Error('Puter.js nao carregado. Recarregue a pagina.')
-  const image = await window.puter.ai.txt2img(prompt, {
-    model: 'gpt-image-1',
-    quality: 'medium',
-  })
-  // Returns HTMLImageElement — convert to data URL string
-  return image.src || ''
+
+  // Detect "improve" intent
+  const improveWords = ['melhore', 'melhora', 'melhorar', 'refine', 'refina', 'melhor', 'improve', 'enhance', 'ajuste', 'ajusta']
+  const isImprove = improveWords.some(w => prompt.toLowerCase().trim().startsWith(w))
+
+  // If user wants to improve AND we have a previous image — use Gemini image-to-image
+  if (isImprove && existingImageSrc) {
+    try {
+      // Convert data URL to base64
+      const base64 = existingImageSrc.split(',')[1] || existingImageSrc
+      const mimeType = existingImageSrc.startsWith('data:image/png') ? 'image/png' : 'image/jpeg'
+      const improvePrompt = prompt.toLowerCase().includes('melhore') || prompt.toLowerCase().includes('melhora')
+        ? 'Melhore esta imagem: torne-a mais profissional, com melhor iluminacao, maior detalhamento e qualidade fotografica superior.'
+        : prompt
+
+      const image = await window.puter.ai.txt2img(improvePrompt, {
+        model: 'gemini-2.5-flash-image-preview',
+        input_image: base64,
+        input_image_mime_type: mimeType,
+      })
+      return image.src || image.getAttribute?.('src') || ''
+    } catch (e) {
+      console.warn('Image-to-image failed, generating new:', e)
+      // fallback to new generation
+    }
+  }
+
+  // Normal generation
+  try {
+    const image = await window.puter.ai.txt2img(prompt, {
+      model: 'gpt-image-1-mini',
+      quality: 'low',
+    })
+    return image.src || image.getAttribute?.('src') || ''
+  } catch (e1) {
+    const image = await window.puter.ai.txt2img(prompt)
+    return image.src || image.getAttribute?.('src') || ''
+  }
 }
 
 // ─── PUTER VIDEO ──────────────────────────────────────────────────────────────
@@ -317,6 +349,7 @@ export default function App() {
   const [geminiKey, setGeminiKey] = useState(loadGeminiKey)
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [apiError, setApiError] = useState('')
+  const [lastImageSrc, setLastImageSrc] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(false)
@@ -431,7 +464,8 @@ export default function App() {
     try {
       let raw = ''
       if (currentMode.system === 'IMAGE_MODE') {
-        const imgSrc = await callPuterImage(prompt)
+        const imgSrc = await callPuterImage(prompt, lastImageSrc)
+        setLastImageSrc(imgSrc)
         raw = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;}img{max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);}a{color:#FFD050;font-size:.85rem;text-decoration:none;padding:8px 18px;border:1px solid rgba(255,208,80,.4);border-radius:6px;}a:hover{background:rgba(255,208,80,.1);}</style></head><body><img src="${imgSrc}" alt="Imagem gerada"/><a href="${imgSrc}" download="imagem-ia.png">↓ Baixar imagem</a></body></html>`
       } else if (currentMode.system === 'VIDEO_MODE') {
         const vidSrc = await callPuterVideo(prompt)
@@ -453,7 +487,7 @@ export default function App() {
       setProjects(updated)
       saveProjects(updated)
     } catch (e) {
-      setApiError(e.message || 'Erro ao gerar. Verifique a chave da API.')
+      setApiError(e.message || 'Erro ao gerar. Tente novamente.')
       console.error(e)
     } finally {
       setLoading(false)
@@ -462,6 +496,7 @@ export default function App() {
 
   // BUG 2 FIX: troca modo primeiro, dispara geração quando modo confirmar
   function clickExample(ex, exMode) {
+    if (exMode !== 'image') setLastImageSrc(null)
     if (modeRef.current !== exMode) {
       pendingPromptRef.current = ex
       setMode(exMode)
