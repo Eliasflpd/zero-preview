@@ -373,7 +373,7 @@ export default function App() {
   }
 
   // BUG 1 + 3 FIX: generate usa refs, Claude via backend
-  const generate = useCallback(async (prompt) => {
+  const generate = useCallback(async (prompt, imageBase64) => {
     const currentMode = MODES.find(m => m.id === modeRef.current)
     if (!currentMode?.system) return
     // Re-sync key from storage in case of remount
@@ -388,7 +388,7 @@ export default function App() {
     setLoading(true)
     try {
       const raw = api === 'gemini'
-        ? await callGemini(currentMode.system, prompt, (geminiKey.trim() || loadGeminiKey().trim()))
+        ? await callGemini(currentMode.system, imageBase64 ? prompt + '\n\n[O usuario colou uma imagem de referencia visual. Use-a como inspiracao para o design, cores e estilo.]' : prompt, (geminiKey.trim() || loadGeminiKey().trim()))
         : await callClaude(currentMode.system, prompt)
       const clean = raw.replace(/```(?:html|css|jsx?|tsx?)?\n?/gi, '').replace(/```/g, '').trim()
       setCode(clean)
@@ -745,7 +745,7 @@ export default function App() {
               </div>
             )}
 
-            <PromptInput onSubmit={generate} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} compact />
+            <PromptInput onSubmit={(text, img) => generate(text, img)} loading={loading} placeholder={placeholders[mode] || 'Descreva o que quer criar...'} compact />
           </div>
         )}
 
