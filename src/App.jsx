@@ -682,7 +682,7 @@ function Dashboard({ user, onLogout }) {
                   ref={textareaRef}
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
-                  onKeyDown={e => (e.metaKey || e.ctrlKey) && e.key === "Enter" && handleGenerate()}
+                  onKeyDown={e => (e.metaKey || e.ctrlKey) && e.key === "Enter && !e.shiftKey && handleGenerate()}
                   disabled={generating}
                   placeholder={`Ex: Crie um dashboard financeiro com:\n• Sidebar: Visão Geral, Transações, Clientes, Relatórios\n• KPIs animados: faturamento, despesas, lucro\n• Gráficos SVG de barras mensais e pizza\n• Tabela de transações com dados reais\n• Tema escuro premium`}
                   style={{
