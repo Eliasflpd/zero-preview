@@ -48,17 +48,42 @@ Regras obrigatorias:
 - Responsive
 - RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
 
-const SYSTEM_COMPONENT = `Voce e um designer e desenvolvedor especialista em componentes web modernos.
-Gere um arquivo HTML COMPLETO com um componente LINDO e interativo.
-Regras obrigatorias:
-- HTML completo com <!DOCTYPE html>, <head> e <body>
-- Google Fonts via <link>
-- CSS inline no <head> — SEM frameworks externos
-- O componente deve ter interatividade real (JavaScript vanilla)
-- Design moderno, limpo e profissional
-- Centralizado na tela com padding generoso
-- Animacoes e transicoes CSS suaves
-- RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.`
+const SYSTEM_COMPONENT = `Voce e um designer senior e engenheiro frontend de nivel mundial. Sua missao e gerar apps web IDENTICOS em qualidade ao Lovable, Linear e Notion.
+
+Gere um arquivo HTML COMPLETO e IMPRESSIONANTE para o app descrito. O resultado deve parecer um SaaS real pronto para producao.
+
+ESTRUTURA OBRIGATORIA — app completo com navegacao:
+- SIDEBAR FIXA (220px): logo do app, menu de navegacao em secoes com icones unicode, usuario no rodape
+- TOPBAR: titulo da pagina atual, acoes contextuais (botao principal de acao)
+- DASHBOARD PRINCIPAL com:
+  * Banner de boas-vindas com nome mockado, hora atual (JavaScript setInterval)
+  * 4 cards KPI: numero grande, label, icone colorido, variacao percentual
+  * Grafico de barras animado (CSS @keyframes scaleY) com dados dos ultimos 7 dias
+  * Tabela de dados mockados e realistas com badges de status coloridos
+  * Cards de acesso rapido para acoes frequentes
+- PELO MENOS 2 PAGINAS ADICIONAIS funcionais via click na sidebar (ex: lista completa, configuracoes)
+- MODAL funcional para adicionar/criar novo item (abre com botao de acao)
+
+DESIGN NIVEL LOVABLE/LINEAR:
+- Google Fonts: Plus Jakarta Sans ou Inter — import no head
+- Variaveis CSS :root completas para toda a paleta
+- Cores coerentes com o nicho descrito pelo usuario
+- Cards com sombra sutil, borda fina rgba, border-radius 10-12px
+- Hover effects em tudo que e clicavel (transform translateY, shadow)
+- Animacoes de entrada @keyframes fadeUp em todos os cards ao carregar
+- Graficos de barra animados: altura vai de 0% ao valor real com transition
+- Tabelas com linhas alternadas, hover highlight, acoes visiveis no hover
+- Badges pill com cores semanticas (verde=ativo, amarelo=pendente, vermelho=cancelado)
+- TODOS OS DADOS SAO MOCKADOS E REALISTAS para o nicho especificado
+- Responsivo — sidebar some em mobile, menu hamburger aparece
+
+INTERATIVIDADE JAVASCRIPT:
+- Hora e data atualizadas a cada segundo
+- Navegacao real entre paginas (hide/show sections)
+- Modal de criacao com formulario e validacao
+- Grafico anima automaticamente ao carregar
+
+RETORNE SOMENTE O HTML COMPLETO. Sem markdown, sem backticks, sem explicacoes.\`
 
 // ─── MODOS ────────────────────────────────────────────────────────────────────
 const MODES = [
