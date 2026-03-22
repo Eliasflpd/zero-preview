@@ -24,7 +24,7 @@
 nav{--fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'JetBrains Mono',monospace;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{background:#060F1E;font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+body{background:white;font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.01) 40px,rgba(255,255,255,.01) 41px);}
 @keyframes fu{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -34,7 +34,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 section{position:relative;width:100%;}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,64px);height:60px;background:rgba(6,15,30,.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.1);transition:border-color .3s;}
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,64px);height:60px;background:rgba(6,15,30,.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.1);transition:border-color .3s;}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;font-family:var(--fh);font-weight:700;font-size:1rem;}
 .logo-mark{width:30px;height:30px;border-radius:7px;background:var(--yellow);display:grid;place-items:center;font-family:var(--fm);font-size:.65rem;font-weight:700;color:var(--navy);}
 .nav-links{display:flex;align-items:center;gap:24px;list-style:none;}
@@ -227,7 +227,7 @@ footer{padding:36px 0;border-top:1px solid var(--border);}
   </div>
 </nav>
 
-<div id="landing">
+<div id="landing" style="background:#060F1E;position:relative;z-index:10;">
 
 <!-- HERO -->
 <section id="hero">
@@ -432,7 +432,7 @@ footer{padding:36px 0;border-top:1px solid var(--border);}
 
 </div><!-- /landing -->
 
-<div id="root" style="position:fixed;inset:0;z-index:1;"></div>
+<div id="root" style="position:fixed;inset:0;z-index:1;background:white;"></div>
 <script type="module" src="/src/main.jsx"></script>
 
 <script>
