@@ -245,7 +245,7 @@ function Sidebar({ user, projects, activeId, onSelect, onNew, onLogout, onSettin
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 13, fontWeight: 700, color: C.bg, fontFamily: SYNE, flexShrink: 0,
         }}>
-          {String(user).charAt(0).toUpperCase()}
+          {user.charAt(0).toUpperCase()}
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user}</div>
@@ -537,6 +537,7 @@ function Dashboard({ user, onLogout }) {
   };
 
   const handleSelect = (id) => {
+    if (id === activeId) return; // já está selecionado
     const p = projects.find(x => x.id === id);
     if (!p) return;
     setActiveId(id);
@@ -552,7 +553,7 @@ function Dashboard({ user, onLogout }) {
 
     setError("");
     setGenerating(true);
-    setGeneratedFiles(null);
+    // Não reseta generatedFiles aqui — mantém preview atual enquanto gera novo
 
     try {
       const res = await fetch(
@@ -682,7 +683,7 @@ function Dashboard({ user, onLogout }) {
                   ref={textareaRef}
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
-                  onKeyDown={e => (e.metaKey || e.ctrlKey) && e.key === "Enter && !e.shiftKey && handleGenerate()}
+                  onKeyDown={e => (e.metaKey || e.ctrlKey) && e.key === "Enter" && handleGenerate()}
                   disabled={generating}
                   placeholder={`Ex: Crie um dashboard financeiro com:\n• Sidebar: Visão Geral, Transações, Clientes, Relatórios\n• KPIs animados: faturamento, despesas, lucro\n• Gráficos SVG de barras mensais e pizza\n• Tabela de transações com dados reais\n• Tema escuro premium`}
                   style={{
@@ -755,7 +756,11 @@ function Dashboard({ user, onLogout }) {
           </div>
 
           {hasPreview && (
-            <PreviewPanel files={generatedFiles} onClose={() => setGeneratedFiles(null)} />
+            <PreviewPanel
+              key={activeId || "new"}
+              files={generatedFiles}
+              onClose={() => setGeneratedFiles(null)}
+            />
           )}
         </div>
       </div>
@@ -778,7 +783,7 @@ function Dashboard({ user, onLogout }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [user, setUser] = useLS("zp_user", null); if (user && typeof user === "object") { localStorage.removeItem("zp_user"); window.location.reload(); }
+  const [user, setUser] = useLS("zp_user", null);
   if (!user) return <Login onLogin={setUser} />;
   return <Dashboard user={user} onLogout={() => setUser(null)} />;
 }
