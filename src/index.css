@@ -1,29 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:       #071628;
-  --bg2:      #0D1F3C;
-  --bg3:      #132B50;
-  --surface:  #0F2440;
-  --surface2: #1A3460;
-  --border:   #1E3A5F;
-  --border2:  #2D5A8E;
-  --text:     #F0F6FF;
-  --text2:    #B8CFEA;
-  --muted:    #6A8AAD;
-  --accent:   #2D6BE4;
-  --accent2:  #4A8FF0;
+  /* fundos — mais distintos entre si */
+  --bg:       #060F1E;
+  --bg2:      #0C1929;
+  --bg3:      #132236;
+  --surface:  #0E1F33;
+  --surface2: #1C3050;
+
+  /* bordas — mais visiveis */
+  --border:   #263D5A;
+  --border2:  #3A5880;
+
+  /* textos — muito mais contrastados */
+  --text:     #FFFFFF;
+  --text2:    #D4E4F7;
+  --muted:    #8AAECF;
+
+  /* acentos */
+  --accent:   #3D7BFF;
+  --accent2:  #5A9FFF;
   --yellow:   #FFD050;
   --yellow2:  #E6A800;
   --green:    #22D3A0;
   --wpp:      #25D366;
+
   --font-head:'Syne',sans-serif;
   --font-body:'DM Sans',sans-serif;
   --font-mono:'JetBrains Mono',monospace;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body,#root{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow:hidden;}
+html,body,#root{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden;}
+/* força contraste em todos os textos do app */
+input,button,select,textarea{color:var(--text);font-family:var(--font-body);}
+input::placeholder{color:var(--muted);opacity:1;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
