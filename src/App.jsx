@@ -15,17 +15,13 @@ function useLS(key, init) {
   return [v, set];
 }
 
-// ─── MODELOS ─────────────────────────────────────────────────────────────────
 const MODELS = [
-  { id: "gemini",      label: "Gemini",      color: "#4285F4", key: "zp_gemini_key" },
-  { id: "groq",        label: "Groq",        color: "#F55036", key: "zp_groq_key" },
-  { id: "openrouter",  label: "OpenRouter",  color: "#6C47FF", key: "zp_openrouter_key" },
-  { id: "deepseek",    label: "DeepSeek",    color: "#0066FF", key: "zp_deepseek_key" },
-  { id: "grok",        label: "Grok",        color: "#888888", key: "zp_grok_key" },
-  { id: "claude",      label: "Claude",      color: "#CC785C", key: "zp_claude_key" },
+  { id: "gemini",     label: "Gemini",     color: "#4285F4", key: "zp_gemini_key",     badge: "Gratis" },
+  { id: "groq",       label: "Groq",       color: "#F55036", key: "zp_groq_key",       badge: "Gratis" },
+  { id: "openrouter", label: "OpenRouter", color: "#6C47FF", key: "zp_openrouter_key", badge: "Gratis" },
+  { id: "deepseek",   label: "DeepSeek",   color: "#0066FF", key: "zp_deepseek_key",   badge: "Barato" },
 ];
 
-// ─── LOGIN ───────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
@@ -44,20 +40,14 @@ function Login({ onLogin }) {
             <div style={{ width: 42, height: 42, background: C.yellow, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 28px rgba(255,208,80,0.3)" }}>
               <span style={{ fontSize: 20, fontWeight: 900, fontFamily: SYNE, color: C.bg }}>Z</span>
             </div>
-            <span style={{ fontSize: 24, fontWeight: 800, fontFamily: SYNE, color: C.text, letterSpacing: -1 }}>
-              Zero<span style={{ color: C.yellow }}>.</span>
-            </span>
+            <span style={{ fontSize: 24, fontWeight: 800, fontFamily: SYNE, color: C.text, letterSpacing: -1 }}>Zero<span style={{ color: C.yellow }}>.</span></span>
           </div>
           <h1 style={{ fontSize: 30, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1.5 }}>Zero Preview</h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>Crie apps React reais com IA.<br />Preview ao vivo via WebContainer.</p>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 18, padding: 26, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
           <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>Seu nome</div>
-          <input
-            value={name} onChange={e => { setName(e.target.value); setErr(""); }}
-            onKeyDown={e => e.key === "Enter" && submit()}
-            placeholder="Como podemos te chamar?"
-            autoFocus
+          <input value={name} onChange={e => { setName(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Como podemos te chamar?" autoFocus
             style={{ display: "block", width: "100%", padding: "11px 13px", background: C.bg, border: `1px solid ${err ? C.error : C.border}`, borderRadius: 9, fontSize: 13, color: C.text, fontFamily: DM, outline: "none", marginBottom: err ? 7 : 14, boxSizing: "border-box" }}
             onFocus={e => e.target.style.borderColor = C.yellow}
             onBlur={e => e.target.style.borderColor = err ? C.error : C.border}
@@ -70,15 +60,12 @@ function Login({ onLogin }) {
             Entrar no Zero Preview
           </button>
         </div>
-        <p style={{ textAlign: "center", marginTop: 14, fontSize: 10, color: C.textDim }}>
-          Gemini · Groq · OpenRouter · DeepSeek · Grok · Claude · WebContainer
-        </p>
+        <p style={{ textAlign: "center", marginTop: 14, fontSize: 10, color: C.textDim }}>Gemini · Groq · OpenRouter · DeepSeek · WebContainer</p>
       </div>
     </div>
   );
 }
 
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function Dashboard({ user, onLogout }) {
   const [projects, setProjects] = useLS("zp_projects", []);
   const [activeId, setActiveId] = useState(null);
@@ -89,8 +76,8 @@ function Dashboard({ user, onLogout }) {
   const [runId, setRunId] = useState(null);
   const [error, setError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [thinkMsg, setThinkMsg] = useState("");
-  const [model, setModel] = useLS("zp_model", "gemini");
+  const [thinkSteps, setThinkSteps] = useState([]);
+  const [model, setModel] = useLS("zp_model", "groq");
   const textareaRef = useRef();
   const historyEndRef = useRef();
 
@@ -100,22 +87,10 @@ function Dashboard({ user, onLogout }) {
     try { return JSON.parse(localStorage.getItem(m.key)) || ""; } catch { return ""; }
   };
 
-  const THINK_MSGS = [
-    "Entendendo suas intencoes...",
-    "Detectando nicho do negocio...",
-    "Gerando estilos CSS...",
-    "Arquitetando componentes React...",
-    "Criando dados brasileiros realistas...",
-    "Montando KPIs e graficos Recharts...",
-    "Revisando e corrigindo o codigo...",
-    "Finalizando...",
-  ];
-
   useEffect(() => {
     if (!generating) return;
-    let i = 0; setThinkMsg(THINK_MSGS[0]);
-    const iv = setInterval(() => { i = (i + 1) % THINK_MSGS.length; setThinkMsg(THINK_MSGS[i]); }, 2200);
-    return () => clearInterval(iv);
+    // Limpa steps ao iniciar nova geração
+    setThinkSteps([]);
   }, [generating]);
 
   useEffect(() => { historyEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history, generating]);
@@ -126,13 +101,13 @@ function Dashboard({ user, onLogout }) {
 
   const handleNew = () => {
     setActiveId(null); setGeneratedFiles(null);
-    setPrompt(""); setHistory([]); setError("");
+    setPrompt(""); setHistory([]); setError(""); setThinkSteps([]);
     setTimeout(() => textareaRef.current?.focus(), 100);
   };
 
   const handleDelete = (id) => {
     setProjects(prev => prev.filter(p => p.id !== id));
-    if (activeId === id) { setActiveId(null); setGeneratedFiles(null); setPrompt(""); setHistory([]); }
+    if (activeId === id) { setActiveId(null); setGeneratedFiles(null); setPrompt(""); setHistory([]); setThinkSteps([]); }
   };
 
   const handleSelect = (id) => {
@@ -141,7 +116,7 @@ function Dashboard({ user, onLogout }) {
     if (!p) return;
     setActiveId(id); setPrompt("");
     setGeneratedFiles(p.files || null);
-    setHistory(p.history || []); setError("");
+    setHistory(p.history || []); setError(""); setThinkSteps([]);
   };
 
   const handleGenerate = async () => {
@@ -149,12 +124,12 @@ function Dashboard({ user, onLogout }) {
     const key = getKey(model);
     if (!key) { setShowSettings(true); setError(`Configure sua chave ${activeModel.label} primeiro.`); return; }
 
-    setError(""); setGenerating(true);
+    setError(""); setGenerating(true); setThinkSteps([]);
 
     try {
       const result = await generateFiles(
         prompt, key, model,
-        (msg, type) => setThinkMsg(msg),
+        (msg) => setThinkSteps(prev => [...prev, msg]),
         generatedFiles?.["src/App.jsx"] || null
       );
 
@@ -185,7 +160,14 @@ function Dashboard({ user, onLogout }) {
 
   return (
     <div style={{ display: "flex", height: "100vh", background: C.bg, fontFamily: DM, overflow: "hidden" }}>
-      <Sidebar user={user} projects={projects} activeId={activeId} onSelect={handleSelect} onNew={handleNew} onDelete={handleDelete} onLogout={onLogout} onSettings={() => setShowSettings(true)} />
+      <Sidebar
+        user={user} projects={projects} activeId={activeId}
+        onSelect={handleSelect} onNew={handleNew}
+        onDelete={handleDelete} onLogout={onLogout}
+        onSettings={() => setShowSettings(true)}
+        generating={generating}
+        thinkSteps={thinkSteps}
+      />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Topbar */}
@@ -212,14 +194,14 @@ function Dashboard({ user, onLogout }) {
           <div style={{ width: hasPreview ? 340 : "100%", flexShrink: 0, display: "flex", flexDirection: "column", borderRight: hasPreview ? `1px solid ${C.border}` : "none", overflow: "hidden" }}>
             <div style={{ flex: 1, overflowY: "auto", padding: hasPreview ? "16px" : "0 20%", display: "flex", flexDirection: "column", justifyContent: history.length === 0 ? "center" : "flex-start", paddingTop: history.length === 0 ? 0 : 16 }}>
 
-              {history.length === 0 && (
+              {history.length === 0 && !generating && (
                 <div style={{ textAlign: "center", padding: "0 0 32px" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `rgba(255,208,80,0.06)`, border: `1px solid rgba(255,208,80,0.2)`, borderRadius: 20, padding: "5px 14px", marginBottom: 18 }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.2)", borderRadius: 20, padding: "5px 14px", marginBottom: 18 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: activeModel.color, display: "inline-block" }} />
                     <span style={{ fontSize: 11, color: activeModel.color, fontWeight: 600 }}>{activeModel.label} · React + Vite</span>
                   </div>
                   <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1 }}>O que vamos construir?</h2>
-                  <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app - a IA gera os arquivos React completos</p>
+                  <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app — a IA gera os arquivos React completos</p>
                 </div>
               )}
 
@@ -239,18 +221,6 @@ function Dashboard({ user, onLogout }) {
                 </div>
               ))}
 
-              {generating && (
-                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
-                  <div style={{ width: 20, height: 20, background: C.yellow, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: 9, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
-                  </div>
-                  <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", borderRadius: "2px 12px 12px 12px", padding: "7px 11px", fontSize: 11, color: C.yellow, fontFamily: DM, display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.yellow, animation: "pulse 1.4s ease-in-out infinite", display: "inline-block" }} />
-                    {thinkMsg}
-                  </div>
-                </div>
-              )}
-
               {error && (
                 <div style={{ marginBottom: 12, padding: "9px 13px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 9 }}>
                   <span style={{ fontSize: 11, color: C.error }}>{error}</span>
@@ -262,38 +232,25 @@ function Dashboard({ user, onLogout }) {
             {/* Input */}
             <div style={{ padding: "8px 16px 14px", flexShrink: 0 }}>
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-                <textarea
-                  ref={textareaRef} value={prompt}
+                <textarea ref={textareaRef} value={prompt}
                   onChange={e => { setPrompt(e.target.value); setError(""); }}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleGenerate(); } }}
                   disabled={generating}
                   placeholder={history.length === 0 ? "Descreva seu app..." : "Descreva uma alteracao..."}
                   style={{ width: "100%", minHeight: 56, maxHeight: 140, padding: "13px 14px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, color: C.text, fontFamily: DM, lineHeight: 1.6, boxSizing: "border-box" }}
                 />
-                <div style={{ padding: "7px 10px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", background: C.bg, flexWrap: "wrap", gap: 4 }}>
+                <div style={{ padding: "7px 10px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", background: C.bg, gap: 8 }}>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {MODELS.map(m => (
-                      <button key={m.id} onClick={() => setModel(m.id)} style={{
-                        padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                        fontFamily: DM, cursor: "pointer", transition: "all 0.2s",
-                        background: model === m.id ? m.color : "transparent",
-                        border: model === m.id ? "none" : `1px solid ${C.border}`,
-                        color: model === m.id ? "#fff" : C.textMuted,
-                        boxShadow: model === m.id ? `0 2px 8px ${m.color}66` : "none",
-                      }}>
+                      <button key={m.id} onClick={() => setModel(m.id)} style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, fontFamily: DM, cursor: "pointer", transition: "all 0.2s", background: model === m.id ? m.color : "transparent", border: model === m.id ? "none" : `1px solid ${C.border}`, color: model === m.id ? "#fff" : C.textMuted, boxShadow: model === m.id ? `0 2px 8px ${m.color}66` : "none" }}>
                         {m.label}
                       </button>
                     ))}
                   </div>
-                  <button onClick={handleGenerate} disabled={generating || !prompt.trim()} style={{
-                    padding: "6px 14px",
-                    background: generating || !prompt.trim() ? "rgba(255,208,80,0.2)" : C.yellow,
-                    border: "none", borderRadius: 7, fontSize: 12, fontWeight: 700,
-                    fontFamily: DM, color: C.bg,
-                    cursor: generating || !prompt.trim() ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", gap: 5,
-                  }}>
-                    {generating ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>...</span> : "Gerar"}
+                  <button onClick={handleGenerate} disabled={generating || !prompt.trim()} style={{ padding: "6px 14px", background: generating || !prompt.trim() ? "rgba(255,208,80,0.2)" : C.yellow, border: "none", borderRadius: 7, fontSize: 12, fontWeight: 700, fontFamily: DM, color: C.bg, cursor: generating || !prompt.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                    {generating
+                      ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>↻</span>
+                      : "Gerar"}
                   </button>
                 </div>
               </div>
@@ -321,15 +278,9 @@ function Dashboard({ user, onLogout }) {
   );
 }
 
-// ─── ROOT ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useLS("zp_user", null);
-
-  if (user && typeof user === "object") {
-    localStorage.removeItem("zp_user");
-    return null;
-  }
-
+  if (user && typeof user === "object") { localStorage.removeItem("zp_user"); return null; }
   if (!user) return <Login onLogin={setUser} />;
   return <Dashboard user={user} onLogout={() => setUser(null)} />;
 }

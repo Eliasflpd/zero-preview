@@ -45,19 +45,16 @@ CRIATIVO/AGENCIA: Fundo:#FFF5FF Sidebar:#2D0040 Accent:#7B1FA2 Texto sidebar:#FF
 Outros: Fundo:#F0F4FF Sidebar:#0D1B4B Accent:#1565C0 Texto sidebar:#FFFFFF
 
 ESTRUTURA RAIZ:
-<div style={{ display:'flex', height:'100vh', fontFamily:"'Inter', sans-serif", background:FUNDO, overflow:'hidden' }}>
-  <Sidebar /> (width:240px fixo, background:SIDEBAR, height:'100vh')
-  <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-    <Topbar /> (height:56px, background:'#FFFFFF', borderBottom:'1px solid #E5E7EB')
-    <main style={{ flex:1, overflowY:'auto', padding:'24px 28px', background:FUNDO }}>
-      conteudo
-    </main>
-  </div>
-</div>
+display flex, height 100vh, overflow hidden.
+Sidebar: width 240px fixo, height 100vh, background SIDEBAR.
+Conteudo: flex 1, display flex, flexDirection column, overflow hidden.
+Topbar: height 56px, background #FFFFFF, borderBottom 1px solid #E5E7EB.
+Main: flex 1, overflowY auto, padding 24px 28px, background FUNDO.
 
 SIDEBAR - NUNCA use ul/li - use div com style inline:
-- Item ativo: background:'rgba(255,255,255,0.12)', borderLeft:'3px solid ACCENT'
-- Item inativo: color:'rgba(255,255,255,0.6)'
+Item ativo: background rgba(255,255,255,0.12), borderLeft 3px solid ACCENT.
+Item inativo: color rgba(255,255,255,0.6).
+Botoes SEMPRE clicaveis com onClick.
 
 KPIs ANIMADOS:
 const useCounter = (end, duration=1500) => {
@@ -74,44 +71,36 @@ GRAFICOS - RECHARTS OBRIGATORIO:
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 SEMPRE use ResponsiveContainer com width="100%" e height numerico.
 NUNCA use SVG manual para graficos.
+Pizza SEMPRE com cores: const CORES = ['#1565C0', '#059669', '#3B82F6', '#F59E0B', '#EF4444'];
 
-Card padrao: { background:'#FFFFFF', borderRadius:12, border:'1px solid #E5E7EB', padding:'20px 24px', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }
+Card padrao: background #FFFFFF, borderRadius 12, border 1px solid #E5E7EB, padding 20px 24px, boxShadow 0 1px 3px rgba(0,0,0,0.06).
 Dados mockados sempre brasileiros. Minimo 8 registros nas tabelas.
 
 Retorne APENAS o codigo JSX completo. Sem JSON, sem markdown, apenas o codigo.`;
 
-const REVIEWER_PROMPT = `Voce e um revisor especialista em React + Vite. Sua unica funcao e corrigir erros no codigo JSX recebido.
+const REVIEWER_PROMPT = `Voce e um revisor especialista em React + Vite. Corrija erros no codigo JSX recebido.
 
-ERROS QUE VOCE DEVE CORRIGIR OBRIGATORIAMENTE:
-1. Tailwind CSS usado sem estar instalado - substitua por inline styles
-2. Imports de bibliotecas nao instaladas (exceto: react, react-dom, recharts, lucide-react) - remova ou substitua
-3. Icones do lucide-react sem prop size - adicione size={18}
-4. SVG sem viewBox ou sem dimensoes fixas - adicione viewBox e width/height fixos
-5. Componentes referenciados mas nao definidos - adicione definicao ou remova
-6. Syntax errors obvios - corrija
-7. useState/useEffect sem import - adicione o import
-8. export default faltando - adicione no final
+CORRIJA OBRIGATORIAMENTE:
+1. Tailwind CSS - substitua por inline styles
+2. Imports nao instalados (exceto: react, react-dom, recharts, lucide-react) - remova
+3. Icones sem size - adicione size={18}
+4. Componentes nao definidos - adicione ou remova
+5. useState/useEffect sem import - adicione
+6. export default faltando - adicione
+7. Grafico pizza sem cores - adicione array CORES com 5 cores
+8. Botoes sidebar sem onClick - adicione onClick
 
-REGRAS:
-- Retorne APENAS o codigo JSX corrigido, sem markdown, sem explicacoes
-- Se o codigo estiver correto, retorne ele exatamente como esta
-- NAO adicione funcionalidades novas - apenas corrija erros
-- Comece com o import`;
+Retorne APENAS o codigo JSX corrigido, sem markdown.`;
 
 export function parseGeminiJSON(raw) {
   if (!raw) throw new Error("Resposta vazia da IA.");
-  let clean = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/m, "")
-    .trim();
+  let clean = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
   try { return JSON.parse(clean); } catch {}
   const match = clean.match(/\{[\s\S]*"files"[\s\S]*\}/);
   if (match) { try { return JSON.parse(match[0]); } catch {} }
-  const start = clean.indexOf('{');
-  const end = clean.lastIndexOf('}');
+  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');
   if (start !== -1 && end !== -1) { try { return JSON.parse(clean.slice(start, end + 1)); } catch {} }
-  throw new Error("A IA nao retornou JSON valido. Tente um prompt mais simples.");
+  throw new Error("JSON invalido. Tente novamente.");
 }
 
 const FIXED_FILES = {
@@ -127,16 +116,27 @@ ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><A
     name: "zp-app", private: true, version: "0.0.0", type: "module",
     scripts: { dev: "vite --host", build: "vite build" },
     dependencies: {
-      react: "^18.2.0",
-      "react-dom": "^18.2.0",
-      recharts: "^2.12.7",
-      "lucide-react": "^0.383.0",
+      react: "^18.2.0", "react-dom": "^18.2.0",
+      recharts: "^2.12.7", "lucide-react": "^0.383.0",
     },
     devDependencies: { "@vitejs/plugin-react": "^4.2.1", vite: "^5.0.8" }
   }, null, 2),
 };
 
-// ─── CHAMADA UNIFICADA DE IA ─────────────────────────────────────────────────
+// ─── ORDEM DE FALLBACK ────────────────────────────────────────────────────────
+const FALLBACK_ORDER = ["groq", "gemini", "openrouter", "deepseek"];
+
+function getApiKey(model) {
+  const map = {
+    gemini:     "zp_gemini_key",
+    groq:       "zp_groq_key",
+    openrouter: "zp_openrouter_key",
+    deepseek:   "zp_deepseek_key",
+  };
+  try { return JSON.parse(localStorage.getItem(map[model])) || ""; } catch { return ""; }
+}
+
+// ─── CHAMADA ÚNICA DE IA ──────────────────────────────────────────────────────
 async function callAI(systemPrompt, userPrompt, apiKey, model) {
 
   if (model === "gemini") {
@@ -148,7 +148,7 @@ async function callAI(systemPrompt, userPrompt, apiKey, model) {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.85, maxOutputTokens: 65536 },
+          generationConfig: { temperature: 0.85, maxOutputTokens: 32768 },
         }),
       }
     );
@@ -156,49 +156,13 @@ async function callAI(systemPrompt, userPrompt, apiKey, model) {
     const data = await res.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-  } else if (model === "deepseek") {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        max_tokens: 16000,
-        temperature: 0.85,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `DeepSeek erro ${res.status}`); }
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "";
-
-  } else if (model === "grok") {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "grok-3",
-        max_tokens: 32000,
-        temperature: 0.85,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `Grok erro ${res.status}`); }
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "";
-
   } else if (model === "groq") {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 32000,
+        max_tokens: 8192,
         temperature: 0.85,
         messages: [
           { role: "system", content: systemPrompt },
@@ -211,6 +175,7 @@ async function callAI(systemPrompt, userPrompt, apiKey, model) {
     return data?.choices?.[0]?.message?.content || "";
 
   } else if (model === "openrouter") {
+    // ✅ CORRIGIDO: model ID com hífen correto
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -220,8 +185,8 @@ async function callAI(systemPrompt, userPrompt, apiKey, model) {
         "X-Title": "Zero Preview",
       },
       body: JSON.stringify({
-        model: "qwen/qwen2.5-coder-32b-instruct",
-        max_tokens: 32000,
+        model: "qwen/qwen-2.5-coder-32b-instruct",
+        max_tokens: 16000,
         temperature: 0.85,
         messages: [
           { role: "system", content: systemPrompt },
@@ -234,27 +199,45 @@ async function callAI(systemPrompt, userPrompt, apiKey, model) {
     return data?.choices?.[0]?.message?.content || "";
 
   } else {
-    // Claude
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    // ✅ CORRIGIDO: deepseek max_tokens 8192 (limite máximo)
+    const res = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 16000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
+        model: "deepseek-chat",
+        max_tokens: 8192,
+        temperature: 0.85,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
       }),
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `Claude erro ${res.status}`); }
+    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `DeepSeek erro ${res.status}`); }
     const data = await res.json();
-    const textBlock = data?.content?.find(b => b.type === "text");
-    return textBlock?.text || data?.content?.[0]?.text || "";
+    return data?.choices?.[0]?.message?.content || "";
   }
+}
+
+// ─── FALLBACK AUTOMÁTICO ──────────────────────────────────────────────────────
+async function callWithFallback(systemPrompt, userPrompt, preferredModel, onProgress) {
+  const order = [preferredModel, ...FALLBACK_ORDER.filter(m => m !== preferredModel)];
+
+  for (const model of order) {
+    const key = getApiKey(model);
+    if (!key) continue;
+    try {
+      if (model !== preferredModel) {
+        onProgress?.(`${preferredModel} indisponivel, usando ${model}...`, "info");
+      }
+      const result = await callAI(systemPrompt, userPrompt, key, model);
+      if (result && result.length > 50) return { result, usedModel: model };
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error("Todos os modelos falharam. Verifique suas chaves nas Configuracoes.");
 }
 
 // ─── GERAÇÃO ARQUIVO POR ARQUIVO ─────────────────────────────────────────────
@@ -262,23 +245,26 @@ export async function generateFiles(prompt, apiKey, model, onProgress, previousC
   const files = { ...FIXED_FILES };
 
   // Detecta nicho
-  const nichoPrompt = `Detecte o nicho do seguinte pedido e responda APENAS com uma palavra em ingles: beauty, food, finance, fitness, church, retail, construction, education, nature, health, creative, or generic.\n\nPedido: ${prompt}`;
   let nicho = "generic";
   try {
-    const nichoRaw = await callAI("Voce detecta nichos de negocio.", nichoPrompt, apiKey, model);
+    const { result: nichoRaw } = await callWithFallback(
+      "Voce detecta nichos. Responda apenas UMA palavra em ingles: beauty, food, finance, fitness, church, retail, construction, education, nature, health, creative, or generic.",
+      `Nicho deste pedido: ${prompt}`,
+      model, onProgress
+    );
     nicho = nichoRaw.trim().toLowerCase().split(/\s/)[0] || "generic";
   } catch {}
-  onProgress?.("Nicho detectado: " + nicho, "info");
+  onProgress?.(`Nicho: ${nicho}`, "info");
 
   // PASSO 1 — CSS
   onProgress?.("Gerando estilos (1/3)...", "info");
-  const cssSystem = `Voce e um especialista em CSS para React. Retorne APENAS o codigo CSS puro, sem explicacoes, sem markdown.`;
-  const cssPrompt = `Crie um src/index.css moderno para um app React no nicho "${nicho}".
-Inclua: reset CSS, variaveis de cor, font-face para Inter e Plus Jakarta Sans, estilos base para body e #root.
-Use as cores do nicho como variaveis CSS (--color-primary, --color-bg, --color-surface, --color-text).`;
   try {
-    const css = await callAI(cssSystem, cssPrompt, apiKey, model);
-    files["src/index.css"] = css.replace(/^```css\s*/i, "").replace(/\s*```$/m, "").trim();
+    const { result: css } = await callWithFallback(
+      "Especialista CSS. Retorne APENAS CSS puro, sem markdown.",
+      `CSS moderno para React nicho "${nicho}". Reset, variaveis, Inter e Plus Jakarta Sans, body e #root.`,
+      model, onProgress
+    );
+    files["src/index.css"] = css.replace(/^```css\s*/i,"").replace(/\s*```$/m,"").trim();
   } catch {
     files["src/index.css"] = `*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:#f8f9ff;color:#1a1a2e}#root{min-height:100vh}`;
   }
@@ -286,44 +272,37 @@ Use as cores do nicho como variaveis CSS (--color-primary, --color-bg, --color-s
   // PASSO 2 — App.jsx
   onProgress?.("Gerando aplicacao React (2/3)...", "info");
   const appPrompt = previousCode
-    ? `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 8000)}\n\`\`\`\n\nMODIFICACAO: ${prompt}\n\nRetorne o App.jsx COMPLETO atualizado. Apenas o codigo JSX, sem markdown.`
-    : `${prompt}\n\nNicho: ${nicho}\nUse a paleta do nicho ${nicho}.\nRetorne APENAS o codigo completo do src/App.jsx. Sem JSON, sem markdown, apenas o codigo JSX.`;
+    ? `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 8000)}\n\`\`\`\n\nMODIFICACAO: ${prompt}\n\nRetorne App.jsx COMPLETO. Apenas JSX.`
+    : `${prompt}\n\nNicho: ${nicho}. Use paleta do nicho.\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
 
-  const appRaw = await callAI(SYSTEM_PROMPT, appPrompt, apiKey, model);
-  const appCode = appRaw
-    .replace(/^```jsx?\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/m, "")
-    .trim();
+  const { result: appRaw, usedModel } = await callWithFallback(SYSTEM_PROMPT, appPrompt, model, onProgress);
+  if (usedModel !== model) onProgress?.(`Usando ${usedModel} (fallback automatico)`, "info");
 
-  if (!appCode || appCode.length < 100) {
-    throw new Error("Codigo gerado muito pequeno. Tente novamente.");
-  }
+  const appCode = appRaw.replace(/^```jsx?\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
+  if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
   // PASSO 3 — REVISOR
-  onProgress?.("Revisando e corrigindo o codigo (3/3)...", "info");
-  const reviewerPrompt = `Revise e corrija este codigo React, retornando APENAS o codigo corrigido:\n\n${appCode.slice(0, 12000)}`;
+  onProgress?.("Revisando codigo (3/3)...", "info");
   try {
-    const reviewedRaw = await callAI(REVIEWER_PROMPT, reviewerPrompt, apiKey, model);
-    const reviewedCode = reviewedRaw
-      .replace(/^```jsx?\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/m, "")
-      .trim();
-    files["src/App.jsx"] = (reviewedCode && reviewedCode.length > 100) ? reviewedCode : appCode;
-    onProgress?.("Codigo revisado e pronto!", "success");
+    const { result: reviewedRaw } = await callWithFallback(
+      REVIEWER_PROMPT,
+      `Revise e corrija:\n\n${appCode.slice(0, 12000)}`,
+      model, onProgress
+    );
+    const reviewed = reviewedRaw.replace(/^```jsx?\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
+    files["src/App.jsx"] = (reviewed && reviewed.length > 100) ? reviewed : appCode;
+    onProgress?.("Pronto!", "success");
   } catch {
     files["src/App.jsx"] = appCode;
-    onProgress?.("Arquivos gerados!", "success");
+    onProgress?.("Gerado!", "success");
   }
 
   return { files };
 }
 
-// Compatibilidade
 export async function callGemini(prompt, apiKey) {
-  return generateFiles(prompt, apiKey, "gemini", null);
+  return generateFiles(prompt, apiKey, "groq", null);
 }
 export async function callClaude(prompt, apiKey) {
-  return generateFiles(prompt, apiKey, "claude", null);
+  return generateFiles(prompt, apiKey, "groq", null);
 }
