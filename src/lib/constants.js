@@ -372,8 +372,51 @@ Retorne APENAS o código completo do src/App.jsx. Sem JSON, sem markdown, apenas
     throw new Error("Código gerado muito pequeno. Tente novamente.");
   }
 
-  files["src/App.jsx"] = appCode;
-  onProgress?.("Arquivos gerados com sucesso!", "success");
+  // PASSO 3 — REVISOR: lê o código e corrige erros antes de executar
+  onProgress?.("Revisando e corrigindo o código...", "info");
+
+  const reviewerSystem = `Você é um revisor especialista em React + Vite. Sua única função é corrigir erros no código JSX recebido.
+
+ERROS QUE VOCÊ DEVE CORRIGIR OBRIGATORIAMENTE:
+1. Tailwind CSS usado sem estar instalado — substitua por inline styles ou CSS puro
+2. Imports de bibliotecas não instaladas (exceto: react, react-dom, recharts, lucide-react) — remova ou substitua
+3. Ícones do lucide-react sem prop "size" — adicione size={18}
+4. SVG sem viewBox ou sem dimensões fixas — adicione viewBox e width/height fixos
+5. Componentes referenciados mas não definidos no arquivo — adicione definição ou remova
+6. Syntax errors óbvios — corrija
+7. useState/useEffect sem import — adicione o import
+8. export default faltando — adicione no final
+
+REGRAS:
+- Retorne APENAS o código JSX corrigido, sem markdown, sem explicações
+- Se o código estiver correto, retorne ele exatamente como está
+- NÃO adicione funcionalidades novas — apenas corrija erros
+- Comece com o import`;
+
+  const reviewerPrompt = `Revise e corrija este código React, retornando APENAS o código corrigido:
+
+${appCode.slice(0, 12000)}`;
+
+  try {
+    const reviewedRaw = await callAI(reviewerSystem, reviewerPrompt, apiKey, model);
+    const reviewedCode = reviewedRaw
+      .replace(/^```jsx?\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/m, "")
+      .trim();
+
+    if (reviewedCode && reviewedCode.length > 100) {
+      files["src/App.jsx"] = reviewedCode;
+      onProgress?.("Código revisado e corrigido!", "success");
+    } else {
+      files["src/App.jsx"] = appCode;
+      onProgress?.("Revisão concluída!", "success");
+    }
+  } catch {
+    // Se o revisor falhar, usa o código original
+    files["src/App.jsx"] = appCode;
+    onProgress?.("Arquivos gerados!", "success");
+  }
 
   return { files };
 }
