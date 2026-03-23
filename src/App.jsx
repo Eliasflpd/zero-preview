@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import PreviewPanel from "./components/PreviewPanel";
 import SettingsModal from "./components/SettingsModal";
-import { C, SYNE, DM, callGemini, callClaude } from "./lib/constants";
+import { C, SYNE, DM, callGemini, callClaude, callDeepSeek, reformulatePrompt } from "./lib/constants";
 
-// ─── useLocalStorage ─────────────────────────────────────────────────────────
+// ─── useLocalStorage ────────────────────────────────────────────────────────
 function useLS(key, init) {
   const [v, setV] = useState(() => {
     try { return JSON.parse(localStorage.getItem(key)) ?? init; } catch { return init; }
@@ -17,7 +17,7 @@ function useLS(key, init) {
   return [v, set];
 }
 
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
+// ─── LOGIN ───────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
@@ -90,11 +90,11 @@ function Login({ onLogin }) {
             onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.background = "#FFD966"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.background = C.yellow; }}
           >
-            Entrar no Zero Preview →
+            Entrar no Zero Preview
           </button>
         </div>
         <p style={{ textAlign: "center", marginTop: 14, fontSize: 10, color: C.textDim }}>
-          Powered by Gemini 2.5 Flash · WebContainer API
+          Powered by Gemini · Claude · DeepSeek · WebContainer API
         </p>
       </div>
     </div>
@@ -113,22 +113,30 @@ function Dashboard({ user, onLogout }) {
   const [error, setError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [thinkMsg, setThinkMsg] = useState("");
-  const [model, setModel] = useLS("zp_model", "gemini"); // gemini | claude
+  const [model, setModel] = useLS("zp_model", "gemini"); // gemini | claude | deepseek
   const textareaRef = useRef();
   const historyEndRef = useRef();
 
   const getKeys = () => ({
     gemini: (() => { try { return JSON.parse(localStorage.getItem("zp_gemini_key")) || ""; } catch { return ""; } })(),
     claude: (() => { try { return JSON.parse(localStorage.getItem("zp_claude_key")) || ""; } catch { return ""; } })(),
+    deepseek: (() => { try { return JSON.parse(localStorage.getItem("zp_deepseek_key")) || ""; } catch { return ""; } })(),
   });
 
+  const MODELS = [
+    { id: "gemini", label: "Gemini" },
+    { id: "claude", label: "Claude" },
+    { id: "deepseek", label: "DeepSeek" },
+  ];
+
   const THINK_MSGS = [
-    "Analisando seu prompt...",
-    "Planejando a arquitetura React...",
-    "Gerando componentes e sidebar...",
-    "Criando dados mockados brasileiros...",
-    "Montando KPIs e gráficos SVG...",
-    "Aplicando design premium...",
+    "Entendendo suas intencoes...",
+    "Arquitetando o projeto...",
+    "Planejando componentes e modulos...",
+    "Gerando estrutura React...",
+    "Criando dados brasileiros realistas...",
+    "Montando KPIs e graficos Recharts...",
+    "Aplicando design premium ao nicho...",
     "Finalizando os arquivos...",
   ];
 
@@ -140,7 +148,6 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(iv);
   }, [generating]);
 
-  // Auto-scroll histórico
   useEffect(() => {
     historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, generating]);
@@ -168,7 +175,7 @@ function Dashboard({ user, onLogout }) {
   };
 
   const handleSelect = (id) => {
-    if (id === activeId) return; // já selecionado — não faz nada
+    if (id === activeId) return;
     const p = projects.find(x => x.id === id);
     if (!p) return;
     setActiveId(id);
@@ -176,30 +183,34 @@ function Dashboard({ user, onLogout }) {
     setGeneratedFiles(p.files || null);
     setHistory(p.history || []);
     setError("");
-    // NÃO muda runId → PreviewPanel não reinicia o WC
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) { setError("Digite um prompt para começar."); return; }
+    if (!prompt.trim()) { setError("Digite um prompt para comecar."); return; }
     const keys = getKeys();
-    const key = model === "claude" ? keys.claude : keys.gemini;
-    if (!key) { setShowSettings(true); setError(`Configure sua chave ${model === "claude" ? "Claude" : "Gemini"} primeiro.`); return; }
+    const key = keys[model];
+    if (!key) { setShowSettings(true); setError(`Configure sua chave ${model === "claude" ? "Claude" : model === "deepseek" ? "DeepSeek" : "Gemini"} primeiro.`); return; }
 
     setError("");
     setGenerating(true);
 
     try {
-      const parsed = model === "claude"
-        ? await callClaude(prompt, key)
-        : await callGemini(prompt, key);
+      // 1. Reformulador oculto
+      const enrichedPrompt = await reformulatePrompt(prompt, key, model);
 
-      if (!parsed?.files?.["src/App.jsx"]) throw new Error("Arquivo App.jsx não gerado. Tente novamente.");
+      // 2. Geracao do app
+      let parsed;
+      if (model === "claude") parsed = await callClaude(enrichedPrompt, key);
+      else if (model === "deepseek") parsed = await callDeepSeek(enrichedPrompt, key);
+      else parsed = await callGemini(enrichedPrompt, key);
+
+      if (!parsed?.files?.["src/App.jsx"]) throw new Error("Arquivo App.jsx nao gerado. Tente novamente.");
 
       const files = parsed.files;
       const now = Date.now();
       const newHistory = [...history, { prompt, at: now }];
-      const name = prompt.slice(0, 42).trim() + (prompt.length > 42 ? "…" : "");
-      const newRunId = `run_${now}`; // ID único para essa geração
+      const name = prompt.slice(0, 42).trim() + (prompt.length > 42 ? "..." : "");
+      const newRunId = `run_${now}`;
 
       if (activeId) {
         setProjects(prev => prev.map(p => p.id === activeId
@@ -214,7 +225,7 @@ function Dashboard({ user, onLogout }) {
 
       setGeneratedFiles(files);
       setHistory(newHistory);
-      setRunId(newRunId); // ← AGORA muda runId → PreviewPanel reinicia WC
+      setRunId(newRunId);
       setPrompt("");
 
     } catch (e) {
@@ -246,7 +257,7 @@ function Dashboard({ user, onLogout }) {
             </span>
             {hasPreview && (
               <span style={{ fontSize: 10, color: C.success, background: "rgba(52,211,153,0.1)", padding: "2px 8px", borderRadius: 20, border: "1px solid rgba(52,211,153,0.2)" }}>
-                ● React + Vite
+                React + Vite
               </span>
             )}
           </div>
@@ -256,21 +267,21 @@ function Dashboard({ user, onLogout }) {
               border: `1px solid ${C.error}`, borderRadius: 6,
               fontSize: 11, color: C.error, cursor: "pointer", fontFamily: DM,
             }}>
-              ⚠ Configurar chave {model === "claude" ? "Claude" : "Gemini"}
+              Configurar chave {model === "claude" ? "Claude" : model === "deepseek" ? "DeepSeek" : "Gemini"}
             </button>
           )}
         </div>
 
         {/* Content */}
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-          {/* Área de chat */}
+          {/* Area de chat */}
           <div style={{
             width: hasPreview ? 340 : "100%", flexShrink: 0,
             display: "flex", flexDirection: "column",
             borderRight: hasPreview ? `1px solid ${C.border}` : "none",
             overflow: "hidden",
           }}>
-            {/* Histórico */}
+            {/* Historico */}
             <div style={{
               flex: 1, overflowY: "auto", padding: hasPreview ? "16px" : "0 20%",
               display: "flex", flexDirection: "column",
@@ -285,13 +296,13 @@ function Dashboard({ user, onLogout }) {
                     borderRadius: 20, padding: "5px 14px", marginBottom: 18,
                   }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.yellow, display: "inline-block" }} />
-                    <span style={{ fontSize: 11, color: C.yellow, fontWeight: 600 }}>Gemini 2.5 Flash · React + Vite</span>
+                    <span style={{ fontSize: 11, color: C.yellow, fontWeight: 600 }}>Gemini · Claude · DeepSeek · React + Vite</span>
                   </div>
                   <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1 }}>
                     O que vamos construir?
                   </h2>
                   <p style={{ fontSize: 13, color: C.textMuted }}>
-                    Descreva seu app — a IA gera os arquivos React completos
+                    Descreva seu app - a IA gera os arquivos React completos
                   </p>
                 </div>
               )}
@@ -320,7 +331,7 @@ function Dashboard({ user, onLogout }) {
                       borderRadius: "2px 12px 12px 12px", padding: "7px 11px",
                       fontSize: 11, color: C.yellow, fontFamily: DM,
                     }}>
-                      ✓ App gerado com sucesso
+                      App gerado com sucesso
                     </div>
                   </div>
                 </div>
@@ -369,7 +380,7 @@ function Dashboard({ user, onLogout }) {
                     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleGenerate(); }
                   }}
                   disabled={generating}
-                  placeholder={history.length === 0 ? "Descreva seu app..." : "Descreva uma alteração..."}
+                  placeholder={history.length === 0 ? "Descreva seu app..." : "Descreva uma alteracao..."}
                   style={{
                     width: "100%", minHeight: 56, maxHeight: 140,
                     padding: "13px 14px", background: "transparent",
@@ -385,15 +396,15 @@ function Dashboard({ user, onLogout }) {
                 }}>
                   {/* Model toggle */}
                   <div style={{ display: "flex", gap: 4 }}>
-                    {["gemini", "claude"].map(m => (
-                      <button key={m} onClick={() => setModel(m)} style={{
+                    {MODELS.map(m => (
+                      <button key={m.id} onClick={() => setModel(m.id)} style={{
                         padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                         fontFamily: DM, cursor: "pointer", transition: "all 0.2s",
-                        background: model === m ? C.yellow : "transparent",
-                        border: model === m ? "none" : `1px solid ${C.border}`,
-                        color: model === m ? C.bg : C.textMuted,
+                        background: model === m.id ? C.yellow : "transparent",
+                        border: model === m.id ? "none" : `1px solid ${C.border}`,
+                        color: model === m.id ? C.bg : C.textMuted,
                       }}>
-                        {m === "gemini" ? "⚡ Gemini" : "◆ Claude"}
+                        {m.label}
                       </button>
                     ))}
                   </div>
@@ -410,8 +421,8 @@ function Dashboard({ user, onLogout }) {
                     }}
                   >
                     {generating
-                      ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span>
-                      : "⚡ Gerar"}
+                      ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>...</span>
+                      : "Gerar"}
                   </button>
                 </div>
               </div>
@@ -448,11 +459,10 @@ function Dashboard({ user, onLogout }) {
   );
 }
 
-// ─── ROOT ─────────────────────────────────────────────────────────────────────
+// ─── ROOT ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useLS("zp_user", null);
 
-  // Limpa user objeto antigo
   if (user && typeof user === "object") {
     localStorage.removeItem("zp_user");
     return null;

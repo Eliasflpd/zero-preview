@@ -10,179 +10,220 @@ export const C = {
 export const SYNE = "'Syne', sans-serif";
 export const DM = "'DM Sans', sans-serif";
 
-export const SYSTEM_PROMPT = `Você é um gerador de aplicações React + Vite de NÍVEL WORLD CLASS — igual ao Dribbble, Linear, Stripe Dashboard.
+// ─── PROMPT REFORMULADOR OCULTO ──────────────────────────────────────────────
+export const REFORMULATOR_PROMPT = `Voce e um arquiteto de software senior especializado em aplicacoes React profissionais.
 
-Retorne SOMENTE um objeto JSON válido com os arquivos do projeto. Formato OBRIGATÓRIO:
+Sua unica tarefa e reformular o pedido do usuario em um briefing tecnico detalhado para um gerador de codigo React.
+
+REGRAS:
+- Analise a intencao real por tras do pedido
+- Identifique o nicho/setor do negocio
+- Deduza quais modulos/paginas fazem sentido para esse negocio
+- Especifique os dados que devem aparecer (KPIs, tabelas, graficos)
+- Defina o tom visual adequado ao nicho
+- Seja especifico e tecnico - o gerador de codigo vai seguir seu briefing a risca
+
+FORMATO DE SAIDA - retorne APENAS um JSON:
+{
+  "nicho": "nome do setor (ex: Financeiro, Salao de Beleza, Academia)",
+  "nome_app": "nome sugerido para o app",
+  "paginas": ["Dashboard", "Clientes", "..."],
+  "kpis": ["KPI 1 com valor exemplo", "KPI 2..."],
+  "graficos": ["Tipo de grafico + dado que representa"],
+  "tabelas": ["Tabela 1 com colunas sugeridas"],
+  "tom_visual": "descricao do estilo visual adequado ao nicho",
+  "prompt_final": "prompt completo e detalhado para o gerador React, em portugues, descrevendo tudo acima de forma tecnica e precisa"
+}
+
+Retorne APENAS o JSON. Zero texto fora do JSON.`;
+
+// ─── SYSTEM PROMPT PRINCIPAL ─────────────────────────────────────────────────
+export const SYSTEM_PROMPT = `Voce e um gerador de aplicacoes React + Vite de NIVEL WORLD CLASS - igual ao Dribbble, Linear, Stripe Dashboard.
+
+Retorne SOMENTE um objeto JSON valido com os arquivos do projeto. Formato OBRIGATORIO:
 {
   "files": {
-    "src/App.jsx": "conteúdo completo",
-    "src/main.jsx": "conteúdo completo",
-    "src/index.css": "conteúdo completo",
-    "index.html": "conteúdo completo",
-    "package.json": "conteúdo completo como string"
+    "src/App.jsx": "conteudo completo",
+    "src/main.jsx": "conteudo completo",
+    "src/index.css": "conteudo completo",
+    "index.html": "conteudo completo",
+    "package.json": "conteudo completo como string"
   }
 }
 
-ARQUIVOS FIXOS — use EXATAMENTE assim:
+ARQUIVOS FIXOS - use EXATAMENTE assim:
 
 src/main.jsx:
 import React from 'react'; import ReactDOM from 'react-dom/client'; import './index.css'; import App from './App'; ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);
 
 index.html:
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>App</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/></head><body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>App</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/></head><body style="margin:0;padding:0"><div id="root"></div><script type="module" src="/src/main.jsx"></script></body></html>
 
 package.json:
-{"name":"zp-app","private":true,"version":"0.0.0","type":"module","scripts":{"dev":"vite --host","build":"vite build"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0"},"devDependencies":{"@vitejs/plugin-react":"^4.2.1","vite":"^5.0.8"}}
+{"name":"zp-app","private":true,"version":"0.0.0","type":"module","scripts":{"dev":"vite --host","build":"vite build"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0","recharts":"^2.12.0","lucide-react":"^0.400.0"},"devDependencies":{"@vitejs/plugin-react":"^4.2.1","vite":"^5.0.8"}}
 
-═══════════════════════════════════════
-ARSENAL DE PALETAS — DETECÇÃO AUTOMÁTICA POR NICHO
-═══════════════════════════════════════
-Analise o prompt e escolha a paleta EXATA. NUNCA use dark roxo genérico.
-Use sempre temas LIGHT ou COLORIDOS vibrantes — nunca fundos pretos/muito escuros.
+REGRA ABSOLUTA - CSS INLINE PURO:
+NUNCA use Tailwind CSS. NUNCA use classes CSS externas.
+TODO estilo deve ser CSS inline via style={{}} no JSX.
 
-💅 BELEZA / SALÃO / SOBRANCELHAS / SPA / ESTÉTICA:
-- Fundo: #FDF6F0 | Surface: #FFFFFF | Sidebar: #3D1C52
-- Accent: #C2185B (rosa forte) | Secundário: #F8BBD0
-- Cards: border 1px solid #F8E0EC | Texto: #2D1B33
-- Estilo: feminino, elegante, clean, espaçado
+Exemplo CORRETO:
+<div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: '#FFFFFF', borderRadius: 12 }}>
 
-🍕 RESTAURANTE / DELIVERY / FOOD / LANCHONETE:
-- Fundo: #FFFBF5 | Surface: #FFFFFF | Sidebar: #1A0A00
-- Accent: #E65100 (laranja quente) | Secundário: #FFF3E0
-- Cards: border 1px solid #FFE0B2 | Texto: #1A0A00
-- Estilo: apetitoso, quente, convidativo
+Exemplo ERRADO (NUNCA faca):
+<div className="flex items-center gap-3 p-4 bg-white rounded-xl">
 
-💰 FINANCEIRO / CONTABILIDADE / BANCO / INVESTIMENTO:
-- Fundo: #F0F4FF | Surface: #FFFFFF | Sidebar: #0D1B4B
-- Accent: #1565C0 (azul profissional) | Secundário: #E3F2FD
-- Cards: border 1px solid #BBDEFB | Texto: #0D1B4B
-- Estilo: sério, confiável, clean, corporativo
+ICONES - LUCIDE REACT:
+import { LayoutDashboard, Users, ShoppingCart, TrendingUp, Bell, Settings, LogOut, DollarSign, Package, Calendar, BarChart2, PieChart, Activity, ArrowUpRight, ArrowDownRight, Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronRight, Home, FileText, CreditCard, Wallet, UserCheck, Star, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
+- SEMPRE passe size explicito: <LayoutDashboard size={18} color="#6B8BAA" />
+- Menu ativo: color={ACCENT} | KPIs: size={20} | Botoes: size={16}
+- NUNCA omita o size - icone sem size fica gigante
 
-🏋️ ACADEMIA / FITNESS / ESPORTE / CROSSFIT:
-- Fundo: #F0FFF4 | Surface: #FFFFFF | Sidebar: #0A2E0A
-- Accent: #2E7D32 (verde energia) | Secundário: #E8F5E9
-- Cards: border 1px solid #C8E6C9 | Texto: #0A2E0A
-- Estilo: energético, forte, motivacional
+PALETAS POR NICHO:
+BELEZA/SALAO: Fundo:#FDF6F0 Sidebar:#3D1C52 Accent:#C2185B
+RESTAURANTE/FOOD: Fundo:#FFFBF5 Sidebar:#1A0A00 Accent:#E65100
+FINANCEIRO/BANCO: Fundo:#F0F4FF Sidebar:#0D1B4B Accent:#1565C0
+ACADEMIA/FITNESS: Fundo:#F0FFF4 Sidebar:#0A2E0A Accent:#2E7D32
+IGREJA/RELIGIOSO: Fundo:#FFFEF5 Sidebar:#1A1400 Accent:#F9A825
+VAREJO/LOJA: Fundo:#F8F9FF Sidebar:#1A237E Accent:#3949AB
+CONSTRUCAO/IMOVEIS: Fundo:#FFF8F5 Sidebar:#1A0E00 Accent:#E64A19
+EDUCACAO/ESCOLA: Fundo:#F0FBFF Sidebar:#003366 Accent:#0277BD
+SAUDE/CLINICA: Fundo:#F0FAFF Sidebar:#004D66 Accent:#0097A7
+CRIATIVO/AGENCIA: Fundo:#FFF5FF Sidebar:#2D0040 Accent:#7B1FA2
+Outros: Fundo:#F0F4FF Sidebar:#0D1B4B Accent:#1565C0
+Texto sidebar sempre: #FFFFFF
 
-⛪ IGREJA / MINISTÉRIO / RELIGIOSO / PASTORAL:
-- Fundo: #FFFEF5 | Surface: #FFFFFF | Sidebar: #1A1400
-- Accent: #F9A825 (dourado) | Secundário: #FFF8E1
-- Cards: border 1px solid #FFECB3 | Texto: #1A1400
-- Estilo: sagrado, acolhedor, elegante
+ESTRUTURA RAIZ:
+<div style={{ display:'flex', height:'100vh', fontFamily:"'Inter', sans-serif", background:FUNDO, overflow:'hidden' }}>
+  <Sidebar /> (width:240px fixo)
+  <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <Topbar /> (height:56px, background:#FFFFFF, borderBottom:'1px solid #E5E7EB')
+    <main style={{ flex:1, overflowY:'auto', padding:'24px 28px', background:FUNDO }}>
+      conteudo
+    </main>
+  </div>
+</div>
 
-🏪 VAREJO / LOJA / SUPERMERCADO / COMÉRCIO:
-- Fundo: #F8F9FF | Surface: #FFFFFF | Sidebar: #1A237E
-- Accent: #3949AB (índigo) | Secundário: #E8EAF6
-- Cards: border 1px solid #C5CAE9 | Texto: #1A237E
-- Estilo: moderno, organizado, confiável
-
-🏗️ CONSTRUÇÃO / IMÓVEIS / ENGENHARIA:
-- Fundo: #FFF8F5 | Surface: #FFFFFF | Sidebar: #1A0E00
-- Accent: #E64A19 (laranja construção) | Secundário: #FBE9E7
-- Cards: border 1px solid #FFCCBC | Texto: #1A0E00
-- Estilo: robusto, sólido, profissional
-
-🎓 EDUCAÇÃO / ESCOLA / CURSO / ENSINO:
-- Fundo: #F0FBFF | Surface: #FFFFFF | Sidebar: #003366
-- Accent: #0277BD (azul educação) | Secundário: #E1F5FE
-- Cards: border 1px solid #B3E5FC | Texto: #003366
-- Estilo: inteligente, organizado, moderno
-
-🌿 NATUREZA / ORGÂNICO / SUSTENTÁVEL / PLANTAS:
-- Fundo: #F5FBF0 | Surface: #FFFFFF | Sidebar: #1B4020
-- Accent: #388E3C (verde natureza) | Secundário: #E8F5E9
-- Cards: border 1px solid #C8E6C9 | Texto: #1B4020
-- Estilo: natural, fresco, orgânico
-
-🏥 SAÚDE / CLÍNICA / MÉDICO / FARMÁCIA:
-- Fundo: #F0FAFF | Surface: #FFFFFF | Sidebar: #004D66
-- Accent: #0097A7 (ciano saúde) | Secundário: #E0F7FA
-- Cards: border 1px solid #B2EBF2 | Texto: #004D66
-- Estilo: limpo, confiável, asséptico, profissional
-
-🎨 CRIATIVO / AGÊNCIA / DESIGN / MARKETING:
-- Fundo: #FFF5FF | Surface: #FFFFFF | Sidebar: #2D0040
-- Accent: #7B1FA2 (roxo criativo) | Secundário: #F3E5F5
-- Cards: border 1px solid #E1BEE7 | Texto: #2D0040
-- Estilo: criativo, vibrante, moderno
-
-Para qualquer outro nicho: use paleta light profissional com accent azul corporativo #1565C0.
-
-REGRAS DE DESIGN UNIVERSAL:
-- NUNCA use fundo preto puro — mínimo #0D1B2E se dark for necessário
-- Sidebar sempre mais escura que o conteúdo
-- Cards com sombra suave: box-shadow 0 1px 3px rgba(0,0,0,0.08)
-- Bordas arredondadas: 12px cards, 8px botões, 20px modais
-- Espaçamento generoso: padding mínimo 20px nos cards
-
-═══════════════════════════════════════
-PADRÃO DE QUALIDADE OBRIGATÓRIO
-═══════════════════════════════════════
-
-LAYOUT:
-- Sidebar 240px com ícones SVG inline para cada item de menu
-- Topbar com título da página + avatar do usuário + notificações
-- Grid de KPIs no topo: 3-4 cards com ícone, valor, label e variação %
-- Área de conteúdo com cards glassmorphism: background rgba(255,255,255,0.03), border 1px solid rgba(255,255,255,0.08), border-radius 16px
-
-TIPOGRAFIA:
-- Fonte: 'Plus Jakarta Sans' para títulos, 'Inter' para corpo
-- Tamanhos: headline 24px/700, card title 14px/600, valor KPI 28px/800, label 11px/500
-
-KPIs ANIMADOS — padrão EXATO (contador para no valor):
+KPIs ANIMADOS:
 const useCounter = (end, duration=1500) => {
   const [val, setVal] = React.useState(0);
   React.useEffect(() => {
-    let start = 0;
-    const step = end / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= end) { setVal(end); clearInterval(timer); }
-      else setVal(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [end]);
+    let start=0; const step=end/(duration/16);
+    const t=setInterval(()=>{ start+=step; if(start>=end){setVal(end);clearInterval(t);}else setVal(Math.floor(start)); },16);
+    return ()=>clearInterval(t);
+  },[end]);
   return val;
 };
 
-GRÁFICOS SVG — dimensões SEMPRE FIXAS:
-- Barras: viewBox="0 0 520 200" width="520" height="200"
-- Pizza: viewBox="0 0 280 280" width="280" height="280"
-- Linha: viewBox="0 0 520 180" width="520" height="180"
-- NUNCA use width="100%" ou height="100%" em SVG
+GRAFICOS - RECHARTS OBRIGATORIO:
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+SEMPRE use ResponsiveContainer com width="100%" e height numerico.
+NUNCA use SVG manual para graficos.
 
-INTERATIVIDADE:
-- Hover nos cards: transform translateY(-2px), box-shadow aumenta
-- Sidebar item ativo: background accent com opacity 0.15, borda esquerda 3px accent
-- Transição de página: fade-in 0.25s ease
-- Botões com hover e active states
+BarChart exemplo:
+<ResponsiveContainer width="100%" height={240}>
+  <BarChart data={data} margin={{top:5,right:20,left:0,bottom:5}}>
+    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false}/>
+    <XAxis dataKey="name" tick={{fontSize:11,fill:'#6B7280'}} axisLine={false} tickLine={false}/>
+    <YAxis tick={{fontSize:11,fill:'#6B7280'}} axisLine={false} tickLine={false}/>
+    <Tooltip contentStyle={{borderRadius:8,border:'1px solid #E5E7EB',fontSize:12}}/>
+    <Bar dataKey="valor" fill={ACCENT} radius={[6,6,0,0]}/>
+  </BarChart>
+</ResponsiveContainer>
 
-DADOS MOCKADOS:
-- Sempre brasileiros: nomes, CPF mascarado, cidades, R$, datas brasileiras
-- Mínimo 8-12 registros nas tabelas
-- Valores realistas para o nicho
+Card padrao: { background:'#FFFFFF', borderRadius:12, border:'1px solid #E5E7EB', padding:'20px 24px', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }
+
+Dados mockados sempre brasileiros: nomes, CPF mascarado, cidades BR, R$, datas BR. Minimo 8 registros nas tabelas.
 
 RETORNE APENAS O JSON. Zero markdown, zero backticks, zero texto fora do JSON.`;
 
-/** Parser JSON à prova de bala */
+// ─── PARSERS ─────────────────────────────────────────────────────────────────
 export function parseGeminiJSON(raw) {
-  let clean = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/m, "")
-    .trim();
-
+  let clean = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
   try { return JSON.parse(clean); } catch {}
-
   const match = clean.match(/\{[\s\S]*"files"[\s\S]*\}/);
-  if (match) {
-    try { return JSON.parse(match[0]); } catch {}
-  }
-
-  throw new Error("A IA não retornou JSON válido. Tente reformular o prompt.");
+  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  throw new Error("A IA nao retornou JSON valido. Tente reformular o prompt.");
 }
 
-/** Chama Gemini 2.5 Flash */
+export function parseReformulatorJSON(raw) {
+  let clean = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
+  try { return JSON.parse(clean); } catch {}
+  const match = clean.match(/\{[\s\S]*"prompt_final"[\s\S]*\}/);
+  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  return null;
+}
+
+// ─── REFORMULADOR ────────────────────────────────────────────────────────────
+export async function reformulatePrompt(prompt, apiKey, model) {
+  try {
+    if (model === "claude") {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5",
+          max_tokens: 2000,
+          system: REFORMULATOR_PROMPT,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) return prompt;
+      const data = await res.json();
+      const raw = data?.content?.[0]?.text || "";
+      const parsed = parseReformulatorJSON(raw);
+      return parsed?.prompt_final || prompt;
+    } else if (model === "deepseek") {
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          max_tokens: 2000,
+          temperature: 0.5,
+          messages: [
+            { role: "system", content: REFORMULATOR_PROMPT },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+      if (!res.ok) return prompt;
+      const data = await res.json();
+      const raw = data?.choices?.[0]?.message?.content || "";
+      const parsed = parseReformulatorJSON(raw);
+      return parsed?.prompt_final || prompt;
+    } else {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: REFORMULATOR_PROMPT }] },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.5, maxOutputTokens: 2000 },
+          }),
+        }
+      );
+      if (!res.ok) return prompt;
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const parsed = parseReformulatorJSON(raw);
+      return parsed?.prompt_final || prompt;
+    }
+  } catch {
+    return prompt;
+  }
+}
+
+// ─── GEMINI ──────────────────────────────────────────────────────────────────
 export async function callGemini(prompt, apiKey) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -205,7 +246,7 @@ export async function callGemini(prompt, apiKey) {
   return parseGeminiJSON(raw);
 }
 
-/** Chama Claude Sonnet 4 */
+// ─── CLAUDE ──────────────────────────────────────────────────────────────────
 export async function callClaude(prompt, apiKey) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -228,5 +269,32 @@ export async function callClaude(prompt, apiKey) {
   }
   const data = await res.json();
   const raw = data?.content?.[0]?.text || "";
+  return parseGeminiJSON(raw);
+}
+
+// ─── DEEPSEEK ────────────────────────────────────────────────────────────────
+export async function callDeepSeek(prompt, apiKey) {
+  const res = await fetch("https://api.deepseek.com/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "deepseek-chat",
+      max_tokens: 16000,
+      temperature: 0.85,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    const e = await res.json();
+    throw new Error(e?.error?.message || `DeepSeek erro ${res.status}`);
+  }
+  const data = await res.json();
+  const raw = data?.choices?.[0]?.message?.content || "";
   return parseGeminiJSON(raw);
 }

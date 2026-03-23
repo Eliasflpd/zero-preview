@@ -8,11 +8,15 @@ export default function SettingsModal({ onClose }) {
   const [claudeKey, setClaudeKey] = useState(() => {
     try { return JSON.parse(localStorage.getItem("zp_claude_key")) || ""; } catch { return ""; }
   });
+  const [deepseekKey, setDeepseekKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("zp_deepseek_key")) || ""; } catch { return ""; }
+  });
   const [saved, setSaved] = useState(false);
 
   const save = () => {
     localStorage.setItem("zp_gemini_key", JSON.stringify(geminiKey.trim()));
     localStorage.setItem("zp_claude_key", JSON.stringify(claudeKey.trim()));
+    localStorage.setItem("zp_deepseek_key", JSON.stringify(deepseekKey.trim()));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -53,23 +57,24 @@ export default function SettingsModal({ onClose }) {
         background: C.surface, border: `1px solid ${C.border}`,
         borderRadius: 20, padding: 32, width: 460,
         boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
+        maxHeight: "90vh", overflowY: "auto",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontFamily: SYNE, fontSize: 18, fontWeight: 700, color: C.text, margin: 0 }}>
-            Configurações de IA
+            Configuracoes de IA
           </h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer" }}>×</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer" }}>x</button>
         </div>
 
         <div style={{
           background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.2)",
           borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: C.yellow,
         }}>
-          💡 Configure pelo menos uma chave. O modelo selecionado no chat será usado para gerar.
+          Configure pelo menos uma chave. O modelo selecionado no chat sera usado para gerar.
         </div>
 
         <Field
-          label="Gemini 2.5 Flash (Grátis)"
+          label="Gemini 2.5 Flash (Gratis)"
           value={geminiKey}
           onChange={setGeminiKey}
           placeholder="AIza..."
@@ -86,12 +91,21 @@ export default function SettingsModal({ onClose }) {
           linkText="console.anthropic.com"
         />
 
+        <Field
+          label="DeepSeek V3 (Ultra barato)"
+          value={deepseekKey}
+          onChange={setDeepseekKey}
+          placeholder="sk-..."
+          link="https://platform.deepseek.com/api_keys"
+          linkText="platform.deepseek.com"
+        />
+
         <button onClick={save} style={{
           padding: "10px 22px", background: saved ? C.success : C.yellow,
           border: "none", borderRadius: 9, fontSize: 13, fontWeight: 700,
           fontFamily: DM, color: C.bg, cursor: "pointer", transition: "background 0.3s",
         }}>
-          {saved ? "✓ Salvo!" : "Salvar chaves"}
+          {saved ? "Salvo!" : "Salvar chaves"}
         </button>
       </div>
     </div>
