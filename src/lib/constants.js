@@ -35,43 +35,85 @@ package.json:
 {"name":"zp-app","private":true,"version":"0.0.0","type":"module","scripts":{"dev":"vite --host","build":"vite build"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0"},"devDependencies":{"@vitejs/plugin-react":"^4.2.1","vite":"^5.0.8"}}
 
 ═══════════════════════════════════════
-SISTEMA DE PALETA CONTEXTUAL INTELIGENTE
+ARSENAL DE PALETAS — DETECÇÃO AUTOMÁTICA POR NICHO
 ═══════════════════════════════════════
-Detecte o nicho e aplique a paleta correta:
+Analise o prompt e escolha a paleta EXATA. NUNCA use dark roxo genérico.
+Use sempre temas LIGHT ou COLORIDOS vibrantes — nunca fundos pretos/muito escuros.
 
-🏥 SAÚDE/ESTÉTICA/BELEZA/SALÃO:
-- Fundo: #0D0A14 | Accent: #C084FC (roxo suave) | Cards: rgba(192,132,252,0.08)
-- Secundário: #F472B6 (rosa) | Texto: #F1E8FF
+💅 BELEZA / SALÃO / SOBRANCELHAS / SPA / ESTÉTICA:
+- Fundo: #FDF6F0 | Surface: #FFFFFF | Sidebar: #3D1C52
+- Accent: #C2185B (rosa forte) | Secundário: #F8BBD0
+- Cards: border 1px solid #F8E0EC | Texto: #2D1B33
+- Estilo: feminino, elegante, clean, espaçado
 
-💰 FINANCEIRO/CONTABILIDADE/BANCO:
-- Fundo: #060F1E | Accent: #3B82F6 (azul) | Cards: rgba(59,130,246,0.08)
-- Secundário: #10B981 (verde lucro) | Texto: #E8F4FF
+🍕 RESTAURANTE / DELIVERY / FOOD / LANCHONETE:
+- Fundo: #FFFBF5 | Surface: #FFFFFF | Sidebar: #1A0A00
+- Accent: #E65100 (laranja quente) | Secundário: #FFF3E0
+- Cards: border 1px solid #FFE0B2 | Texto: #1A0A00
+- Estilo: apetitoso, quente, convidativo
 
-🍕 RESTAURANTE/FOOD/DELIVERY:
-- Fundo: #0F0A00 | Accent: #F59E0B (âmbar) | Cards: rgba(245,158,11,0.08)
-- Secundário: #EF4444 (vermelho) | Texto: #FFF8E8
+💰 FINANCEIRO / CONTABILIDADE / BANCO / INVESTIMENTO:
+- Fundo: #F0F4FF | Surface: #FFFFFF | Sidebar: #0D1B4B
+- Accent: #1565C0 (azul profissional) | Secundário: #E3F2FD
+- Cards: border 1px solid #BBDEFB | Texto: #0D1B4B
+- Estilo: sério, confiável, clean, corporativo
 
-⛪ IGREJA/MINISTÉRIO/RELIGIOSO:
-- Fundo: #0A0F1E | Accent: #F59E0B (dourado) | Cards: rgba(245,158,11,0.08)
-- Secundário: #8B5CF6 (púrpura) | Texto: #FFF8E8
+🏋️ ACADEMIA / FITNESS / ESPORTE / CROSSFIT:
+- Fundo: #F0FFF4 | Surface: #FFFFFF | Sidebar: #0A2E0A
+- Accent: #2E7D32 (verde energia) | Secundário: #E8F5E9
+- Cards: border 1px solid #C8E6C9 | Texto: #0A2E0A
+- Estilo: energético, forte, motivacional
 
-🏋️ ACADEMIA/FITNESS/ESPORTE:
-- Fundo: #080C08 | Accent: #22C55E (verde) | Cards: rgba(34,197,94,0.08)
-- Secundário: #F97316 (laranja) | Texto: #E8FFE8
+⛪ IGREJA / MINISTÉRIO / RELIGIOSO / PASTORAL:
+- Fundo: #FFFEF5 | Surface: #FFFFFF | Sidebar: #1A1400
+- Accent: #F9A825 (dourado) | Secundário: #FFF8E1
+- Cards: border 1px solid #FFECB3 | Texto: #1A1400
+- Estilo: sagrado, acolhedor, elegante
 
-🏪 VAREJO/SUPERMERCADO/LOJA:
-- Fundo: #0A0A14 | Accent: #6366F1 (índigo) | Cards: rgba(99,102,241,0.08)
-- Secundário: #F472B6 | Texto: #F0F0FF
+🏪 VAREJO / LOJA / SUPERMERCADO / COMÉRCIO:
+- Fundo: #F8F9FF | Surface: #FFFFFF | Sidebar: #1A237E
+- Accent: #3949AB (índigo) | Secundário: #E8EAF6
+- Cards: border 1px solid #C5CAE9 | Texto: #1A237E
+- Estilo: moderno, organizado, confiável
 
-🏗️ CONSTRUÇÃO/IMÓVEIS/EMPRESA:
-- Fundo: #0A0C0A | Accent: #F97316 (laranja) | Cards: rgba(249,115,22,0.08)
-- Secundário: #64748B | Texto: #F5F5F0
+🏗️ CONSTRUÇÃO / IMÓVEIS / ENGENHARIA:
+- Fundo: #FFF8F5 | Surface: #FFFFFF | Sidebar: #1A0E00
+- Accent: #E64A19 (laranja construção) | Secundário: #FBE9E7
+- Cards: border 1px solid #FFCCBC | Texto: #1A0E00
+- Estilo: robusto, sólido, profissional
 
-🎓 EDUCAÇÃO/ESCOLA/CURSO:
-- Fundo: #060A1E | Accent: #06B6D4 (ciano) | Cards: rgba(6,182,212,0.08)
-- Secundário: #8B5CF6 | Texto: #E8FAFF
+🎓 EDUCAÇÃO / ESCOLA / CURSO / ENSINO:
+- Fundo: #F0FBFF | Surface: #FFFFFF | Sidebar: #003366
+- Accent: #0277BD (azul educação) | Secundário: #E1F5FE
+- Cards: border 1px solid #B3E5FC | Texto: #003366
+- Estilo: inteligente, organizado, moderno
 
-Para qualquer outro nicho: use Linear-style dark com accent inteligente.
+🌿 NATUREZA / ORGÂNICO / SUSTENTÁVEL / PLANTAS:
+- Fundo: #F5FBF0 | Surface: #FFFFFF | Sidebar: #1B4020
+- Accent: #388E3C (verde natureza) | Secundário: #E8F5E9
+- Cards: border 1px solid #C8E6C9 | Texto: #1B4020
+- Estilo: natural, fresco, orgânico
+
+🏥 SAÚDE / CLÍNICA / MÉDICO / FARMÁCIA:
+- Fundo: #F0FAFF | Surface: #FFFFFF | Sidebar: #004D66
+- Accent: #0097A7 (ciano saúde) | Secundário: #E0F7FA
+- Cards: border 1px solid #B2EBF2 | Texto: #004D66
+- Estilo: limpo, confiável, asséptico, profissional
+
+🎨 CRIATIVO / AGÊNCIA / DESIGN / MARKETING:
+- Fundo: #FFF5FF | Surface: #FFFFFF | Sidebar: #2D0040
+- Accent: #7B1FA2 (roxo criativo) | Secundário: #F3E5F5
+- Cards: border 1px solid #E1BEE7 | Texto: #2D0040
+- Estilo: criativo, vibrante, moderno
+
+Para qualquer outro nicho: use paleta light profissional com accent azul corporativo #1565C0.
+
+REGRAS DE DESIGN UNIVERSAL:
+- NUNCA use fundo preto puro — mínimo #0D1B2E se dark for necessário
+- Sidebar sempre mais escura que o conteúdo
+- Cards com sombra suave: box-shadow 0 1px 3px rgba(0,0,0,0.08)
+- Bordas arredondadas: 12px cards, 8px botões, 20px modais
+- Espaçamento generoso: padding mínimo 20px nos cards
 
 ═══════════════════════════════════════
 PADRÃO DE QUALIDADE OBRIGATÓRIO
