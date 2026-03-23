@@ -11,19 +11,23 @@ export default function SettingsModal({ onClose }) {
   const [deepseekKey, setDeepseekKey] = useState(() => {
     try { return JSON.parse(localStorage.getItem("zp_deepseek_key")) || ""; } catch { return ""; }
   });
+  const [grokKey, setGrokKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("zp_grok_key")) || ""; } catch { return ""; }
+  });
   const [saved, setSaved] = useState(false);
 
   const save = () => {
     localStorage.setItem("zp_gemini_key", JSON.stringify(geminiKey.trim()));
     localStorage.setItem("zp_claude_key", JSON.stringify(claudeKey.trim()));
     localStorage.setItem("zp_deepseek_key", JSON.stringify(deepseekKey.trim()));
+    localStorage.setItem("zp_grok_key", JSON.stringify(grokKey.trim()));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const Field = ({ label, value, onChange, placeholder, link, linkText }) => (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
+  const Field = ({ label, value, onChange, placeholder, link, linkText, color }) => (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 11, color: color || C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 7 }}>
         {label}
       </div>
       <input
@@ -34,15 +38,14 @@ export default function SettingsModal({ onClose }) {
           display: "block", width: "100%", padding: "11px 13px",
           background: C.bg, border: `1px solid ${C.border}`,
           borderRadius: 9, fontSize: 13, color: C.text, fontFamily: DM,
-          outline: "none", marginBottom: 6, boxSizing: "border-box",
-          transition: "border-color 0.2s",
+          outline: "none", marginBottom: 5, boxSizing: "border-box",
         }}
-        onFocus={e => e.target.style.borderColor = C.yellow}
+        onFocus={e => e.target.style.borderColor = color || C.yellow}
         onBlur={e => e.target.style.borderColor = C.border}
       />
-      <p style={{ fontSize: 11, color: C.textDim, margin: 0 }}>
+      <p style={{ fontSize: 10, color: C.textDim, margin: 0 }}>
         Obtenha em{" "}
-        <a href={link} target="_blank" rel="noreferrer" style={{ color: C.yellow }}>{linkText}</a>
+        <a href={link} target="_blank" rel="noreferrer" style={{ color: color || C.yellow }}>{linkText}</a>
       </p>
     </div>
   );
@@ -61,51 +64,37 @@ export default function SettingsModal({ onClose }) {
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontFamily: SYNE, fontSize: 18, fontWeight: 700, color: C.text, margin: 0 }}>
-            Configuracoes de IA
+            Configurações de IA
           </h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer" }}>x</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer" }}>×</button>
         </div>
 
-        <div style={{
-          background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.2)",
-          borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: C.yellow,
-        }}>
-          Configure pelo menos uma chave. O modelo selecionado no chat sera usado para gerar.
+        <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 11, color: C.yellow }}>
+          💡 Configure pelo menos uma chave. Selecione o modelo no campo de prompt.
         </div>
 
-        <Field
-          label="Gemini 2.5 Flash (Gratis)"
-          value={geminiKey}
-          onChange={setGeminiKey}
-          placeholder="AIza..."
-          link="https://aistudio.google.com/apikey"
-          linkText="aistudio.google.com"
-        />
+        <Field label="✦ Gemini 2.5 Flash — Grátis" value={geminiKey} onChange={setGeminiKey}
+          placeholder="AIza..." link="https://aistudio.google.com/apikey"
+          linkText="aistudio.google.com" color="#4285F4" />
 
-        <Field
-          label="Claude Sonnet 4 (Premium)"
-          value={claudeKey}
-          onChange={setClaudeKey}
-          placeholder="sk-ant-..."
-          link="https://console.anthropic.com/settings/keys"
-          linkText="console.anthropic.com"
-        />
+        <Field label="◆ Claude Sonnet — Premium" value={claudeKey} onChange={setClaudeKey}
+          placeholder="sk-ant-..." link="https://console.anthropic.com/settings/keys"
+          linkText="console.anthropic.com" color="#CC785C" />
 
-        <Field
-          label="DeepSeek V3 (Ultra barato)"
-          value={deepseekKey}
-          onChange={setDeepseekKey}
-          placeholder="sk-..."
-          link="https://platform.deepseek.com/api_keys"
-          linkText="platform.deepseek.com"
-        />
+        <Field label="🐋 DeepSeek Coder — Econômico" value={deepseekKey} onChange={setDeepseekKey}
+          placeholder="sk-..." link="https://platform.deepseek.com/api_keys"
+          linkText="platform.deepseek.com" color="#0066FF" />
+
+        <Field label="𝕏 Grok — xAI" value={grokKey} onChange={setGrokKey}
+          placeholder="xai-..." link="https://console.x.ai"
+          linkText="console.x.ai" color="#ffffff" />
 
         <button onClick={save} style={{
           padding: "10px 22px", background: saved ? C.success : C.yellow,
           border: "none", borderRadius: 9, fontSize: 13, fontWeight: 700,
           fontFamily: DM, color: C.bg, cursor: "pointer", transition: "background 0.3s",
         }}>
-          {saved ? "Salvo!" : "Salvar chaves"}
+          {saved ? "✓ Salvo!" : "Salvar chaves"}
         </button>
       </div>
     </div>
