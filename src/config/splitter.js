@@ -235,18 +235,13 @@ function buildExtractedFile(comp, originalCode) {
     }
   }
 
-  // Add the component, ensuring export default
+  // Add the component — NEVER use "export default const" (invalid syntax)
+  // Always: write component as-is, then add "export default Name;" at the end
   let compCode = comp.fullMatch;
-  if (!compCode.includes("export default")) {
-    compCode = compCode.replace(
-      /^(function|const)\s+/,
-      "export default $1 "
-    );
-    // If that didn't work, add export at the end
-    if (!compCode.includes("export default")) {
-      compCode += `\n\nexport default ${comp.name};`;
-    }
-  }
+  // Remove any existing "export" or "export default" prefix
+  compCode = compCode.replace(/^export\s+default\s+/, "").replace(/^export\s+/, "");
+  // Add export default as SEPARATE line at the end
+  compCode += `\n\nexport default ${comp.name};`;
 
   file += compCode + "\n";
   return file;
