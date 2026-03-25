@@ -166,17 +166,33 @@ function v8_hasErrorHandling(code) {
 }
 
 // ─── V9: Component Count ────────────────────────────────────────────────────
+// Must detect REAL React components — not constants like THEME, CHART_COLORS
 function v9_hasComponents(code) {
-  const matches = code.match(/(?:function|const)\s+[A-Z][a-zA-Z]+/g) || [];
-  const passed = matches.length >= 5;
+  // Match function/const declarations that are followed by JSX-like patterns
+  // Real components: function Sidebar(...) or const Sidebar = (...) =>
+  const fnComponents = code.match(/function\s+[A-Z][a-zA-Z]+\s*\(/g) || [];
+  const arrowComponents = code.match(/const\s+[A-Z][a-zA-Z]+\s*=\s*\(?[^=]*\)?\s*=>/g) || [];
+  // Class components
+  const classComponents = code.match(/class\s+[A-Z][a-zA-Z]+\s+extends/g) || [];
+
+  // Filter out known non-components: THEME, CHART_COLORS, COLORS, etc.
+  const nonComponents = /^(THEME|CHART_COLORS|COLORS|PALETA|FIXED|API|STATUS|MOCK)/;
+  const allMatches = [
+    ...fnComponents.map(m => m.match(/[A-Z][a-zA-Z]+/)?.[0]).filter(Boolean),
+    ...arrowComponents.map(m => m.match(/const\s+([A-Z][a-zA-Z]+)/)?.[1]).filter(Boolean),
+    ...classComponents.map(m => m.match(/class\s+([A-Z][a-zA-Z]+)/)?.[1]).filter(Boolean),
+  ].filter(name => !nonComponents.test(name));
+
+  const unique = [...new Set(allMatches)];
+  const passed = unique.length >= 5;
 
   return {
     id: "V9",
     name: "Component Count",
     passed,
     message: passed
-      ? `Found ${matches.length} component definitions`
-      : `Only ${matches.length} component(s) found — need at least 5`,
+      ? `Found ${unique.length} components: ${unique.slice(0, 8).join(", ")}`
+      : `Only ${unique.length} component(s): ${unique.join(", ")} — need at least 5`,
   };
 }
 

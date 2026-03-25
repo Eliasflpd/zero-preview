@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { C, DM } from "../config/theme";
 import { generateFiles } from "../config/generator";
 import { checkLicense } from "../lib/api";
-import { pruneProjects, trimProject } from "../lib/storage";
-import useLocalStorage from "../hooks/useLocalStorage";
+import { trimProject } from "../lib/storage";
+import useProjects from "../hooks/useProjects";
 import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
 
@@ -12,7 +12,7 @@ const PreviewPanel = lazy(() => import("../components/PreviewPanel"));
 const SettingsModal = lazy(() => import("../components/SettingsModal"));
 
 export default function Dashboard({ user, onLogout }) {
-  const [projects, setProjects] = useLocalStorage("zp_projects", []);
+  const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
   const [activeId, setActiveId] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [history, setHistory] = useState([]);
@@ -63,7 +63,7 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const handleDelete = (id) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+    removeProject(id);
     if (activeId === id) { setActiveId(null); setGeneratedFiles(null); setPrompt(""); setHistory([]); setThinkSteps([]); }
   };
 
@@ -107,10 +107,10 @@ export default function Dashboard({ user, onLogout }) {
       const newRunId = `run_${now}`;
 
       if (activeId) {
-        setProjects(prev => prev.map(p => p.id === activeId ? trimProject({ ...p, files, lastPrompt: prompt, history: newHistory, updatedAt: now }) : p));
+        updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: prompt, history: newHistory, updatedAt: now }));
       } else {
         const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: prompt, history: newHistory, createdAt: now, updatedAt: now });
-        setProjects(prev => pruneProjects([np, ...prev]));
+        addProject(np);
         setActiveId(np.id);
       }
 
