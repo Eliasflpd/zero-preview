@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import WCManager from "../lib/wcManager";
 import { C, DM } from "../config/theme";
-import { exportToZip } from "../lib/exporter";
+
+const DeployModal = lazy(() => import("./DeployModal"));
 
 function Terminal({ logs }) {
   const ref = useRef();
@@ -34,6 +35,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const [url, setUrl] = useState("");
   const [runtimeError, setRuntimeError] = useState(null);
   const [deviceWidth, setDeviceWidth] = useState("100%");
+  const [showDeploy, setShowDeploy] = useState(false);
   const prevRunId = useRef(null);
   const loadTimer = useRef(null);
 
@@ -158,11 +160,11 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
             }}>Abrir</a>
           )}
           {url && (
-            <button onClick={() => exportToZip(files, projectName)} style={{
-              padding: "4px 10px", background: C.yellowGlow,
-              border: `1px solid rgba(255,208,80,0.3)`, borderRadius: 5,
-              fontSize: 10, color: C.yellow, cursor: "pointer", fontFamily: DM, fontWeight: 600,
-            }}>Exportar ZIP</button>
+            <button onClick={() => setShowDeploy(true)} style={{
+              padding: "4px 10px", background: "rgba(52,211,153,0.1)",
+              border: "1px solid rgba(52,211,153,0.3)", borderRadius: 5,
+              fontSize: 10, color: C.success, cursor: "pointer", fontFamily: DM, fontWeight: 600,
+            }}>Publicar</button>
           )}
           {url && (
             <button onClick={() => { const iframe = document.querySelector('iframe[title="Preview"]'); if (iframe) { iframe.src = iframe.src; setRuntimeError(null); } }} style={{
@@ -222,6 +224,12 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
       </div>
 
       <Terminal logs={logs} />
+
+      {showDeploy && (
+        <Suspense fallback={null}>
+          <DeployModal files={files} projectName={projectName} onClose={() => setShowDeploy(false)} />
+        </Suspense>
+      )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
