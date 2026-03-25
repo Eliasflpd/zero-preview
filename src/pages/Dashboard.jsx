@@ -119,12 +119,12 @@ export default function Dashboard({ user, onLogout }) {
       const result = await generateFiles(
         currentPrompt,
         onProgressFn,
-        generatedFiles?.["src/App.jsx"] || null,
+        generatedFiles?.["src/pages/Dashboard.tsx"] || null,
         (_delta, fullText) => setStreamingCode(fullText),
         history
       );
 
-      if (!result?.files?.["src/App.jsx"]) throw new Error("App.jsx nao gerado. Tente novamente.");
+      if (!result?.files?.["src/pages/Dashboard.tsx"]) throw new Error("App.jsx nao gerado. Tente novamente.");
 
       const files = result.files;
       const now = Date.now();

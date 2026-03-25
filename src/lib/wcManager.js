@@ -1,13 +1,16 @@
 import { WebContainer } from "@webcontainer/api";
 
-const VITE_CONFIG = `import { defineConfig } from 'vite';
+const VITE_CONFIG_TS = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({ plugins: [react()] });`;
+import path from 'path';
+export default defineConfig({
+  plugins: [react()],
+  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+});`;
 
 /**
  * WCManager — Singleton blindado do WebContainer
- * Zero React. Zero side effects externos.
- * Uma instância por sessão do browser. Nunca reinicia.
+ * Suporta diretórios aninhados de qualquer profundidade.
  */
 const WCManager = {
   instance: null,
@@ -17,22 +20,18 @@ const WCManager = {
   booting: false,
   bootPromise: null,
 
-  /** Retorna a instância WC, bootando uma única vez */
   async getWC() {
     if (this.instance) return this.instance;
     if (this.booting) return this.bootPromise;
-
     this.booting = true;
     this.bootPromise = WebContainer.boot().then(wc => {
       this.instance = wc;
       this.booting = false;
       return wc;
     });
-
     return this.bootPromise;
   },
 
-  /** Mata o processo dev anterior com segurança */
   async killDev() {
     if (this.devProcess) {
       try { this.devProcess.kill(); } catch {}
@@ -42,39 +41,44 @@ const WCManager = {
   },
 
   /**
-   * Monta arquivos e inicia o servidor Vite
-   * @param {Object} files - mapa path → conteúdo
-   * @param {Function} onLog - callback(text, type)
-   * @param {Function} onUrl - callback(url) quando server-ready
+   * Converts flat path map to WebContainer FileSystemTree.
+   * Supports ANY depth: "src/components/ui/button.tsx" → nested tree
    */
-  async run(files, onLog, onUrl) {
-    const wc = await this.getWC();
-
-    await this.killDev();
-    onLog("Montando arquivos...", "info");
-
-    // Converter paths flat para FileSystemTree
+  buildTree(files) {
     const tree = {};
     for (const [path, contents] of Object.entries(files)) {
       const parts = path.split("/");
-      if (parts.length === 1) {
-        tree[path] = { file: { contents } };
-      } else {
-        const dir = parts[0];
-        if (!tree[dir]) tree[dir] = { directory: {} };
-        const filename = parts.slice(1).join("/");
-        tree[dir].directory[filename] = { file: { contents } };
+      let current = tree;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i === parts.length - 1) {
+          // Last part = file
+          current[part] = { file: { contents } };
+        } else {
+          // Directory
+          if (!current[part]) current[part] = { directory: {} };
+          current = current[part].directory;
+        }
       }
     }
-    tree["vite.config.js"] = { file: { contents: VITE_CONFIG } };
+    return tree;
+  },
+
+  async run(files, onLog, onUrl) {
+    const wc = await this.getWC();
+    await this.killDev();
+    onLog("Montando arquivos...", "info");
+
+    const tree = this.buildTree(files);
+    // Add vite config (TypeScript-aware with @ alias)
+    tree["vite.config.ts"] = { file: { contents: VITE_CONFIG_TS } };
 
     await wc.mount(tree);
     onLog("Arquivos montados!", "success");
 
-    // Cache de dependências — só instala se package.json mudou
     const pkg = files["package.json"] || "";
     if (pkg !== this.lastPkgJson) {
-      onLog("Instalando dependências...", "info");
+      onLog("Instalando dependencias...", "info");
       const install = await wc.spawn("npm", ["install"]);
       install.output.pipeTo(new WritableStream({
         write(chunk) { onLog(chunk); }
@@ -82,9 +86,9 @@ const WCManager = {
       const code = await install.exit;
       if (code !== 0) throw new Error(`npm install falhou (exit ${code})`);
       this.lastPkgJson = pkg;
-      onLog("Dependências instaladas!", "success");
+      onLog("Dependencias instaladas!", "success");
     } else {
-      onLog("Cache de deps válido — pulando install ⚡", "success");
+      onLog("Cache de deps valido", "success");
     }
 
     onLog("Iniciando Vite...", "info");
@@ -93,7 +97,6 @@ const WCManager = {
       write(chunk) { onLog(chunk); }
     }));
 
-    // server-ready → captura URL e notifica
     wc.on("server-ready", (port, url) => {
       this.serverUrl = url;
       onLog(`Servidor pronto → ${url}`, "success");

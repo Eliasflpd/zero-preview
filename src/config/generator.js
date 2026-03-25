@@ -4,7 +4,7 @@
 
 import { callClaude, callClaudeStream, alertCritical } from "../lib/api";
 import { SYSTEM_PROMPT, REVIEWER_PROMPT } from "./prompts";
-import { FIXED_FILES } from "./templates";
+import { FIXED_FILES, buildNicheCSS } from "./templates";
 import { NICHE_DETECT_PROMPT, getNiche } from "./niches";
 import { analyzePrompt } from "./architect";
 import { validateCode, getValidationSummary } from "./validator";
@@ -52,49 +52,7 @@ function emit(onProgress, step, message, type = "info") {
   onProgress?.({ step, message, type });
 }
 
-// ─── CSS TEMPLATES BY NICHE (eliminates 1 AI call) ──────────────────────────
-function buildNicheCSS(niche) {
-  const p = niche.palette;
-  const font = niche.fonts || "'Inter', sans-serif";
-  return `:root {
-  --bg: ${p.bg};
-  --sidebar: ${p.sidebar};
-  --sidebar-text: ${p.text || '#FFFFFF'};
-  --accent: ${p.accent};
-  --accent-light: ${p.accent}15;
-  --card: #FFFFFF;
-  --border: #E5E7EB;
-  --text: #1A1A2E;
-  --text-muted: #6B7280;
-  --success: #059669;
-  --warning: #F59E0B;
-  --error: #EF4444;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: ${font};
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-#root { min-height: 100vh; }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }`;
-}
+// buildNicheCSS is now imported from templates.js
 
 // ─── EDIT vs REBUILD DISCRIMINATOR ───────────────────────────────────────────
 // Detects if a prompt with previousCode is a small edit or a full rebuild
@@ -183,7 +141,10 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   emit(onProgress, STEPS.ARCHITECT, `${brief.complexity} · ${brief.pages} secoes · ${brief.components.length} componentes`);
 
   // ══ STEP 3: CSS template (no AI call — saves ~4000 tokens) ═════════════════
-  files["src/index.css"] = buildNicheCSS(nicheConfig);
+  files["src/index.css"] = buildNicheCSS(nicheConfig.palette);
+  // Add App.tsx router that imports Dashboard
+  files["src/App.tsx"] = `import Dashboard from "./pages/Dashboard";\nexport default function App() { return <Dashboard />; }`;
+
   emit(onProgress, STEPS.CSS, "Estilos aplicados", "success");
 
   // ══ STEP 4: MEMORIALISTA — Build enhanced prompt ═══════════════════════════
@@ -206,7 +167,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
   // VELOCISTA Level 2: inject cached code as reference
   if (cached && (cached.level === 2 || cached.level === 3)) {
-    const refCode = cached.entry.files?.["src/App.jsx"];
+    const refCode = cached.entry.files?.["src/pages/Dashboard.tsx"];
     if (refCode) {
       extras += `\n\nCODIGO DE REFERENCIA (projeto similar, use como base de estrutura):\n\`\`\`jsx\n${refCode.slice(0, 4000)}\n\`\`\``;
       emit(onProgress, STEPS.CACHE_REUSE, "Reutilizando estrutura de projeto similar");
@@ -216,10 +177,10 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
   emit(onProgress, STEPS.EXECUTOR, "Gerando aplicacao React...");
 
-  const appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
+  const appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS o codigo de src/pages/Dashboard.tsx. Sem markdown. Comece com imports.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
-  files["src/App.jsx"] = appCode.code;
+  files["src/pages/Dashboard.tsx"] = appCode.code;
 
   // ══ STEP 6: MEMORIALISTA — Record + VELOCISTA — Cache ══════════════════════
   const duration = Date.now() - startTime;
@@ -242,7 +203,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
 
   const validation = validateCode(code);
   const summary = getValidationSummary(validation);
-  files["src/App.jsx"] = code;
+  files["src/pages/Dashboard.tsx"] = code;
 
   const duration = Date.now() - startTime;
   recordGeneration({ prompt: prompt.slice(0, 200), nicho: "edit", score: validation.score, duration, success: true });

@@ -84,14 +84,12 @@ function v4_hasBrazilianData(code) {
 // ─── V5: Responsive Design ──────────────────────────────────────────────────
 function v5_hasResponsive(code) {
   const patterns = [
-    "minmax",
-    "auto-fit",
-    "auto-fill",
-    "isMobile",
-    "window.innerWidth",
-    "@media",
-    "repeat(auto",
-    "flexWrap",
+    "minmax", "auto-fit", "auto-fill",
+    "isMobile", "window.innerWidth", "@media",
+    "repeat(auto", "flexWrap",
+    "md:", "lg:", "sm:", // Tailwind responsive breakpoints
+    "grid-cols-1",
+    "hidden md:flex",
   ];
   const found = patterns.filter(p => code.includes(p));
   const passed = found.length >= 1;
@@ -201,15 +199,15 @@ function v9_hasComponents(code) {
 const ALLOWED_PACKAGES = new Set([
   "react", "react-dom", "recharts", "lucide-react",
   "react/jsx-runtime", "react-dom/client",
+  "react-router-dom", "clsx", "tailwind-merge",
 ]);
 
 function v10_noForbiddenPatterns(code) {
-  const hasTailwind = /className="/.test(code);
-  const hasExternalCSS = /import.*\.css/.test(code) && !/import.*index\.css/.test(code);
+  // With the new Tailwind stack, className IS correct. style={{}} is forbidden.
+  const hasInlineStyles = /style=\{\{/.test(code);
   const hasCommonJS = /require\(/.test(code);
   const forbidden = [];
-  if (hasTailwind) forbidden.push('className="" (Tailwind)');
-  if (hasExternalCSS) forbidden.push("external CSS import");
+  if (hasInlineStyles) forbidden.push("style={{}} (use Tailwind className)");
   if (hasCommonJS) forbidden.push("require() (CommonJS)");
   const passed = forbidden.length === 0;
 
@@ -227,27 +225,36 @@ function v10_noForbiddenPatterns(code) {
 function v11_importSafety(code) {
   const problems = [];
 
-  // Check for local file imports that don't exist (only src/App.jsx is generated)
-  const localImports = code.match(/import\s+.*from\s+['"]\.\/[^'"]+['"]/g) || [];
-  for (const imp of localImports) {
-    // Allow: ./index.css (exists), ./App (self-reference unlikely but ok)
-    if (imp.includes("index.css")) continue;
-    // Flag any ./components/X, ./pages/X, ./hooks/X, ./utils/X etc
-    if (/from\s+['"]\.\/(?:components|pages|hooks|utils|lib|services|context)\//.test(imp)) {
-      problems.push(imp.trim());
+  // Allowed @/ imports (Shadcn components + utils that exist in template)
+  const ALLOWED_LOCAL = new Set([
+    "@/components/ui/button", "@/components/ui/card", "@/components/ui/badge", "@/components/ui/input",
+    "@/lib/utils",
+  ]);
+
+  // Check for @/ imports that don't exist in template
+  const atImports = code.match(/from\s+['"]@\/[^'"]+['"]/g) || [];
+  for (const imp of atImports) {
+    const match = imp.match(/from\s+['"]([^'"]+)['"]/);
+    if (match && !ALLOWED_LOCAL.has(match[1])) {
+      problems.push(`${match[1]} (not in template)`);
     }
   }
 
+  // Check for ./ imports (should not exist — everything is defined in same file or @/ path)
+  const localImports = code.match(/from\s+['"]\.\/[^'"]+['"]/g) || [];
+  for (const imp of localImports) {
+    if (imp.includes("index.css")) continue;
+    problems.push(imp.trim() + " (use @/ path or define in same file)");
+  }
+
   // Check for package imports that aren't in ALLOWED_PACKAGES
-  const pkgImports = code.match(/import\s+.*from\s+['"]([^./][^'"]*)['"]/g) || [];
+  const pkgImports = code.match(/import\s+.*from\s+['"]([^./@][^'"]*)['"]/g) || [];
   for (const imp of pkgImports) {
     const match = imp.match(/from\s+['"]([^'"]+)['"]/);
     if (match) {
-      const pkg = match[1].split("/")[0]; // get base package name
-      // @scope/pkg → @scope/pkg
-      const fullPkg = match[1].startsWith("@") ? match[1].split("/").slice(0, 2).join("/") : pkg;
-      if (!ALLOWED_PACKAGES.has(match[1]) && !ALLOWED_PACKAGES.has(fullPkg) && !ALLOWED_PACKAGES.has(pkg)) {
-        problems.push(`${fullPkg} (not in package.json)`);
+      const pkg = match[1].split("/")[0];
+      if (!ALLOWED_PACKAGES.has(match[1]) && !ALLOWED_PACKAGES.has(pkg)) {
+        problems.push(`${pkg} (not in package.json)`);
       }
     }
   }
