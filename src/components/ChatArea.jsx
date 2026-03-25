@@ -2,10 +2,20 @@ import { useRef, useEffect } from "react";
 import { C, SYNE, DM } from "../config/theme";
 import StreamingCode from "./StreamingCode";
 
+const suggestions = [
+  "Dashboard para petshop com agendamento",
+  "Landing page para escritorio de advocacia",
+  "Painel de vendas para e-commerce de roupas",
+  "Sistema de agendamento para clinica medica",
+  "Dashboard financeiro para escola de idiomas",
+  "Cardapio digital para restaurante japones",
+];
+
 export default function ChatArea({
   history, generating, streamingCode, error,
   prompt, onPromptChange, onGenerate,
   licenseInfo, hasPreview, disabled,
+  onSuggestionClick,
 }) {
   const historyEndRef = useRef();
 
@@ -24,8 +34,25 @@ export default function ChatArea({
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.info, display: "inline-block" }} />
               <span style={{ fontSize: 11, color: C.info, fontWeight: 600 }}>Claude Sonnet &middot; React + Vite</span>
             </div>
-            <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1 }}>O que vamos construir?</h2>
+            <h2 style={{ fontSize: 28, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1, background: `linear-gradient(135deg, ${C.text}, ${C.yellow})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              O que vamos construir?
+            </h2>
             <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app — a IA gera os arquivos React completos</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 480, margin: "20px auto 0", textAlign: "left" }}>
+              {suggestions.map(s => (
+                <button key={s} onClick={() => onSuggestionClick(s)} style={{
+                  padding: "10px 14px", background: C.surface, border: `1px solid ${C.border}`,
+                  borderRadius: 10, fontSize: 12, color: C.textMuted, fontFamily: DM,
+                  cursor: "pointer", textAlign: "left", lineHeight: 1.4,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.yellow; e.currentTarget.style.color = C.text; e.currentTarget.style.background = C.surface2; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.background = C.surface; }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -84,7 +111,14 @@ export default function ChatArea({
             </button>
           </div>
         </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6 }}>Enter para gerar &middot; Shift+Enter nova linha</p>
+        {!prompt.trim() && (
+          <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6, lineHeight: 1.4 }}>
+            Dica: seja especifico! &lsquo;Dashboard para petshop com graficos de vendas&rsquo; funciona melhor que &lsquo;faz um app&rsquo;
+          </p>
+        )}
+        {prompt.trim() && (
+          <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6 }}>Enter para gerar &middot; Shift+Enter nova linha</p>
+        )}
       </div>
     </div>
   );

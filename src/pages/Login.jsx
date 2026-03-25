@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { C, SYNE, DM } from "../config/theme";
+import { C, SYNE, DM, MONO } from "../config/theme";
 import { checkLicense, healthCheck } from "../lib/api";
 
 export default function Login({ onLogin }) {
@@ -7,6 +7,8 @@ export default function Login({ onLogin }) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [backendUp, setBackendUp] = useState(null);
+  const [btnHover, setBtnHover] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
 
   useEffect(() => {
     healthCheck().then(setBackendUp);
@@ -35,7 +37,12 @@ export default function Login({ onLogin }) {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DM, position: "relative", overflow: "hidden" }}>
+      {/* Grid background */}
       <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`, backgroundSize: "48px 48px", opacity: 0.2, pointerEvents: "none" }} />
+
+      {/* Animated gradient orb */}
+      <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,208,80,0.08) 0%, transparent 70%)", animation: "pulse 4s ease-in-out infinite", pointerEvents: "none" }} />
+
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420, padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
@@ -46,6 +53,15 @@ export default function Login({ onLogin }) {
           </div>
           <h1 style={{ fontSize: 30, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1.5 }}>Zero Preview</h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>Crie apps React reais com IA.<br />Preview ao vivo via WebContainer.</p>
+
+          {/* Feature pills */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginTop: 16 }}>
+            {["React + Vite", "Preview ao Vivo", "21 Nichos BR", "Claude Sonnet"].map(f => (
+              <span key={f} style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", color: C.yellowDim }}>
+                {f}
+              </span>
+            ))}
+          </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 18, padding: 26, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
           <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>License Key</div>
@@ -58,18 +74,22 @@ export default function Login({ onLogin }) {
             disabled={loading}
             style={{
               display: "block", width: "100%", padding: "11px 13px",
-              background: C.bg, border: `1px solid ${err ? C.error : C.border}`,
-              borderRadius: 9, fontSize: 13, color: C.text, fontFamily: "'JetBrains Mono', monospace",
+              background: C.bg, border: `1px solid ${err ? C.error : inputFocused ? C.yellow : C.border}`,
+              borderRadius: 9, fontSize: 13, color: C.text, fontFamily: MONO,
               outline: "none", marginBottom: err ? 7 : 14, boxSizing: "border-box",
               letterSpacing: 0.5,
+              transition: "all 0.2s ease",
+              boxShadow: inputFocused ? "0 0 0 3px rgba(255,208,80,0.15)" : "none",
             }}
-            onFocus={e => e.target.style.borderColor = C.yellow}
-            onBlur={e => e.target.style.borderColor = err ? C.error : C.border}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
           />
           {err && <p style={{ color: C.error, fontSize: 11, marginBottom: 12 }}>{err}</p>}
           <button
             onClick={submit}
             disabled={loading}
+            onMouseEnter={() => setBtnHover(true)}
+            onMouseLeave={() => setBtnHover(false)}
             style={{
               width: "100%", padding: "12px 0",
               background: loading ? C.yellowDim : C.yellow,
@@ -77,6 +97,9 @@ export default function Login({ onLogin }) {
               fontFamily: DM, color: C.bg,
               cursor: loading ? "wait" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              transition: "all 0.2s ease",
+              transform: btnHover && !loading ? "translateY(-1px)" : "translateY(0)",
+              boxShadow: btnHover && !loading ? "0 4px 16px rgba(255,208,80,0.3)" : "none",
             }}
           >
             {loading && <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#8635;</span>}
@@ -90,6 +113,11 @@ export default function Login({ onLogin }) {
           </div>
           <p style={{ fontSize: 10, color: C.textDim, marginTop: 4 }}>Claude Sonnet via backend seguro</p>
         </div>
+      </div>
+
+      {/* Version badge */}
+      <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
+        <span style={{ fontSize: 9, color: C.textDim, fontFamily: MONO }}>Zero Preview v2.0 — Build {new Date().toISOString().slice(0,10).replace(/-/g,'')}</span>
       </div>
     </div>
   );

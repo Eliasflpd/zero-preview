@@ -164,6 +164,7 @@ export default function Dashboard({ user, onLogout }) {
           hasPreview={hasPreview}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(s => !s)}
+          syncing={syncing}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -175,6 +176,7 @@ export default function Dashboard({ user, onLogout }) {
             prompt={prompt}
             onPromptChange={(v) => { setPrompt(v); setError(""); }}
             onGenerate={handleGenerate}
+            onSuggestionClick={(s) => setPrompt(s)}
             licenseInfo={licenseInfo}
             hasPreview={hasPreview}
             disabled={generating}
