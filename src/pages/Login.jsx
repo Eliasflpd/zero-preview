@@ -109,9 +109,16 @@ export default function Login({ onLogin }) {
         <div style={{ textAlign: "center", marginTop: 14 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10, color: backendUp === null ? C.textDim : backendUp ? C.success : C.error }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: backendUp === null ? C.textDim : backendUp ? C.success : C.error, display: "inline-block", animation: backendUp === null ? "pulse 1.4s ease-in-out infinite" : "none" }} />
-            {backendUp === null ? "Verificando backend..." : backendUp ? "Backend online" : "Backend offline — tente novamente em breve"}
+            {backendUp === null ? "Verificando backend..." : backendUp ? "Backend online" : "Backend offline"}
           </div>
-          <p style={{ fontSize: 10, color: C.textDim, marginTop: 4 }}>Claude Sonnet via backend seguro</p>
+          {backendUp === false && (
+            <button onClick={() => { setBackendUp(null); healthCheck().then(setBackendUp); }} style={{ marginTop: 6, padding: "4px 14px", background: "transparent", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM }}>
+              Verificar novamente
+            </button>
+          )}
+          {backendUp !== false && (
+            <p style={{ fontSize: 10, color: C.textDim, marginTop: 4 }}>Claude Sonnet via backend seguro</p>
+          )}
         </div>
       </div>
 

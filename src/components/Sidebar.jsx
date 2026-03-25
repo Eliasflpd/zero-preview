@@ -132,7 +132,13 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
           Projetos ({projects.length})
         </div>
         {projects.length === 0 && (
-          <div style={{ fontSize: 11, color: C.textDim, padding: "6px 2px", fontStyle: "italic" }}>Nenhum projeto ainda</div>
+          <div style={{ padding: "16px 8px", textAlign: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px" }}>
+              <IconFolder />
+            </div>
+            <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>Nenhum projeto ainda</div>
+            <div style={{ fontSize: 10, color: C.textDim, opacity: 0.6, marginTop: 2 }}>Descreva seu app para comecar</div>
+          </div>
         )}
         {projects.map(p => (
           <div key={p.id} style={{ position: "relative", marginBottom: 2 }}

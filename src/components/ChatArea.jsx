@@ -80,8 +80,18 @@ export default function ChatArea({
         {generating && streamingCode && <StreamingCode code={streamingCode} />}
 
         {error && (
-          <div style={{ marginBottom: 12, padding: "9px 13px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 9 }}>
-            <span style={{ fontSize: 11, color: C.error }}>{error}</span>
+          <div style={{ marginBottom: 12, padding: "12px 14px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10 }}>
+            <div style={{ fontSize: 11, color: C.error, marginBottom: 8, lineHeight: 1.5 }}>{error}</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button onClick={onGenerate} style={{ padding: "4px 12px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600 }}>
+                Tentar novamente
+              </button>
+              {onSuggestionClick && (
+                <button onClick={() => onSuggestionClick("Dashboard simples para minha empresa")} style={{ padding: "4px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM }}>
+                  Usar prompt simples
+                </button>
+              )}
+            </div>
           </div>
         )}
         <div ref={historyEndRef} />

@@ -137,7 +137,15 @@ export default function Dashboard({ user, onLogout }) {
         setTimeout(() => onLogout(), 2000);
         return;
       }
-      setError(e.message || "Erro ao gerar. Tente novamente.");
+      if (e.message === "RATE_LIMITED") {
+        setError("Muitas requisicoes. Aguarde 1 minuto e tente novamente.");
+      } else if (e.message?.includes("Codigo muito pequeno")) {
+        setError("A IA gerou um codigo incompleto. Tente reformular o prompt com mais detalhes.");
+      } else if (e.name === "AbortError" || e.message?.includes("abort")) {
+        setError("A geracao demorou demais e foi cancelada. Tente um prompt mais simples.");
+      } else {
+        setError(e.message || "Erro ao gerar. Tente novamente.");
+      }
     } finally { setGenerating(false); }
   };
 
