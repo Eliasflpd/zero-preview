@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, memo } from "react";
-import { C, SYNE, DM } from "../lib/constants";
+import { C, SYNE, DM } from "../config/theme";
 
 // ─── ÍCONES SVG INLINE ────────────────────────────────────────────────────────
 const IconPlus = () => (

@@ -1,5 +1,5 @@
 import React from "react";
-import { C, SYNE, DM } from "../lib/constants";
+import { C, SYNE, DM } from "../config/theme";
 
 export default class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };

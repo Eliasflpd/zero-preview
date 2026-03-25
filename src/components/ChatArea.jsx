@@ -1,0 +1,86 @@
+import { useRef, useEffect } from "react";
+import { C, SYNE, DM } from "../config/theme";
+import StreamingCode from "./StreamingCode";
+
+export default function ChatArea({
+  history, generating, streamingCode, error,
+  prompt, onPromptChange, onGenerate,
+  licenseInfo, hasPreview, disabled,
+}) {
+  const historyEndRef = useRef();
+
+  useEffect(() => {
+    historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [history, generating]);
+
+  return (
+    <div style={{ width: hasPreview ? 340 : "100%", flexShrink: 0, display: "flex", flexDirection: "column", borderRight: hasPreview ? `1px solid ${C.border}` : "none", overflow: "hidden" }}>
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: "auto", padding: hasPreview ? "16px" : "0 20%", display: "flex", flexDirection: "column", justifyContent: history.length === 0 ? "center" : "flex-start", paddingTop: history.length === 0 ? 0 : 16 }}>
+
+        {history.length === 0 && !generating && (
+          <div style={{ textAlign: "center", padding: "0 0 32px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 20, padding: "5px 14px", marginBottom: 18 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.info, display: "inline-block" }} />
+              <span style={{ fontSize: 11, color: C.info, fontWeight: 600 }}>Claude Sonnet &middot; React + Vite</span>
+            </div>
+            <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1 }}>O que vamos construir?</h2>
+            <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app — a IA gera os arquivos React completos</p>
+          </div>
+        )}
+
+        {history.map((h, i) => (
+          <div key={`hist_${h.at}_${i}`} style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: "12px 12px 2px 12px", padding: "9px 13px", fontSize: 12, color: C.text, maxWidth: "88%", lineHeight: 1.6, fontFamily: DM, whiteSpace: "pre-wrap" }}>{h.prompt}</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <div style={{ width: 20, height: 20, background: C.yellow, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 9, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
+              </div>
+              <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", borderRadius: "2px 12px 12px 12px", padding: "7px 11px", fontSize: 11, color: C.yellow, fontFamily: DM }}>
+                App gerado com sucesso
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {generating && streamingCode && <StreamingCode code={streamingCode} />}
+
+        {error && (
+          <div style={{ marginBottom: 12, padding: "9px 13px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 9 }}>
+            <span style={{ fontSize: 11, color: C.error }}>{error}</span>
+          </div>
+        )}
+        <div ref={historyEndRef} />
+      </div>
+
+      {/* Input */}
+      <div style={{ padding: "8px 16px 14px", flexShrink: 0 }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+          <textarea
+            value={prompt}
+            onChange={e => onPromptChange(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onGenerate(); } }}
+            disabled={disabled}
+            placeholder={history.length === 0 ? "Descreva seu app..." : "Descreva uma alteracao..."}
+            style={{ width: "100%", minHeight: 56, maxHeight: 140, padding: "13px 14px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, color: C.text, fontFamily: DM, lineHeight: 1.6, boxSizing: "border-box" }}
+          />
+          <div style={{ padding: "7px 10px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", background: C.bg, gap: 8 }}>
+            <span style={{ fontSize: 10, color: C.textDim }}>
+              {licenseInfo?.tokens_used != null
+                ? `${((licenseInfo.tokens_used / 1000) | 0)}k / ${((licenseInfo.tokens_limit / 1000) | 0)}k tokens`
+                : "Claude Sonnet"}
+            </span>
+            <button onClick={onGenerate} disabled={disabled || !prompt.trim()} style={{ padding: "6px 14px", background: disabled || !prompt.trim() ? "rgba(255,208,80,0.2)" : C.yellow, border: "none", borderRadius: 7, fontSize: 12, fontWeight: 700, fontFamily: DM, color: C.bg, cursor: disabled || !prompt.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+              {generating
+                ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#8635;</span>
+                : "Gerar"}
+            </button>
+          </div>
+        </div>
+        <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6 }}>Enter para gerar &middot; Shift+Enter nova linha</p>
+      </div>
+    </div>
+  );
+}

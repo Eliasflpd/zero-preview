@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import WCManager from "../lib/wcManager";
-import { C, DM } from "../lib/constants";
+import { C, DM } from "../config/theme";
 
 function Terminal({ logs }) {
   const ref = useRef();

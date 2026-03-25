@@ -1,4 +1,4 @@
-import { C, SYNE, DM } from "../lib/constants";
+import { C, SYNE, DM } from "../config/theme";
 
 export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
   const licenseKey = (() => {
