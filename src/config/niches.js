@@ -1,0 +1,250 @@
+// ─── ZERO PREVIEW — SOMMELIER (Niche Intelligence) ──────────────────────────
+
+export const NICHES = {
+  beauty: {
+    label: "Beleza / Salao",
+    palette: { bg: "#FDF6F0", sidebar: "#3D1C52", accent: "#C2185B", text: "#FFFFFF" },
+    fonts: "Playfair Display, serif",
+    personality: "Elegante, feminino, suave. Fotos de cabelos, unhas, maquiagem.",
+    mockNames: ["Maria Beleza", "Studio Vanessa", "Espaco Glamour"],
+    forbid: ["cores escuras demais", "fontes brutas", "icones industriais"],
+    suggestIcons: ["Scissors", "Heart", "Star", "Calendar", "Users"],
+    suggestCharts: ["appointments-week", "revenue-month"],
+  },
+  food: {
+    label: "Restaurante / Food",
+    palette: { bg: "#FFFBF5", sidebar: "#1A0A00", accent: "#E65100", text: "#FFFFFF" },
+    fonts: "Plus Jakarta Sans, sans-serif",
+    personality: "Acolhedor, apetitoso, quente. Fotos de pratos, cardapio.",
+    mockNames: ["Cantina da Nonna", "Sabor Mineiro", "Restaurante Tropical"],
+    forbid: ["cores frias", "design corporativo", "tabelas complexas"],
+    suggestIcons: ["Utensils", "Coffee", "ShoppingCart", "Clock", "Star"],
+    suggestCharts: ["orders-day", "revenue-month"],
+  },
+  finance: {
+    label: "Financeiro / Banco",
+    palette: { bg: "#F0F4FF", sidebar: "#0D1B4B", accent: "#1565C0", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Serio, confiavel, profissional. Graficos, numeros, KPIs.",
+    mockNames: ["FinancePro", "Banco Digital ZP", "InvestSmart"],
+    forbid: ["cores vibrantes demais", "emojis", "linguagem informal"],
+    suggestIcons: ["DollarSign", "TrendingUp", "PieChart", "CreditCard", "Wallet"],
+    suggestCharts: ["revenue-line", "expenses-bar", "distribution-pie"],
+  },
+  fitness: {
+    label: "Academia / Fitness",
+    palette: { bg: "#F0FFF4", sidebar: "#0A2E0A", accent: "#2E7D32", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Energetico, motivacional, forte. Treinos, planos, progressao.",
+    mockNames: ["PowerFit", "Arena Fitness", "Corpo & Mente"],
+    forbid: ["design delicado", "cores pastel", "fontes cursivas"],
+    suggestIcons: ["Activity", "Users", "Calendar", "TrendingUp", "Clock"],
+    suggestCharts: ["members-month", "attendance-week"],
+  },
+  church: {
+    label: "Igreja / Religioso",
+    palette: { bg: "#FFFEF5", sidebar: "#1A1400", accent: "#F9A825", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Acolhedor, espiritual, comunitario. Eventos, celulas, dizimos.",
+    mockNames: ["Igreja Vida Nova", "Ministerio Restaurar", "Comunidade Fe"],
+    forbid: ["cores agressivas", "linguagem secular", "graficos financeiros expostos"],
+    suggestIcons: ["Heart", "Users", "Calendar", "Home", "BookOpen"],
+    suggestCharts: ["members-growth", "tithes-month"],
+  },
+  retail: {
+    label: "Varejo / Loja",
+    palette: { bg: "#F8F9FF", sidebar: "#1A237E", accent: "#3949AB", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Moderno, comercial, organizado. Estoque, vendas, clientes.",
+    mockNames: ["Loja Central", "MegaStore BR", "Ponto Certo"],
+    forbid: ["design artesanal", "fontes decorativas", "layouts assimetricos"],
+    suggestIcons: ["ShoppingCart", "Package", "BarChart2", "Users", "DollarSign"],
+    suggestCharts: ["sales-line", "inventory-bar", "category-pie"],
+  },
+  construction: {
+    label: "Construcao / Imoveis",
+    palette: { bg: "#FFF8F5", sidebar: "#1A0E00", accent: "#E64A19", text: "#FFFFFF" },
+    fonts: "Plus Jakarta Sans, sans-serif",
+    personality: "Robusto, profissional, terra. Obras, orcamentos, projetos.",
+    mockNames: ["Construtora Alvorada", "Engenharia Total", "CasaPlan"],
+    forbid: ["cores pastel", "design feminino", "icones de comida"],
+    suggestIcons: ["Home", "Wrench", "FileText", "DollarSign", "Calendar"],
+    suggestCharts: ["projects-status", "budget-bar"],
+  },
+  education: {
+    label: "Educacao / Escola",
+    palette: { bg: "#F0FBFF", sidebar: "#003366", accent: "#0277BD", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Didatico, limpo, organizado. Turmas, notas, frequencia.",
+    mockNames: ["Colegio Futuro", "EduPlan", "Escola Saber"],
+    forbid: ["design corporativo pesado", "graficos financeiros", "linguagem tecnica"],
+    suggestIcons: ["BookOpen", "Users", "Calendar", "CheckCircle", "Star"],
+    suggestCharts: ["grades-bar", "attendance-line"],
+  },
+  health: {
+    label: "Saude / Clinica",
+    palette: { bg: "#F0FAFF", sidebar: "#004D66", accent: "#0097A7", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Limpo, confiavel, cuidadoso. Pacientes, consultas, prontuarios.",
+    mockNames: ["Clinica Vida", "SaudeTotal", "Dr. Bem-Estar"],
+    forbid: ["cores agressivas", "design poluido", "linguagem informal"],
+    suggestIcons: ["Heart", "Users", "Calendar", "Activity", "FileText"],
+    suggestCharts: ["appointments-week", "patients-month"],
+  },
+  creative: {
+    label: "Criativo / Agencia",
+    palette: { bg: "#FFF5FF", sidebar: "#2D0040", accent: "#7B1FA2", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Ousado, moderno, artistico. Projetos, clientes, portfolio.",
+    mockNames: ["Studio Criativo", "Agencia Neon", "PixelLab"],
+    forbid: ["design conservador", "cores corporativas", "layouts tabelados"],
+    suggestIcons: ["Palette", "Layers", "Eye", "Star", "Zap"],
+    suggestCharts: ["projects-status", "revenue-area"],
+  },
+  // ─── 10 NEW BRAZILIAN NICHES ───────────────────────────────────────────────
+  law: {
+    label: "Advocacia / Escritorio",
+    palette: { bg: "#F5F5F0", sidebar: "#1A1A2E", accent: "#8B6914", text: "#FFFFFF" },
+    fonts: "Playfair Display, serif",
+    personality: "Serio, autoritativo, classico. Processos, prazos, clientes.",
+    mockNames: ["Oliveira & Associados", "Escritorio Jurislegal", "Advocacia Santos"],
+    forbid: ["cores vibrantes", "design casual", "emojis", "linguagem coloquial"],
+    suggestIcons: ["Scale", "FileText", "Users", "Calendar", "Clock"],
+    suggestCharts: ["cases-status", "deadlines-month"],
+  },
+  vet: {
+    label: "Clinica Veterinaria",
+    palette: { bg: "#F0FFF4", sidebar: "#1B4332", accent: "#2D6A4F", text: "#FFFFFF" },
+    fonts: "Plus Jakarta Sans, sans-serif",
+    personality: "Carinhoso, confiavel, natural. Animais, consultas, vacinas.",
+    mockNames: ["PetVida Vet", "Clinica Amigo Fiel", "VetCare Plus"],
+    forbid: ["design frio", "graficos financeiros expostos", "cores industriais"],
+    suggestIcons: ["Heart", "Calendar", "Activity", "FileText", "Star"],
+    suggestCharts: ["appointments-week", "vaccines-month"],
+  },
+  languages: {
+    label: "Escola de Idiomas",
+    palette: { bg: "#F0F4FF", sidebar: "#1E3A5F", accent: "#2563EB", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Dinamico, global, didatico. Turmas, niveis, horarios.",
+    mockNames: ["LingoSchool", "Fluency Hub", "Centro de Idiomas BR"],
+    forbid: ["design pesado", "tabelas complexas", "linguagem tecnica demais"],
+    suggestIcons: ["Globe", "BookOpen", "Users", "Calendar", "Star"],
+    suggestCharts: ["students-level", "classes-week"],
+  },
+  petshop: {
+    label: "Petshop",
+    palette: { bg: "#FFF8F0", sidebar: "#4A2C0A", accent: "#E88D2A", text: "#FFFFFF" },
+    fonts: "Plus Jakarta Sans, sans-serif",
+    personality: "Divertido, colorido, acolhedor. Produtos, banho e tosa, agenda.",
+    mockNames: ["PetMania", "Mundo Animal", "Au Au Petshop"],
+    forbid: ["design corporativo", "cores escuras", "linguagem formal demais"],
+    suggestIcons: ["ShoppingCart", "Calendar", "Star", "Package", "Heart"],
+    suggestCharts: ["sales-category", "services-week"],
+  },
+  pharmacy: {
+    label: "Farmacia",
+    palette: { bg: "#F0FFF8", sidebar: "#064E3B", accent: "#059669", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Limpo, confiavel, saude. Medicamentos, estoque, clientes.",
+    mockNames: ["Farmacia Saude", "DrogaVida", "Farmacia Popular Plus"],
+    forbid: ["design festivo", "cores quentes demais", "linguagem casual"],
+    suggestIcons: ["Heart", "Package", "ShoppingCart", "Users", "Search"],
+    suggestCharts: ["stock-bar", "sales-month"],
+  },
+  realestate: {
+    label: "Corretora de Imoveis",
+    palette: { bg: "#FFFAF0", sidebar: "#1C1917", accent: "#B45309", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Sofisticado, premium, persuasivo. Imoveis, contratos, visitas.",
+    mockNames: ["Imobiliaria Premium", "Casa & Cia", "BR Imoveis"],
+    forbid: ["design infantil", "cores neon", "linguagem informal"],
+    suggestIcons: ["Home", "MapPin", "DollarSign", "Calendar", "Users"],
+    suggestCharts: ["listings-type", "sales-quarter"],
+  },
+  ministry: {
+    label: "Ministerio / ONG",
+    palette: { bg: "#FFFEF5", sidebar: "#1A1400", accent: "#92400E", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Acolhedor, comunitario, solidario. Voluntarios, eventos, doacoes.",
+    mockNames: ["Ministerio Esperanca", "ONG Maos Solidarias", "Projeto Vida"],
+    forbid: ["design luxuoso", "linguagem corporativa", "cores frias"],
+    suggestIcons: ["Heart", "Users", "Calendar", "Home", "Star"],
+    suggestCharts: ["donations-month", "volunteers-growth"],
+  },
+  automotive: {
+    label: "Mecanica Automotiva",
+    palette: { bg: "#F5F5F5", sidebar: "#1C1917", accent: "#DC2626", text: "#FFFFFF" },
+    fonts: "Syne, sans-serif",
+    personality: "Robusto, tecnico, confiavel. Servicos, orcamentos, veiculos.",
+    mockNames: ["AutoCenter", "Mecanica Rapidao", "Oficina do Joao"],
+    forbid: ["design delicado", "cores pastel", "icones femininos"],
+    suggestIcons: ["Wrench", "Car", "Calendar", "DollarSign", "FileText"],
+    suggestCharts: ["services-type", "revenue-month"],
+  },
+  events: {
+    label: "Buffet / Eventos",
+    palette: { bg: "#FFF5F7", sidebar: "#4A1942", accent: "#BE185D", text: "#FFFFFF" },
+    fonts: "Playfair Display, serif",
+    personality: "Festivo, elegante, celebratorio. Eventos, cardapios, orcamentos.",
+    mockNames: ["Buffet Celebration", "Festa & Sabor", "Eventos Encanto"],
+    forbid: ["design corporativo", "cores apagadas", "graficos tecnicos"],
+    suggestIcons: ["Calendar", "Users", "Star", "Heart", "DollarSign"],
+    suggestCharts: ["events-month", "revenue-type"],
+  },
+  crafts: {
+    label: "E-commerce Artesanato",
+    palette: { bg: "#FFFBF0", sidebar: "#3B1F0B", accent: "#D97706", text: "#FFFFFF" },
+    fonts: "Playfair Display, serif",
+    personality: "Artesanal, caloroso, handmade. Produtos, pedidos, clientes.",
+    mockNames: ["Atelie da Mari", "Feito a Mao", "Artesanato Brasil"],
+    forbid: ["design industrial", "fontes modernas demais", "cores frias"],
+    suggestIcons: ["Package", "ShoppingCart", "Heart", "Star", "Eye"],
+    suggestCharts: ["orders-week", "products-category"],
+  },
+  generic: {
+    label: "Geral",
+    palette: { bg: "#F0F4FF", sidebar: "#0D1B4B", accent: "#1565C0", text: "#FFFFFF" },
+    fonts: "Inter, sans-serif",
+    personality: "Profissional, neutro, limpo. Dashboard padrao.",
+    mockNames: ["Minha Empresa", "Dashboard Pro", "Painel Admin"],
+    forbid: [],
+    suggestIcons: ["LayoutDashboard", "Users", "BarChart2", "Settings", "FileText"],
+    suggestCharts: ["overview-line", "metrics-bar"],
+  },
+};
+
+// All niche IDs for detection
+export const NICHE_IDS = Object.keys(NICHES);
+
+// Detection prompt — returns the niche ID
+export const NICHE_DETECT_PROMPT = `Voce detecta nichos de negocio brasileiros. Responda APENAS com uma das opcoes abaixo (uma unica palavra):
+${NICHE_IDS.join(", ")}
+
+Regras:
+- "salao de beleza" ou "cabeleireiro" → beauty
+- "restaurante" ou "lanchonete" ou "pizzaria" → food
+- "banco" ou "fintech" ou "investimento" → finance
+- "academia" ou "crossfit" ou "personal" → fitness
+- "igreja" ou "culto" ou "congregacao" → church
+- "loja" ou "comercio" ou "pdv" → retail
+- "construtora" ou "obra" ou "engenharia" → construction
+- "escola" ou "faculdade" ou "cursinho" → education
+- "clinica" ou "hospital" ou "consultorio medico" → health
+- "agencia" ou "design" ou "marketing" → creative
+- "advocacia" ou "advogado" ou "juridico" → law
+- "veterinario" ou "vet" ou "animal" → vet
+- "idiomas" ou "ingles" ou "espanhol" → languages
+- "petshop" ou "pet" ou "racao" → petshop
+- "farmacia" ou "drogaria" ou "medicamento" → pharmacy
+- "imobiliaria" ou "corretor" ou "aluguel" → realestate
+- "ministerio" ou "ong" ou "voluntario" → ministry
+- "mecanica" ou "oficina" ou "automovel" → automotive
+- "buffet" ou "evento" ou "festa" ou "casamento" → events
+- "artesanato" ou "handmade" ou "atelie" → crafts
+- Qualquer outro → generic`;
+
+// Get niche config by ID (with fallback)
+export function getNiche(id) {
+  return NICHES[id] || NICHES.generic;
+}
