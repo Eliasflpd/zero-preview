@@ -135,9 +135,19 @@ export default function GitHubSync({ files, projectName, onClose }) {
                 placeholder="ghp_xxxxxxxxxxxx"
                 style={{ display: "block", width: "100%", padding: "10px 13px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 12, color: C.text, fontFamily: MONO, outline: "none", boxSizing: "border-box" }}
               />
-              <p style={{ fontSize: 10, color: C.textDim, marginTop: 4 }}>
-                Crie em <a href="https://github.com/settings/tokens/new?scopes=repo&description=ZeroPreview" target="_blank" rel="noreferrer" style={{ color: C.yellow }}>github.com/settings/tokens</a> com permissao "repo"
-              </p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                <p style={{ fontSize: 10, color: C.textDim, margin: 0 }}>
+                  Crie em <a href="https://github.com/settings/tokens/new?scopes=repo&description=ZeroPreview" target="_blank" rel="noreferrer" style={{ color: C.yellow }}>github.com/settings/tokens</a> com permissao "repo"
+                </p>
+                {token && (
+                  <button onClick={() => { setToken(""); localStorage.removeItem("zp_github_token"); }} style={{ fontSize: 9, color: C.error, background: "none", border: "none", cursor: "pointer", fontFamily: DM }}>
+                    Esquecer token
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 9, color: C.textDim, padding: "4px 0", background: "rgba(245,158,11,0.06)", borderRadius: 4, textAlign: "center", marginTop: 4 }}>
+                O token fica salvo localmente no seu navegador
+              </div>
             </div>
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Nome do repositorio</div>

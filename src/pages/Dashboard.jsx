@@ -10,7 +10,14 @@ import ChatArea from "../components/ChatArea";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
-  return lazy(() => importFn().catch(() => { window.location.reload(); return { default: () => null }; }));
+  return lazy(() => importFn().catch(() => {
+    const reloads = parseInt(sessionStorage.getItem("zp_chunk_reloads") || "0");
+    if (reloads < 2) {
+      sessionStorage.setItem("zp_chunk_reloads", String(reloads + 1));
+      window.location.reload();
+    }
+    return { default: () => null };
+  }));
 }
 const Sidebar = safeLazy(() => import("../components/Sidebar"));
 const PreviewPanel = safeLazy(() => import("../components/PreviewPanel"));

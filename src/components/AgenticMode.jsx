@@ -37,6 +37,18 @@ export default function AgenticMode({ onGenerate, generating, thinkSteps, hasPre
     }
   }, [generating, hasPreview]);
 
+  // Timeout: if stuck in VERIFYING for 30s without preview, go back to CHAT
+  useEffect(() => {
+    if (phase !== PHASES.VERIFYING) return;
+    const timeout = setTimeout(() => {
+      if (!hasPreview) {
+        setPhase(PHASES.CHAT);
+        setMessages(prev => [...prev, { from: "system", text: "A geracao demorou demais. Tente descrever seu negocio de forma mais simples." }]);
+      }
+    }, 30000);
+    return () => clearTimeout(timeout);
+  }, [phase, hasPreview]);
+
   const send = () => {
     const text = input.trim();
     if (!text) return;
