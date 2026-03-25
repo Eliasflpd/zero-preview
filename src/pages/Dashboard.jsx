@@ -4,6 +4,7 @@ import { generateFiles } from "../config/generator";
 import { checkLicense } from "../lib/api";
 import { trimProject } from "../lib/storage";
 import useProjects from "../hooks/useProjects";
+import useVersions from "../hooks/useVersions";
 import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
 
@@ -14,6 +15,7 @@ const DisparadorBridge = lazy(() => import("../components/DisparadorBridge"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
+  const { pushVersion, undo, redo, canUndo, canRedo, versionCount, currentVersion, initProject } = useVersions();
   const [activeId, setActiveId] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [history, setHistory] = useState([]);
@@ -98,6 +100,23 @@ export default function Dashboard({ user, onLogout }) {
     setActiveId(id); setPrompt("");
     setGeneratedFiles(p.files || null);
     setHistory(p.history || []); setError(""); setThinkSteps([]);
+    initProject(id, p.files);
+  };
+
+  const handleUndo = () => {
+    const prev = undo();
+    if (prev) {
+      setGeneratedFiles(prev.files);
+      setRunId(`run_undo_${Date.now()}`);
+    }
+  };
+
+  const handleRedo = () => {
+    const next = redo();
+    if (next) {
+      setGeneratedFiles(next.files);
+      setRunId(`run_redo_${Date.now()}`);
+    }
   };
 
   const handleGenerate = async () => {
@@ -146,6 +165,7 @@ export default function Dashboard({ user, onLogout }) {
       setHistory(newHistory);
       setRunId(newRunId);
       setPrompt("");
+      pushVersion(files, currentPrompt, score);
 
       // Refresh license info after generation
       try {
@@ -201,6 +221,9 @@ export default function Dashboard({ user, onLogout }) {
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(s => !s)}
           syncing={syncing}
+          canUndo={canUndo} canRedo={canRedo}
+          onUndo={handleUndo} onRedo={handleRedo}
+          versionInfo={versionCount > 0 ? `v${currentVersion}/${versionCount}` : null}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
