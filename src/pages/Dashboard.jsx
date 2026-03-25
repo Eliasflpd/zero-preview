@@ -10,6 +10,7 @@ import ChatArea from "../components/ChatArea";
 const Sidebar = lazy(() => import("../components/Sidebar"));
 const PreviewPanel = lazy(() => import("../components/PreviewPanel"));
 const SettingsModal = lazy(() => import("../components/SettingsModal"));
+const DisparadorBridge = lazy(() => import("../components/DisparadorBridge"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -233,6 +234,9 @@ export default function Dashboard({ user, onLogout }) {
           <SettingsModal licenseInfo={licenseInfo} onClose={() => setShowSettings(false)} onLogout={onLogout} />
         </Suspense>
       )}
+
+      {/* Disparador floating bridge — only if admin key exists */}
+      {(() => { const ak = localStorage.getItem("zp_admin_key"); return ak ? <Suspense fallback={null}><DisparadorBridge adminKey={ak} /></Suspense> : null; })()}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
