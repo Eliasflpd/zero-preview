@@ -12,7 +12,11 @@ const Sidebar = lazy(() => import("../components/Sidebar"));
 const PreviewPanel = lazy(() => import("../components/PreviewPanel"));
 const SettingsModal = lazy(() => import("../components/SettingsModal"));
 const DisparadorBridge = lazy(() => import("../components/DisparadorBridge"));
-const AgenticMode = lazy(() => import("../components/AgenticMode"));
+const AgenticMode = lazy(() => import("../components/AgenticMode").catch(() => {
+  // Fallback if chunk fails to load (stale cache after deploy)
+  window.location.reload();
+  return { default: () => null };
+}));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
