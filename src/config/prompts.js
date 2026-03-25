@@ -64,9 +64,14 @@ Ele e importado pelo App.tsx que ja existe.
 Estrutura OBRIGATORIA:
 1. Imports no topo (react, lucide-react, shadcn, recharts, utils)
 2. Dados mockados brasileiros (const data = [...])
-3. Subcomponentes (Sidebar, Header, StatsCards, DataTable, etc)
+3. Subcomponentes com responsabilidade unica (cada um recebe props tipadas)
 4. Componente principal Dashboard com export default
-5. MINIMO 5 subcomponentes definidos no mesmo arquivo
+5. MINIMO 5 subcomponentes, cada um com pelo menos 1 prop tipada:
+   - Sidebar: recebe items[], activeIndex, onSelect
+   - Header: recebe title, userName, onMenuClick
+   - StatsCard: recebe label, value, icon, trend (positivo/negativo)
+   - DataTable: recebe data[], columns
+   - Modal/Panel: recebe open, onClose, children
 
 ═══════════════════════════════════════════════════════
 REGRA #4 — RESPONSIVO MOBILE-FIRST
@@ -116,10 +121,21 @@ Tooltip: <Tooltip formatter={(v) => formatCurrency(Number(v))} />
 ═══════════════════════════════════════════════════════
 REGRA #8 — LOADING + ERROR + EMPTY STATES
 ═══════════════════════════════════════════════════════
-LOADING:
+LOADING — use este padrao (simula fetch real):
 const [loading, setLoading] = useState(true);
-useEffect(() => { setTimeout(() => setLoading(false), 800); }, []);
+const [data, setData] = useState<any>(null);
+useEffect(() => {
+  // Simula fetch de dados — em app real, substituir por fetch()
+  const timer = setTimeout(() => {
+    setData(mockData); // carrega dados mockados
+    setLoading(false);
+  }, 600);
+  return () => clearTimeout(timer);
+}, []);
 if (loading) return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>;
+
+IMPORTANTE: setLoading(false) SEMPRE dentro do callback que carrega dados.
+NUNCA faca setLoading(false) separado dos dados — causa tela branca.
 
 EMPTY:
 {items.length === 0 && <div className="flex flex-col items-center py-12 text-gray-400"><Package size={40} /><p className="mt-2">Nenhum item encontrado</p></div>}
@@ -173,19 +189,41 @@ LEMBRETE FINAL
 - Minimo 5 subcomponentes.
 - O resultado deve parecer um app PROFISSIONAL.`;
 
-export const REVIEWER_PROMPT = `Voce e um REVISOR de codigo React + TypeScript + Tailwind.
-Corrija TODOS os problemas encontrados. Retorne o codigo COMPLETO corrigido.
+export const REVIEWER_PROMPT = `Voce e um REVISOR SENIOR de codigo React + TypeScript + Tailwind + Shadcn/UI.
+Corrija TODOS os problemas. Retorne o codigo COMPLETO corrigido.
 
-CHECKLIST:
-1. Usa Tailwind? Se tem style={{}}, converta pra className
-2. Importa de @/components/ui/? Se reinventa Button/Card, substitua por import
-3. Tem export default? Se nao, adicione
-4. Dados brasileiros? Se tem John/Jane, substitua por Maria/Joao
-5. Tem formatCurrency? Se tem $ hardcoded, use formatCurrency de @/lib/utils
-6. Tem responsividade? Se nao, adicione md: breakpoints
-7. Tem loading state? Se nao, adicione useState(true) + spinner
-8. Renderiza objeto no JSX? Se {obj} onde obj nao e string, corrija pra {obj.prop}
-9. Imports quebrados? Se importa de ./components/X que nao existe, mova pro mesmo arquivo
-10. Icones sem size? Adicione size={18}
+═══ TAILWIND ═══
+1. Se tem style={{}}, CONVERTA pra className com Tailwind
+2. Cores: use var(--accent), var(--sidebar), var(--bg) — NUNCA hex hardcoded em className
+
+═══ SHADCN/UI ═══
+3. Se reinventa Button, Card, Badge ou Input → SUBSTITUA por import de @/components/ui/
+4. APENAS estes imports @/ sao validos: @/components/ui/button, card, badge, input, @/lib/utils
+5. Se importa de @/components/ui/dialog, dropdown, etc → NAO EXISTE. Mova pra inline no arquivo.
+
+═══ TYPESCRIPT ═══
+6. Props de componentes sem tipo? Adicione interface. Ex: interface StatsCardProps { label: string; value: number; }
+7. useState sem tipo quando e objeto? Adicione generic. Ex: useState<Item[]>([])
+8. useEffect sem dependency array? ADICIONE o array (mesmo que vazio [])
+9. .map() sem key? ADICIONE key prop unica
+
+═══ DADOS BR ═══
+10. Nomes em ingles (John, Jane)? SUBSTITUA por Maria Silva, Joao Santos
+11. $ sem ser R$? USE formatCurrency() de @/lib/utils
+12. Datas MM/DD? USE formatDate() de @/lib/utils
+
+═══ ANTI-CRASH ═══
+13. Renderiza objeto no JSX? {obj} onde obj nao e string → CORRIJA pra {obj.prop}
+14. Import de arquivo que nao existe? MOVA a definicao pra dentro do arquivo
+15. Icone sem size? ADICIONE size={18}
+16. export default faltando? ADICIONE
+
+═══ LOADING ═══
+17. setLoading(false) separado dos dados? MOVA pra dentro do callback que carrega dados
+18. Sem loading state? ADICIONE com spinner Tailwind
+
+═══ RESPONSIVO ═══
+19. Layout fixo sem breakpoints? ADICIONE md: e lg: onde necessario
+20. Grid sem responsive? USE grid-cols-1 md:grid-cols-2 lg:grid-cols-4
 
 Retorne APENAS o codigo TSX corrigido. Sem markdown. Sem explicacoes.`;

@@ -23,6 +23,7 @@ export const FIXED_FILES = {
       "autoprefixer": "^10.4.20",
       "postcss": "^8.4.45",
       "tailwindcss": "^3.4.10",
+      "@types/node": "^22.5.0",
       "typescript": "^5.5.4",
       "vite": "^5.4.3",
     }
@@ -47,10 +48,8 @@ export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
-      colors: {
-        sidebar: "var(--sidebar)",
-        accent: "var(--accent)",
-      },
+      // Colors via CSS variables — use bg-[var(--accent)] syntax only (JIT)
+      // Do NOT register as Tailwind named colors to avoid dual system
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
