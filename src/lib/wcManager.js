@@ -69,11 +69,17 @@ const WCManager = {
 
   async run(files, onLog, onUrl) {
     const wc = await this.getWC();
+
+    // CRITICAL: remove previous server-ready listener to prevent accumulation
+    if (this._serverReadyHandler) {
+      try { wc.off?.("server-ready", this._serverReadyHandler); } catch {}
+    }
+    this.serverUrl = null; // Reset — forces iframe to clear
+
     await this.killDev();
     onLog("Montando arquivos...", "info");
 
     const tree = this.buildTree(files);
-    // Add vite config (TypeScript-aware with @ alias)
     tree["vite.config.ts"] = { file: { contents: VITE_CONFIG_TS } };
 
     await wc.mount(tree);
@@ -100,11 +106,13 @@ const WCManager = {
       write(chunk) { onLog(chunk); }
     }));
 
-    wc.on("server-ready", (port, url) => {
+    // Single listener — stored so we can remove it on next run()
+    this._serverReadyHandler = (port, url) => {
       this.serverUrl = url;
       onLog(`Servidor pronto → ${url}`, "success");
       onUrl(url);
-    });
+    };
+    wc.on("server-ready", this._serverReadyHandler);
   },
 };
 

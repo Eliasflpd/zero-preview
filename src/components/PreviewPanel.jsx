@@ -29,9 +29,9 @@ function Terminal({ logs }) {
 }
 
 export default function PreviewPanel({ files, runId, onClose, onAutoFix, projectName }) {
-  const [status, setStatus] = useState(() => WCManager.serverUrl ? "ready" : "booting");
+  const [status, setStatus] = useState("booting");
   const [logs, setLogs] = useState([]);
-  const [url, setUrl] = useState(WCManager.serverUrl || "");
+  const [url, setUrl] = useState("");
   const [runtimeError, setRuntimeError] = useState(null);
   const [deviceWidth, setDeviceWidth] = useState("100%");
   const prevRunId = useRef(null);
