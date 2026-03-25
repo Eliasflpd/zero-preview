@@ -2,7 +2,7 @@
 // Todas as chamadas de IA passam pelo backend Railway via SSE streaming.
 // Nenhuma API key é exposta no cliente.
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://zp-backend-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 
 function getLicenseKey() {
   try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
