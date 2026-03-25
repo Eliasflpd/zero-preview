@@ -10,6 +10,18 @@ import { analyzePrompt } from "./architect";
 import { validateCode, getValidationSummary } from "./validator";
 import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from "../lib/cache";
 
+// ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
+const CONTEXTO_BR = `
+CONTEXTO BRASIL OBRIGATORIO:
+- Valores monetarios SEMPRE em R$ usando: const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+- Metodo de pagamento preferencial: PIX. Inclua PIX em qualquer tela de pagamento ou financeiro.
+- Documentos: CPF (mascarado: ***.***-XX) ou CNPJ em formularios.
+- Nomes brasileiros: Maria Silva, Joao Santos, Ana Oliveira, Carlos Souza, Fernanda Lima, Pedro Costa.
+- Datas no formato DD/MM/AAAA: new Date().toLocaleDateString('pt-BR').
+- Telefone: (11) 98765-4321. CEP: 01310-100. Cidades: Sao Paulo, Rio de Janeiro, Belo Horizonte.
+- Status em portugues: Ativo, Pendente, Cancelado, Concluido.
+- NUNCA use nomes em ingles (John, Jane, Mike). NUNCA use $ sem ser R$. NUNCA use MM/DD/YYYY.`;
+
 function cleanCodeFences(raw) {
   return raw.replace(/^```jsx?\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/m, "").trim();
 }
@@ -84,6 +96,16 @@ function shouldRebuild(prompt, previousCode) {
   // Very long prompts (>150 words) with previousCode suggest a full redesign
   if (prompt.split(/\s+/).length > 150) return true;
 
+  // Layer 4: Structural depth — features that require full architecture change
+  const structuralKeywords = [
+    "login", "auth", "autenticac", "senha", "usuario", "cadastro", "registro de usuario",
+    "pagina", "rota", "router", "navegac", "menu com abas", "tabs", "multiplas telas",
+    "banco de dados", "backend", "api externa", "fetch de dados reais", "integrac",
+    "multiplos componentes", "separar em arquivos", "componentizar", "adiciona sidebar",
+    "adiciona dashboard", "sistema completo", "painel admin",
+  ];
+  if (structuralKeywords.some(k => p.includes(k))) return true;
+
   return false;
 }
 
@@ -149,6 +171,17 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
     extras += `\n\nEXEMPLOS BEM-SUCEDIDOS:\n${topPrompts.map((p, i) => `${i + 1}. "${p}"`).join("\n")}`;
   }
 
+  // Project history insights: learn from past failures
+  if (onProgress._projectHistory) {
+    const pastFails = onProgress._projectHistory
+      .filter(h => h.score && h.score < 50)
+      .slice(0, 3);
+    if (pastFails.length > 0) {
+      const failNotes = pastFails.map(h => `- Prompt "${h.prompt?.slice(0, 60)}" gerou score ${h.score}/100`).join("\n");
+      extras += `\n\nHISTORICO DO PROJETO (evite repetir erros):\n${failNotes}`;
+    }
+  }
+
   // VELOCISTA Level 2: inject cached code as reference
   if (cached && (cached.level === 2 || cached.level === 3)) {
     const refCode = cached.entry.files?.["src/App.jsx"];
@@ -161,7 +194,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
   onProgress?.("Gerando aplicacao React...", "info");
 
-  const appPrompt = `${prompt}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
+  const appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
   files["src/App.jsx"] = appCode.code;
@@ -179,7 +212,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
   onProgress?.("Modo edicao rapida...", "info");
 
-  const editPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\nREGRAS:\n- Retorne o App.jsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Mantenha o objeto THEME existente\n- Mantenha todos os componentes existentes\n- CSS inline, sem Tailwind\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo.`;
+  const editPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\n${CONTEXTO_BR}\n\nREGRAS:\n- Retorne o App.jsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Mantenha o objeto THEME existente\n- Mantenha todos os componentes existentes\n- CSS inline, sem Tailwind\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo.`;
 
   const raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 16000, onCodeStream);
   const code = cleanCodeFences(raw);

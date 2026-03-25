@@ -181,6 +181,12 @@ function v9_hasComponents(code) {
 }
 
 // ─── V10: No Forbidden Patterns ─────────────────────────────────────────────
+// Allowed packages that exist in the generated app's package.json
+const ALLOWED_PACKAGES = new Set([
+  "react", "react-dom", "recharts", "lucide-react",
+  "react/jsx-runtime", "react-dom/client",
+]);
+
 function v10_noForbiddenPatterns(code) {
   const hasTailwind = /className="/.test(code);
   const hasExternalCSS = /import.*\.css/.test(code) && !/import.*index\.css/.test(code);
@@ -201,13 +207,52 @@ function v10_noForbiddenPatterns(code) {
   };
 }
 
+// ─── V11: Import Safety (anti-tela-branca) ──────────────────────────────────
+function v11_importSafety(code) {
+  const problems = [];
+
+  // Check for local file imports that don't exist (only src/App.jsx is generated)
+  const localImports = code.match(/import\s+.*from\s+['"]\.\/[^'"]+['"]/g) || [];
+  for (const imp of localImports) {
+    // Allow: ./index.css (exists), ./App (self-reference unlikely but ok)
+    if (imp.includes("index.css")) continue;
+    // Flag any ./components/X, ./pages/X, ./hooks/X, ./utils/X etc
+    if (/from\s+['"]\.\/(?:components|pages|hooks|utils|lib|services|context)\//.test(imp)) {
+      problems.push(imp.trim());
+    }
+  }
+
+  // Check for package imports that aren't in ALLOWED_PACKAGES
+  const pkgImports = code.match(/import\s+.*from\s+['"]([^./][^'"]*)['"]/g) || [];
+  for (const imp of pkgImports) {
+    const match = imp.match(/from\s+['"]([^'"]+)['"]/);
+    if (match) {
+      const pkg = match[1].split("/")[0]; // get base package name
+      // @scope/pkg → @scope/pkg
+      const fullPkg = match[1].startsWith("@") ? match[1].split("/").slice(0, 2).join("/") : pkg;
+      if (!ALLOWED_PACKAGES.has(match[1]) && !ALLOWED_PACKAGES.has(fullPkg) && !ALLOWED_PACKAGES.has(pkg)) {
+        problems.push(`${fullPkg} (not in package.json)`);
+      }
+    }
+  }
+
+  const passed = problems.length === 0;
+  return {
+    id: "V11",
+    name: "Import Safety",
+    passed,
+    message: passed
+      ? "All imports resolve to valid packages or files"
+      : `Broken imports will cause white screen: ${problems.slice(0, 3).join(", ")}`,
+  };
+}
+
 // ─── Main Validator ─────────────────────────────────────────────────────────
 
 // Returns { score, total, passed, failed, details[] }
-// Each detail: { id: "V1", name: "...", passed: bool, message: "..." }
 export function validateCode(code) {
   if (!code || typeof code !== "string") {
-    return { score: 0, total: 10, passed: 0, failed: 10, details: [], shouldRegenerate: true };
+    return { score: 0, total: 11, passed: 0, failed: 11, details: [], shouldRegenerate: true };
   }
 
   const checks = [
@@ -221,18 +266,23 @@ export function validateCode(code) {
     v8_hasErrorHandling(code),
     v9_hasComponents(code),
     v10_noForbiddenPatterns(code),
+    v11_importSafety(code),
   ];
 
   const passed = checks.filter(c => c.passed).length;
-  const failed = 10 - passed;
+  const failed = checks.length - passed;
+  const score = Math.round((passed / checks.length) * 100);
+
+  // V11 failure is critical — always triggers regeneration
+  const v11Failed = !checks[10].passed;
 
   return {
-    score: passed * 10,
-    total: 10,
+    score,
+    total: checks.length,
     passed,
     failed,
     details: checks,
-    shouldRegenerate: failed >= 3,
+    shouldRegenerate: failed >= 3 || v11Failed,
   };
 }
 

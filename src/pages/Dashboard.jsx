@@ -85,9 +85,13 @@ export default function Dashboard({ user, onLogout }) {
     setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode("");
 
     try {
+      // Attach project history to onProgress for the Memorialista
+      const onProgressFn = (msg) => setThinkSteps(prev => [...prev, msg]);
+      onProgressFn._projectHistory = history;
+
       const result = await generateFiles(
         prompt,
-        (msg) => setThinkSteps(prev => [...prev, msg]),
+        onProgressFn,
         generatedFiles?.["src/App.jsx"] || null,
         (_delta, fullText) => setStreamingCode(fullText)
       );
@@ -97,7 +101,8 @@ export default function Dashboard({ user, onLogout }) {
       const files = result.files;
       const now = Date.now();
       const score = result.validation?.score;
-      const newHistory = [...history, { prompt, at: now, score }];
+      const failedNames = (result.validation?.details || []).filter(d => !d.passed).map(d => d.name);
+      const newHistory = [...history, { prompt, at: now, score, problems: failedNames }];
       const name = prompt.slice(0, 42).trim() + (prompt.length > 42 ? "..." : "");
       const newRunId = `run_${now}`;
 
@@ -177,7 +182,7 @@ export default function Dashboard({ user, onLogout }) {
 
           {hasPreview && (
             <Suspense fallback={null}>
-              <PreviewPanel files={generatedFiles} runId={runId} onClose={() => { setGeneratedFiles(null); setRunId(null); }} />
+              <PreviewPanel files={generatedFiles} runId={runId} projectName={activeProject?.name} onClose={() => { setGeneratedFiles(null); setRunId(null); }} onAutoFix={(fixPrompt) => { setPrompt(fixPrompt); setTimeout(() => handleGenerate(), 100); }} />
             </Suspense>
           )}
         </div>

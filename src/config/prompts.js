@@ -438,6 +438,21 @@ REGRA #17 — TIPOGRAFIA
 - Numeros grandes: fontSize 28, fontWeight 700
 
 ══════════════════════════════════════════════════════════════════════
+REGRA #18 — ANTI-TELA-BRANCA (CRITICO)
+══════════════════════════════════════════════════════════════════════
+NUNCA importe arquivos locais que nao existem. O app gerado tem APENAS 1 arquivo: src/App.jsx.
+PROIBIDO: import X from './components/X' — NAO EXISTE esse arquivo.
+PROIBIDO: import Y from './utils/Y' — NAO EXISTE esse arquivo.
+PROIBIDO: import Z from './hooks/Z' — NAO EXISTE esse arquivo.
+APENAS estes imports sao permitidos:
+- import { ... } from 'react';
+- import { ... } from 'recharts';
+- import { ... } from 'lucide-react';
+- import './index.css'; (ja existe)
+TODO componente, hook, utilitario DEVE ser definido DENTRO do mesmo arquivo App.jsx.
+Import quebrado = TELA BRANCA = app inutilizado.
+
+══════════════════════════════════════════════════════════════════════
 LEMBRETE FINAL
 ══════════════════════════════════════════════════════════════════════
 - Retorne APENAS o codigo JSX completo. Sem JSON, sem markdown, sem explicacoes.
