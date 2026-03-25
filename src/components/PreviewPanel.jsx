@@ -115,11 +115,12 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   }, [addLog, triggerAutoFix]);
 
   useEffect(() => {
-    if (prevRunId.current === runId) {
-      if (WCManager.serverUrl) {
-        setUrl(WCManager.serverUrl);
-        setStatus("ready");
-      }
+    // ALWAYS run when runId changes — even if same value (project reopen)
+    const isRerun = prevRunId.current === runId;
+    if (isRerun && WCManager.serverUrl) {
+      // Server still alive from before — reuse it
+      setUrl(WCManager.serverUrl);
+      setStatus("ready");
       return;
     }
 
@@ -130,11 +131,20 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
     setUrl("");
     setRuntimeError(null);
 
-    // Timeout: if preview doesn't load in 30s, show waiting message
+    // TIMEOUT: if preview doesn't load in 15s, kill and restart
     clearTimeout(loadTimer.current);
     loadTimer.current = setTimeout(() => {
-      if (active && status !== "ready") {
-        addLog("WebContainer demorando mais que o esperado...", "info");
+      if (active && !url) {
+        addLog("Timeout — reiniciando WebContainer...", "info");
+        WCManager.killDev().then(() => {
+          if (active && files && Object.keys(files).length > 0) {
+            WCManager.run(
+              files,
+              (text, type) => { if (active) addLog(text, type); },
+              (serverUrl) => { if (active) { setUrl(serverUrl); setStatus("ready"); clearTimeout(loadTimer.current); } }
+            ).catch(e => { if (active) { addLog(e.message, "error"); setStatus("error"); } });
+          }
+        });
       }
     }, 15000);
 

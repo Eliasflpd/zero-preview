@@ -11,10 +11,6 @@ export default defineConfig({
   resolve: { alias: { '@': resolve(__dirname, './src') } },
 });`;
 
-/**
- * WCManager — Singleton blindado do WebContainer
- * Suporta diretórios aninhados de qualquer profundidade.
- */
 const WCManager = {
   instance: null,
   devProcess: null,
@@ -22,6 +18,8 @@ const WCManager = {
   serverUrl: null,
   booting: false,
   bootPromise: null,
+  _serverReadyHandler: null,
+  _running: false,
 
   async getWC() {
     if (this.instance) return this.instance;
@@ -36,17 +34,14 @@ const WCManager = {
   },
 
   async killDev() {
+    this._running = false;
     if (this.devProcess) {
       try { this.devProcess.kill(); } catch {}
       this.devProcess = null;
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 400));
     }
   },
 
-  /**
-   * Converts flat path map to WebContainer FileSystemTree.
-   * Supports ANY depth: "src/components/ui/button.tsx" → nested tree
-   */
   buildTree(files) {
     const tree = {};
     for (const [path, contents] of Object.entries(files)) {
@@ -55,10 +50,8 @@ const WCManager = {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (i === parts.length - 1) {
-          // Last part = file
           current[part] = { file: { contents } };
         } else {
-          // Directory
           if (!current[part]) current[part] = { directory: {} };
           current = current[part].directory;
         }
@@ -68,15 +61,22 @@ const WCManager = {
   },
 
   async run(files, onLog, onUrl) {
+    // Prevent concurrent runs
+    if (this._running) {
+      await this.killDev();
+    }
+    this._running = true;
+
     const wc = await this.getWC();
 
-    // CRITICAL: remove previous server-ready listener to prevent accumulation
+    // Remove previous listener
     if (this._serverReadyHandler) {
       try { wc.off?.("server-ready", this._serverReadyHandler); } catch {}
     }
-    this.serverUrl = null; // Reset — forces iframe to clear
+    this.serverUrl = null;
 
     await this.killDev();
+    this._running = true; // reset after killDev
     onLog("Montando arquivos...", "info");
 
     const tree = this.buildTree(files);
@@ -106,9 +106,9 @@ const WCManager = {
       write(chunk) { onLog(chunk); }
     }));
 
-    // Single listener — stored so we can remove it on next run()
     this._serverReadyHandler = (port, url) => {
       this.serverUrl = url;
+      this._running = false;
       onLog(`Servidor pronto → ${url}`, "success");
       onUrl(url);
     };
