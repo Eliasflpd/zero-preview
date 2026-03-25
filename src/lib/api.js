@@ -223,6 +223,41 @@ export async function markRead(adminKey, ids) {
   });
 }
 
+// ─── CLAUDE AGENT — autonomous tool-use loop ─────────────────────────────────
+export async function callClaudeAgent(prompt, files, onProgress) {
+  const licenseKey = getLicenseKey();
+  if (!licenseKey) throw new Error("Licenca nao configurada.");
+
+  onProgress?.("Agente Claude iniciando...");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 300000); // 5min timeout
+
+  const res = await fetch(`${API_BASE}/claude-agent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-license-key": licenseKey,
+    },
+    signal: controller.signal,
+    body: JSON.stringify({ prompt, files }),
+  });
+
+  clearTimeout(timeout);
+
+  if (res.status === 503) throw new Error("AGENT_UNAVAILABLE");
+  if (res.status === 401) throw new Error("LICENSE_INVALID");
+  if (res.status === 403) throw new Error("LICENSE_EXPIRED");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Erro do agente: ${res.status}`);
+  }
+
+  const data = await res.json();
+  onProgress?.(`Agente completou em ${data.iterations} iteracoes (${data.tokens} tokens)`);
+  return data; // { files, iterations, tokens }
+}
+
 // ─── ALERT — report critical errors to Discord via backend ───────────────────
 export function alertCritical(type, prompt, score) {
   const licenseKey = getLicenseKey();

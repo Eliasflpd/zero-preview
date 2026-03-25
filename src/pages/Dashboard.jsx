@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { C, DM } from "../config/theme";
 import { generateFiles } from "../config/generator";
-import { checkLicense } from "../lib/api";
+import { checkLicense, callClaudeAgent } from "../lib/api";
 import { trimProject } from "../lib/storage";
 import useProjects from "../hooks/useProjects";
 import useVersions from "../hooks/useVersions";
@@ -124,6 +124,50 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
+  // Claude Agent mode — autonomous multi-file editing
+  const handleAgentMode = async (agentPrompt) => {
+    if (!agentPrompt?.trim()) return;
+    setError(""); setGenerating(true); setThinkSteps([]);
+    setThinkSteps([{ step: "EXECUTOR", message: "Agente Claude trabalhando autonomamente..." }]);
+
+    try {
+      const result = await callClaudeAgent(
+        agentPrompt,
+        generatedFiles || {},
+        (msg) => setThinkSteps(prev => [...prev, { step: "EXECUTOR", message: msg }])
+      );
+
+      if (result?.files && Object.keys(result.files).length > 0) {
+        const merged = { ...(generatedFiles || {}), ...result.files };
+        const now = Date.now();
+        const score = null;
+        const newHistory = [...history, { prompt: agentPrompt, at: now, score, agent: true }];
+
+        if (activeId) {
+          updateProject(activeId, p => trimProject({ ...p, files: merged, lastPrompt: agentPrompt, history: newHistory, updatedAt: now }));
+        } else {
+          const name = agentPrompt.slice(0, 42) + (agentPrompt.length > 42 ? "..." : "");
+          const np = trimProject({ id: `p_${now}`, name, files: merged, lastPrompt: agentPrompt, history: newHistory, createdAt: now, updatedAt: now });
+          addProject(np);
+          setActiveId(np.id);
+        }
+
+        setGeneratedFiles(merged);
+        setHistory(newHistory);
+        setRunId(`run_agent_${now}`);
+        setPrompt("");
+        pushVersion(merged, agentPrompt, null);
+        setThinkSteps(prev => [...prev, { step: "DONE", message: `Agente completou (${result.iterations} iteracoes, ${result.tokens} tokens)` }]);
+      }
+    } catch (e) {
+      if (e.message === "AGENT_UNAVAILABLE") {
+        setError("Agente Claude indisponivel (sem creditos Anthropic). Use o modo normal.");
+      } else {
+        setError(e.message || "Erro do agente.");
+      }
+    } finally { setGenerating(false); }
+  };
+
   // Agentic mode generates with a rich briefing instead of raw prompt
   const handleAgenticGenerate = (briefing) => {
     promptRef.current = briefing;
@@ -238,6 +282,10 @@ export default function Dashboard({ user, onLogout }) {
           versionInfo={versionCount > 0 ? `v${currentVersion}/${versionCount}` : null}
           agenticMode={agenticMode}
           onToggleAgentic={() => setAgenticMode(a => !a)}
+          onAgentMode={() => {
+            const p = promptRef.current || prompt;
+            if (p.trim()) handleAgentMode(p);
+          }}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>

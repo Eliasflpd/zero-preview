@@ -1,6 +1,6 @@
 import { C, SYNE, DM } from "../config/theme";
 
-export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic }) {
+export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode }) {
   const undoRedoBtn = (label, icon, enabled, onClick) => (
     <button onClick={onClick} disabled={!enabled} style={{
       background: "none", border: `1px solid ${enabled ? C.border : "transparent"}`,
@@ -57,8 +57,21 @@ export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleS
           border: `1px solid ${agenticMode ? "rgba(255,208,80,0.4)" : C.border}`,
           color: agenticMode ? C.yellow : C.textDim,
         }}>
-          {agenticMode ? "Modo Agente ON" : "Modo Agente"}
+          {agenticMode ? "Consultor ON" : "Consultor"}
         </button>
+
+        {/* Claude Agent — autonomous mode */}
+        {hasPreview && (
+          <button onClick={onAgentMode} title="Claude Agent — edita arquivos autonomamente" style={{
+            padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
+            fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
+            background: "rgba(168,85,247,0.1)",
+            border: "1px solid rgba(168,85,247,0.3)",
+            color: "#A855F7",
+          }}>
+            Agent
+          </button>
+        )}
 
         {hasPreview && (
           <span style={{ fontSize: 9, color: C.success, background: "rgba(52,211,153,0.08)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(52,211,153,0.2)", fontFamily: DM }}>
