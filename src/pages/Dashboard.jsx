@@ -55,6 +55,27 @@ export default function Dashboard({ user, onLogout }) {
 
   useEffect(() => { if (generating) setThinkSteps([]); }, [generating]);
 
+  // ─── ONBOARDING: auto-generate on first login ────────────────────────────
+  const onboardedRef = useRef(false);
+  useEffect(() => {
+    if (onboardedRef.current) return;
+    if (projects.length > 0 || history.length > 0 || generating) return;
+    // Check if this is truly first time (not just empty after delete)
+    const hasEverGenerated = localStorage.getItem("zp_onboarded");
+    if (hasEverGenerated) return;
+    onboardedRef.current = true;
+    // Auto-generate with a proven prompt after a short delay
+    const timer = setTimeout(() => {
+      const onboardPrompt = "Dashboard para petshop com graficos de vendas mensais, tabela de clientes e agendamento de banho e tosa";
+      promptRef.current = onboardPrompt;
+      setPrompt(onboardPrompt);
+      localStorage.setItem("zp_onboarded", "true");
+      // Don't auto-trigger — let the user see the prompt first and click Gerar
+      // This way they understand what happened
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [projects, history, generating]);
+
   const activeProject = projects.find(p => p.id === activeId);
   const hasPreview = !!generatedFiles;
   const isMobile = () => window.innerWidth <= 768;
@@ -184,8 +205,9 @@ export default function Dashboard({ user, onLogout }) {
             generating={generating}
             streamingCode={streamingCode}
             error={error}
+            thinkSteps={thinkSteps}
             prompt={prompt}
-            onPromptChange={(v) => { setPrompt(v); setError(""); }}
+            onPromptChange={(v) => { promptRef.current = v; setPrompt(v); setError(""); }}
             onGenerate={handleGenerate}
             onSuggestionClick={(s) => setPrompt(s)}
             licenseInfo={licenseInfo}

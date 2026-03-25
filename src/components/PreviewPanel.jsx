@@ -33,6 +33,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const [logs, setLogs] = useState([]);
   const [url, setUrl] = useState(WCManager.serverUrl || "");
   const [runtimeError, setRuntimeError] = useState(null);
+  const [deviceWidth, setDeviceWidth] = useState("100%");
   const prevRunId = useRef(null);
   const loadTimer = useRef(null);
 
@@ -130,6 +131,23 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           </div>
           <span style={{ fontSize: 11, color: statusInfo.color, fontFamily: DM }}>{statusInfo.label}</span>
         </div>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {[
+            { label: "Mobile", w: "375px", icon: "M" },
+            { label: "Tablet", w: "768px", icon: "T" },
+            { label: "Desktop", w: "100%", icon: "D" },
+          ].map(d => (
+            <button key={d.w} onClick={() => setDeviceWidth(d.w)} title={d.label} style={{
+              padding: "3px 8px", borderRadius: 5, fontSize: 9, fontWeight: 600,
+              fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
+              background: deviceWidth === d.w ? "rgba(255,208,80,0.15)" : "transparent",
+              border: `1px solid ${deviceWidth === d.w ? "rgba(255,208,80,0.3)" : C.border}`,
+              color: deviceWidth === d.w ? C.yellow : C.textDim,
+            }}>
+              {d.icon}
+            </button>
+          ))}
+        </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {url && (
             <a href={url} target="_blank" rel="noreferrer" style={{
@@ -172,7 +190,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           </div>
         )}
         {url && (
-          <iframe src={url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style={{ width: "100%", height: "100%", border: "none" }} title="Preview" />
+          <iframe src={url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style={{ width: deviceWidth, maxWidth: "100%", height: "100%", border: "none", margin: deviceWidth !== "100%" ? "0 auto" : "0", display: "block", transition: "width 0.3s ease" }} title="Preview" />
         )}
 
         {/* Runtime error overlay */}

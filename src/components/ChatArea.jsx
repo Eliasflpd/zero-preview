@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { C, SYNE, DM } from "../config/theme";
 import StreamingCode from "./StreamingCode";
+import GenerationProgress from "./GenerationProgress";
 
 const suggestions = [
   "Dashboard para petshop com agendamento",
@@ -12,7 +13,7 @@ const suggestions = [
 ];
 
 export default function ChatArea({
-  history, generating, streamingCode, error,
+  history, generating, streamingCode, error, thinkSteps,
   prompt, onPromptChange, onGenerate,
   licenseInfo, hasPreview, disabled,
   onSuggestionClick,
@@ -77,6 +78,10 @@ export default function ChatArea({
           </div>
         ))}
 
+        {(generating || (thinkSteps && thinkSteps.length > 0 && !hasPreview)) && (
+          <GenerationProgress steps={thinkSteps || []} generating={generating} />
+        )}
+
         {generating && streamingCode && <StreamingCode code={streamingCode} />}
 
         {error && (
@@ -86,7 +91,7 @@ export default function ChatArea({
               <button onClick={onGenerate} style={{ padding: "4px 12px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600 }}>
                 Tentar novamente
               </button>
-              {onSuggestionClick && (
+              {typeof onSuggestionClick === "function" && (
                 <button onClick={() => onSuggestionClick("Dashboard simples para minha empresa")} style={{ padding: "4px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM }}>
                   Usar prompt simples
                 </button>

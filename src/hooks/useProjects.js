@@ -38,9 +38,13 @@ export default function useProjects() {
           const remoteIds = new Set(remote.map(p => p.id));
           const localOnly = local.filter(p => !remoteIds.has(p.id));
 
-          // Push local-only projects to Supabase (best-effort)
+          // Push local-only projects to Supabase, replace local id with server id
+          const uploadedLocalIds = new Set();
           for (const p of localOnly.slice(0, 10)) {
-            try { await saveProject(p); } catch {}
+            try {
+              const saved = await saveProject(p);
+              if (saved?.id) uploadedLocalIds.add(p.id); // mark as synced
+            } catch {} // keep in local for next mount
           }
 
           // Merge: for shared IDs, keep whichever has newer updatedAt
@@ -56,7 +60,6 @@ export default function useProjects() {
               updatedAt: new Date(p.updated_at).getTime(),
             };
             const localVersion = localMap.get(p.id);
-            // If local is newer, keep local and push to Supabase
             if (localVersion && localVersion.updatedAt > remoteFormatted.updatedAt) {
               saveProject(localVersion).catch(() => {});
               return localVersion;
@@ -64,9 +67,9 @@ export default function useProjects() {
             return remoteFormatted;
           });
 
-          // Add local-only projects that were uploaded
+          // Only add local-only projects that FAILED to upload (not yet in Supabase)
           for (const p of localOnly) {
-            merged.push(p);
+            if (!uploadedLocalIds.has(p.id)) merged.push(p);
           }
 
           setProjects(merged.slice(0, 50));
