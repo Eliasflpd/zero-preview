@@ -225,9 +225,19 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
   emit(onProgress, STEPS.EDIT, "Modo edicao rapida...");
 
-  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\n${CONTEXTO_BR}\n\nREGRAS:\n- Retorne o Dashboard.tsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Use Tailwind CSS (className), NUNCA style={{}}\n- Mantenha todos os subcomponentes\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo TSX.`;
+  // Edit prompt is compact — fits in Groq's context easily
+  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Mantenha tudo que funciona. Aplique apenas a mudanca pedida. Use Tailwind. Sem markdown.`;
 
-  const raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 16000, onCodeStream);
+  // Use non-streaming callClaude — goes through callWithFallback on backend
+  // This avoids the Claude streaming empty response issue
+  let raw;
+  try {
+    raw = await callClaude("Voce edita codigo React+TypeScript+Tailwind. Retorne APENAS o codigo modificado completo. Sem explicacao.", editPrompt, 8192);
+  } catch (e) {
+    if (isAuthError(e)) throw e;
+    // If non-streaming also fails, try streaming as last resort
+    raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 8192, onCodeStream);
+  }
   const code = cleanCodeFences(raw);
   if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
