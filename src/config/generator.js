@@ -2,7 +2,7 @@
 // Pipeline: VELOCISTA → SOMMELIER → ARQUITETO → EXECUTOR → CRITICO → MEMORIALISTA
 // v2: auto-regenerate, CSS templates, silent review, edit mode, real cache L2
 
-import { callClaude, callClaudeStream } from "../lib/api";
+import { callClaude, callClaudeStream, alertCritical } from "../lib/api";
 import { SYSTEM_PROMPT, REVIEWER_PROMPT } from "./prompts";
 import { FIXED_FILES } from "./templates";
 import { NICHE_DETECT_PROMPT, getNiche } from "./niches";
@@ -300,6 +300,15 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
 
     // Score < 40 on first attempt — will retry
     if (attempt === 0 && validation.score < 40) continue;
+  }
+
+  // Alert Discord if still critical after all attempts
+  if (validation.score < 40) {
+    alertCritical("SCORE_BAIXO", appPrompt.slice(0, 100), validation.score);
+  }
+  const v11 = validation.details?.find(d => d.id === "V11");
+  if (v11 && !v11.passed) {
+    alertCritical("V11_FALHOU", appPrompt.slice(0, 100), validation.score);
   }
 
   return { code: appCode, score: validation.score, validation, summary };

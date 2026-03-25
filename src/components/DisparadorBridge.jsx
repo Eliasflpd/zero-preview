@@ -71,6 +71,7 @@ export default function DisparadorBridge({ adminKey }) {
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
+        title="Disparador — Code ↔ Elias ↔ Claudin"
         style={{
           position: "fixed", bottom: 20, right: 20, zIndex: 900,
           width: 44, height: 44, borderRadius: 12,

@@ -223,6 +223,17 @@ export async function markRead(adminKey, ids) {
   });
 }
 
+// ─── ALERT — report critical errors to Discord via backend ───────────────────
+export function alertCritical(type, prompt, score) {
+  const licenseKey = getLicenseKey();
+  if (!licenseKey) return;
+  fetch(`${API_BASE}/alert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-license-key": licenseKey },
+    body: JSON.stringify({ type, prompt, score }),
+  }).catch(() => {}); // fire and forget
+}
+
 // ─── HEALTH CHECK ────────────────────────────────────────────────────────────
 export async function healthCheck() {
   try {
