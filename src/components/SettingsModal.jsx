@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C, SYNE, DM, MONO } from "../config/theme";
-import { fetchAdminDashboard } from "../lib/api";
+import { fetchAdminDashboard, sendMessage, getMessages } from "../lib/api";
 
 // ─── STATUS COLORS ───────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -171,6 +171,117 @@ function AdminTab() {
   );
 }
 
+// ─── DISPARADOR TAB — Canal de mensagens entre agentes ───────────────────────
+const SENDER_COLORS = {
+  code: C.info,
+  extension: C.yellow,
+  elias: C.success,
+};
+const SENDER_LABELS = {
+  code: "Claude Code",
+  extension: "Claudin",
+  elias: "Elias",
+};
+
+function DisparadorTab() {
+  const [adminKey] = useState(() => localStorage.getItem("zp_admin_key") || "");
+  const [messages, setMessages] = useState([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sender, setSender] = useState("elias");
+  const [recipient, setRecipient] = useState("all");
+  const bottomRef = useRef();
+
+  const load = async () => {
+    if (!adminKey) return;
+    const msgs = await getMessages(adminKey);
+    setMessages(msgs || []);
+  };
+
+  useEffect(() => { load(); }, []);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const send = async () => {
+    if (!newMsg.trim() || !adminKey) return;
+    setSending(true);
+    await sendMessage(adminKey, sender, recipient, newMsg.trim(), "message");
+    setNewMsg("");
+    await load();
+    setSending(false);
+  };
+
+  if (!adminKey) {
+    return <div style={{ fontSize: 11, color: C.textDim }}>Configure a Admin Key na aba Admin primeiro.</div>;
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 10, lineHeight: 1.5 }}>
+        Canal direto entre Claude Code, Claudin e voce. As mensagens ficam salvas no Supabase.
+      </div>
+
+      {/* Messages */}
+      <div style={{ maxHeight: 300, overflowY: "auto", borderRadius: 10, border: `1px solid ${C.border}`, padding: 8, marginBottom: 12, background: C.bg }}>
+        {messages.length === 0 && <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: 20 }}>Nenhuma mensagem ainda</div>}
+        {[...messages].reverse().map(m => {
+          const color = SENDER_COLORS[m.sender] || C.textMuted;
+          const label = SENDER_LABELS[m.sender] || m.sender;
+          const time = new Date(m.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+          const toLabel = m.recipient === "all" ? "" : ` → ${SENDER_LABELS[m.recipient] || m.recipient}`;
+          return (
+            <div key={m.id} style={{ marginBottom: 8, padding: "6px 8px", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color }}>{label}{toLabel}</span>
+                {m.msg_type !== "message" && <span style={{ fontSize: 8, padding: "1px 5px", borderRadius: 3, background: `${color}18`, color, fontWeight: 600 }}>{m.msg_type}</span>}
+                <span style={{ fontSize: 9, color: C.textDim, marginLeft: "auto" }}>{time}</span>
+              </div>
+              <div style={{ fontSize: 11, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{m.message}</div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Composer */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+        <select value={sender} onChange={e => setSender(e.target.value)} style={{ padding: "6px 8px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.text, fontFamily: DM }}>
+          <option value="elias">Elias</option>
+          <option value="code">Claude Code</option>
+          <option value="extension">Claudin</option>
+        </select>
+        <span style={{ fontSize: 10, color: C.textDim, alignSelf: "center" }}>para</span>
+        <select value={recipient} onChange={e => setRecipient(e.target.value)} style={{ padding: "6px 8px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.text, fontFamily: DM }}>
+          <option value="all">Todos</option>
+          <option value="code">Claude Code</option>
+          <option value="extension">Claudin</option>
+          <option value="elias">Elias</option>
+        </select>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <textarea
+          value={newMsg} onChange={e => setNewMsg(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Escreva uma mensagem..."
+          style={{ flex: 1, minHeight: 48, padding: "8px 10px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11, color: C.text, fontFamily: DM, resize: "none", outline: "none" }}
+        />
+        <button onClick={send} disabled={sending || !newMsg.trim()} style={{
+          padding: "0 16px", background: sending ? C.yellowDim : C.yellow,
+          border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700,
+          fontFamily: DM, color: C.bg, cursor: sending ? "wait" : "pointer", alignSelf: "flex-end",
+        }}>
+          {sending ? "..." : "Enviar"}
+        </button>
+      </div>
+
+      {/* Refresh */}
+      <button onClick={load} style={{ marginTop: 8, padding: "5px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.textDim, cursor: "pointer", fontFamily: DM }}>
+        Atualizar
+      </button>
+    </div>
+  );
+}
+
 // ─── SETTINGS MODAL (with tabs) ──────────────────────────────────────────────
 export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
   const [tab, setTab] = useState("license");
@@ -183,7 +294,7 @@ export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
         background: C.surface, border: `1px solid ${C.border}`,
-        borderRadius: 20, padding: "24px 28px", width: 500,
+        borderRadius: 20, padding: "24px 28px", width: 540,
         boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
         maxHeight: "90vh", overflowY: "auto",
       }}>
@@ -197,11 +308,12 @@ export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
         <div style={{ display: "flex", gap: 4, marginBottom: 20, background: C.bg, borderRadius: 10, padding: 3 }}>
           {[
             { id: "license", label: "Minha Licenca" },
+            { id: "disparador", label: "Disparador" },
             { id: "admin", label: "Admin" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
-              fontSize: 12, fontWeight: 600, fontFamily: DM, cursor: "pointer",
+              fontSize: 11, fontWeight: 600, fontFamily: DM, cursor: "pointer",
               transition: "all 0.2s",
               background: tab === t.id ? C.surface : "transparent",
               color: tab === t.id ? C.text : C.textDim,
@@ -214,6 +326,7 @@ export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
 
         {/* Tab Content */}
         {tab === "license" && <MyLicenseTab licenseInfo={licenseInfo} onLogout={onLogout} />}
+        {tab === "disparador" && <DisparadorTab />}
         {tab === "admin" && <AdminTab />}
       </div>
     </div>

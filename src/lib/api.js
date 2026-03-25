@@ -193,6 +193,36 @@ export async function fetchAdminDashboard(adminKey) {
   return res.json();
 }
 
+// ─── DISPARADOR ──────────────────────────────────────────────────────────────
+export async function sendMessage(adminKey, from, to, message, type) {
+  const res = await fetch(`${API_BASE}/disparador/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+    body: JSON.stringify({ from, to, message, type }),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getMessages(adminKey, recipient) {
+  const url = recipient
+    ? `${API_BASE}/disparador/messages?for=${recipient}&limit=50`
+    : `${API_BASE}/disparador/messages?limit=50`;
+  const res = await fetch(url, {
+    headers: { "x-admin-key": adminKey },
+  });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function markRead(adminKey, ids) {
+  await fetch(`${API_BASE}/disparador/read`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+    body: JSON.stringify({ ids }),
+  });
+}
+
 // ─── HEALTH CHECK ────────────────────────────────────────────────────────────
 export async function healthCheck() {
   try {
