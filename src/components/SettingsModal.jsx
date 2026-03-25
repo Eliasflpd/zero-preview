@@ -1,49 +1,16 @@
-import { useState } from "react";
 import { C, SYNE, DM } from "../lib/constants";
 
-export default function SettingsModal({ onClose }) {
-  const [geminiKey, setGeminiKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_gemini_key")) || ""; } catch { return ""; } });
-  const [claudeKey, setClaudeKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_claude_key")) || ""; } catch { return ""; } });
-  const [deepseekKey, setDeepseekKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_deepseek_key")) || ""; } catch { return ""; } });
-  const [grokKey, setGrokKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_grok_key")) || ""; } catch { return ""; } });
-  const [groqKey, setGroqKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_groq_key")) || ""; } catch { return ""; } });
-  const [openrouterKey, setOpenrouterKey] = useState(() => { try { return JSON.parse(localStorage.getItem("zp_openrouter_key")) || ""; } catch { return ""; } });
-  const [saved, setSaved] = useState(false);
+export default function SettingsModal({ licenseInfo, onClose, onLogout }) {
+  const licenseKey = (() => {
+    try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
+  })();
 
-  const save = () => {
-    localStorage.setItem("zp_gemini_key", JSON.stringify(geminiKey.trim()));
-    localStorage.setItem("zp_claude_key", JSON.stringify(claudeKey.trim()));
-    localStorage.setItem("zp_deepseek_key", JSON.stringify(deepseekKey.trim()));
-    localStorage.setItem("zp_grok_key", JSON.stringify(grokKey.trim()));
-    localStorage.setItem("zp_groq_key", JSON.stringify(groqKey.trim()));
-    localStorage.setItem("zp_openrouter_key", JSON.stringify(openrouterKey.trim()));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  const maskedKey = licenseKey
+    ? licenseKey.slice(0, 6) + "..." + licenseKey.slice(-4)
+    : "—";
 
-  const Field = ({ label, value, onChange, placeholder, link, linkText, color }) => (
-    <div style={{ marginBottom: 18 }}>
-      <div style={{ fontSize: 11, color: color || C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 7 }}>
-        {label}
-      </div>
-      <input
-        type="password" value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          display: "block", width: "100%", padding: "11px 13px",
-          background: C.bg, border: `1px solid ${C.border}`,
-          borderRadius: 9, fontSize: 13, color: C.text, fontFamily: DM,
-          outline: "none", marginBottom: 5, boxSizing: "border-box",
-        }}
-        onFocus={e => e.target.style.borderColor = color || C.yellow}
-        onBlur={e => e.target.style.borderColor = C.border}
-      />
-      <p style={{ fontSize: 10, color: C.textDim, margin: 0 }}>
-        Obtenha em <a href={link} target="_blank" rel="noreferrer" style={{ color: color || C.yellow }}>{linkText}</a>
-      </p>
-    </div>
-  );
+  const pct = licenseInfo?.percent_used ?? 0;
+  const barColor = pct > 85 ? C.error : pct > 60 ? C.yellow : C.success;
 
   return (
     <div style={{
@@ -53,51 +20,93 @@ export default function SettingsModal({ onClose }) {
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
         background: C.surface, border: `1px solid ${C.border}`,
-        borderRadius: 20, padding: 32, width: 460,
+        borderRadius: 20, padding: 32, width: 420,
         boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
-        maxHeight: "90vh", overflowY: "auto",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontFamily: SYNE, fontSize: 18, fontWeight: 700, color: C.text, margin: 0 }}>
-            Configuracoes de IA
+            Sua Licenca
           </h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer" }}>x</button>
         </div>
 
-        <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 11, color: C.yellow }}>
-          Configure pelo menos uma chave. Selecione o modelo no campo de prompt.
+        {/* License Key */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>
+            License Key
+          </div>
+          <div style={{
+            padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`,
+            borderRadius: 9, fontSize: 13, color: C.text,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
+          }}>
+            {maskedKey}
+          </div>
         </div>
 
-        <Field label="Gemini 2.5 Flash - Gratis" value={geminiKey} onChange={setGeminiKey}
-          placeholder="AIza..." link="https://aistudio.google.com/apikey"
-          linkText="aistudio.google.com" color="#4285F4" />
+        {/* Status */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>
+            Status
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: licenseInfo?.valid ? C.success : C.error,
+            }} />
+            <span style={{ fontSize: 13, color: licenseInfo?.valid ? C.success : C.error, fontWeight: 600 }}>
+              {licenseInfo?.valid ? "Ativa" : "Inativa"}
+            </span>
+            {licenseInfo?.expires_at && (
+              <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>
+                Expira: {new Date(licenseInfo.expires_at).toLocaleDateString("pt-BR")}
+              </span>
+            )}
+          </div>
+        </div>
 
-        <Field label="Groq - Ultra rapido e gratis" value={groqKey} onChange={setGroqKey}
-          placeholder="gsk_..." link="https://console.groq.com/keys"
-          linkText="console.groq.com" color="#F55036" />
+        {/* Token Usage */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>
+            Uso de Tokens (mensal)
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 20, fontWeight: 700, color: C.text, fontFamily: SYNE }}>
+              {licenseInfo?.tokens_used != null ? `${((licenseInfo.tokens_used / 1000) | 0)}k` : "—"}
+            </span>
+            <span style={{ fontSize: 13, color: C.textMuted, alignSelf: "flex-end" }}>
+              / {licenseInfo?.tokens_limit ? `${((licenseInfo.tokens_limit / 1000) | 0)}k` : "—"}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div style={{ height: 6, background: C.bg, borderRadius: 3, overflow: "hidden" }}>
+            <div style={{
+              height: "100%", width: `${Math.min(pct, 100)}%`,
+              background: barColor, borderRadius: 3,
+              transition: "width 0.5s ease",
+            }} />
+          </div>
+          <div style={{ fontSize: 10, color: C.textDim, marginTop: 4, textAlign: "right" }}>
+            {pct}% utilizado
+          </div>
+        </div>
 
-        <Field label="OpenRouter - Qwen 2.5 Coder gratis" value={openrouterKey} onChange={setOpenrouterKey}
-          placeholder="sk-or-..." link="https://openrouter.ai/keys"
-          linkText="openrouter.ai" color="#6C47FF" />
-
-        <Field label="DeepSeek - Economico" value={deepseekKey} onChange={setDeepseekKey}
-          placeholder="sk-..." link="https://platform.deepseek.com/api_keys"
-          linkText="platform.deepseek.com" color="#0066FF" />
-
-        <Field label="Grok - xAI" value={grokKey} onChange={setGrokKey}
-          placeholder="xai-..." link="https://console.x.ai"
-          linkText="console.x.ai" color="#888888" />
-
-        <Field label="Claude Sonnet - Premium" value={claudeKey} onChange={setClaudeKey}
-          placeholder="sk-ant-..." link="https://console.anthropic.com/settings/keys"
-          linkText="console.anthropic.com" color="#CC785C" />
-
-        <button onClick={save} style={{
-          padding: "10px 22px", background: saved ? C.success : C.yellow,
-          border: "none", borderRadius: 9, fontSize: 13, fontWeight: 700,
-          fontFamily: DM, color: C.bg, cursor: "pointer", transition: "background 0.3s",
+        {/* Info */}
+        <div style={{
+          background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)",
+          borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 11, color: C.info,
         }}>
-          {saved ? "Salvo!" : "Salvar chaves"}
+          Todas as chamadas de IA passam pelo backend seguro. Nenhuma API key e armazenada no seu navegador.
+        </div>
+
+        {/* Logout */}
+        <button onClick={onLogout} style={{
+          width: "100%", padding: "10px 0",
+          background: "rgba(248,113,113,0.08)", border: `1px solid rgba(248,113,113,0.3)`,
+          borderRadius: 9, fontSize: 13, fontWeight: 600,
+          fontFamily: DM, color: C.error, cursor: "pointer",
+        }}>
+          Sair e trocar licenca
         </button>
       </div>
     </div>

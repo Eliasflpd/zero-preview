@@ -1,3 +1,6 @@
+import { callClaude, callClaudeStream } from "./api";
+
+// ─── CORES ───────────────────────────────────────────────────────────────────
 export const C = {
   bg: "#060F1E", surface: "#0D1B2E", surface2: "#112238",
   border: "#1A2E45", borderHover: "#243F5E",
@@ -10,6 +13,7 @@ export const C = {
 export const SYNE = "'Syne', sans-serif";
 export const DM = "'DM Sans', sans-serif";
 
+// ─── PROMPTS ─────────────────────────────────────────────────────────────────
 export const SYSTEM_PROMPT = `Voce e um gerador de aplicacoes React + Vite de NIVEL WORLD CLASS - igual ao Dribbble, Linear, Stripe Dashboard.
 
 ATENCAO: Retorne APENAS o codigo JSX do componente React. Sem JSON, sem markdown, sem explicacoes.
@@ -92,17 +96,7 @@ CORRIJA OBRIGATORIAMENTE:
 
 Retorne APENAS o codigo JSX corrigido, sem markdown.`;
 
-export function parseGeminiJSON(raw) {
-  if (!raw) throw new Error("Resposta vazia da IA.");
-  let clean = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
-  try { return JSON.parse(clean); } catch {}
-  const match = clean.match(/\{[\s\S]*"files"[\s\S]*\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
-  const start = clean.indexOf('{'); const end = clean.lastIndexOf('}');
-  if (start !== -1 && end !== -1) { try { return JSON.parse(clean.slice(start, end + 1)); } catch {} }
-  throw new Error("JSON invalido. Tente novamente.");
-}
-
+// ─── FIXED FILES (template para apps gerados) ────────────────────────────────
 const FIXED_FILES = {
   "src/main.jsx": `import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -123,186 +117,78 @@ ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><A
   }, null, 2),
 };
 
-// ─── ORDEM DE FALLBACK ────────────────────────────────────────────────────────
-const FALLBACK_ORDER = ["groq", "gemini", "openrouter", "deepseek"];
-
-function getApiKey(model) {
-  const map = {
-    gemini:     "zp_gemini_key",
-    groq:       "zp_groq_key",
-    openrouter: "zp_openrouter_key",
-    deepseek:   "zp_deepseek_key",
-  };
-  try { return JSON.parse(localStorage.getItem(map[model])) || ""; } catch { return ""; }
+// ─── HELPER ──────────────────────────────────────────────────────────────────
+function cleanCodeFences(raw) {
+  return raw.replace(/^```jsx?\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/m, "").trim();
 }
 
-// ─── CHAMADA ÚNICA DE IA ──────────────────────────────────────────────────────
-async function callAI(systemPrompt, userPrompt, apiKey, model) {
-
-  if (model === "gemini") {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.85, maxOutputTokens: 32768 },
-        }),
-      }
-    );
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `Gemini erro ${res.status}`); }
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-  } else if (model === "groq") {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 8192,
-        temperature: 0.85,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `Groq erro ${res.status}`); }
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "";
-
-  } else if (model === "openrouter") {
-    // ✅ CORRIGIDO: model ID com hífen correto
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://zero-preview-six.vercel.app",
-        "X-Title": "Zero Preview",
-      },
-      body: JSON.stringify({
-        model: "qwen/qwen-2.5-coder-32b-instruct",
-        max_tokens: 16000,
-        temperature: 0.85,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `OpenRouter erro ${res.status}`); }
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "";
-
-  } else {
-    // ✅ CORRIGIDO: deepseek max_tokens 8192 (limite máximo)
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        max_tokens: 8192,
-        temperature: 0.85,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e?.error?.message || `DeepSeek erro ${res.status}`); }
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "";
-  }
-}
-
-// ─── FALLBACK AUTOMÁTICO ──────────────────────────────────────────────────────
-async function callWithFallback(systemPrompt, userPrompt, preferredModel, onProgress) {
-  const order = [preferredModel, ...FALLBACK_ORDER.filter(m => m !== preferredModel)];
-
-  for (const model of order) {
-    const key = getApiKey(model);
-    if (!key) continue;
-    try {
-      if (model !== preferredModel) {
-        onProgress?.(`${preferredModel} indisponivel, usando ${model}...`, "info");
-      }
-      const result = await callAI(systemPrompt, userPrompt, key, model);
-      if (result && result.length > 50) return { result, usedModel: model };
-    } catch {
-      continue;
-    }
-  }
-
-  throw new Error("Todos os modelos falharam. Verifique suas chaves nas Configuracoes.");
-}
-
-// ─── GERAÇÃO ARQUIVO POR ARQUIVO ─────────────────────────────────────────────
-export async function generateFiles(prompt, apiKey, model, onProgress, previousCode = null) {
+// ─── GERAÇÃO COM STREAMING ──────────────────────────────────────────────────
+// onProgress(msg, type) — status steps
+// onCodeStream(delta, fullText) — código aparecendo em tempo real
+export async function generateFiles(prompt, onProgress, previousCode = null, onCodeStream = null) {
   const files = { ...FIXED_FILES };
 
-  // Detecta nicho
+  // 1 — Detecta nicho (fast, non-streaming)
   let nicho = "generic";
   try {
-    const { result: nichoRaw } = await callWithFallback(
+    const nichoRaw = await callClaude(
       "Voce detecta nichos. Responda apenas UMA palavra em ingles: beauty, food, finance, fitness, church, retail, construction, education, nature, health, creative, or generic.",
       `Nicho deste pedido: ${prompt}`,
-      model, onProgress
+      100
     );
     nicho = nichoRaw.trim().toLowerCase().split(/\s/)[0] || "generic";
-  } catch {}
+  } catch (e) {
+    if (e.message === "LICENSE_INVALID" || e.message === "LICENSE_EXPIRED" || e.message === "RATE_LIMITED") throw e;
+  }
   onProgress?.(`Nicho: ${nicho}`, "info");
 
-  // PASSO 1 — CSS
+  // 2 — CSS (fast, non-streaming)
   onProgress?.("Gerando estilos (1/3)...", "info");
   try {
-    const { result: css } = await callWithFallback(
+    const css = await callClaude(
       "Especialista CSS. Retorne APENAS CSS puro, sem markdown.",
       `CSS moderno para React nicho "${nicho}". Reset, variaveis, Inter e Plus Jakarta Sans, body e #root.`,
-      model, onProgress
+      4000
     );
-    files["src/index.css"] = css.replace(/^```css\s*/i,"").replace(/\s*```$/m,"").trim();
-  } catch {
+    files["src/index.css"] = cleanCodeFences(css);
+  } catch (e) {
+    if (e.message === "LICENSE_INVALID" || e.message === "LICENSE_EXPIRED" || e.message === "RATE_LIMITED") throw e;
     files["src/index.css"] = `*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:#f8f9ff;color:#1a1a2e}#root{min-height:100vh}`;
   }
 
-  // PASSO 2 — App.jsx
+  // 3 — App.jsx (STREAMING — user sees code appearing in real time)
   onProgress?.("Gerando aplicacao React (2/3)...", "info");
   const appPrompt = previousCode
     ? `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 8000)}\n\`\`\`\n\nMODIFICACAO: ${prompt}\n\nRetorne App.jsx COMPLETO. Apenas JSX.`
     : `${prompt}\n\nNicho: ${nicho}. Use paleta do nicho.\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
 
-  const { result: appRaw, usedModel } = await callWithFallback(SYSTEM_PROMPT, appPrompt, model, onProgress);
-  if (usedModel !== model) onProgress?.(`Usando ${usedModel} (fallback automatico)`, "info");
+  const appRaw = await callClaudeStream(
+    SYSTEM_PROMPT,
+    appPrompt,
+    12000,
+    onCodeStream // cada delta é enviado para a UI em tempo real
+  );
 
-  const appCode = appRaw.replace(/^```jsx?\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
+  const appCode = cleanCodeFences(appRaw);
   if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
-  // PASSO 3 — REVISOR
+  // 4 — Revisor (streaming também — user vê a correção acontecendo)
   onProgress?.("Revisando codigo (3/3)...", "info");
   try {
-    const { result: reviewedRaw } = await callWithFallback(
+    const reviewedRaw = await callClaudeStream(
       REVIEWER_PROMPT,
       `Revise e corrija:\n\n${appCode.slice(0, 12000)}`,
-      model, onProgress
+      12000,
+      onCodeStream
     );
-    const reviewed = reviewedRaw.replace(/^```jsx?\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/m,"").trim();
+    const reviewed = cleanCodeFences(reviewedRaw);
     files["src/App.jsx"] = (reviewed && reviewed.length > 100) ? reviewed : appCode;
     onProgress?.("Pronto!", "success");
-  } catch {
+  } catch (e) {
+    if (e.message === "LICENSE_INVALID" || e.message === "LICENSE_EXPIRED" || e.message === "RATE_LIMITED") throw e;
     files["src/App.jsx"] = appCode;
     onProgress?.("Gerado!", "success");
   }
 
   return { files };
-}
-
-export async function callGemini(prompt, apiKey) {
-  return generateFiles(prompt, apiKey, "groq", null);
-}
-export async function callClaude(prompt, apiKey) {
-  return generateFiles(prompt, apiKey, "groq", null);
 }

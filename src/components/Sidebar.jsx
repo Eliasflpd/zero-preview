@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { C, SYNE, DM } from "../lib/constants";
 
 // ─── ÍCONES SVG INLINE ────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const IconFolder = () => (
   </svg>
 );
 
-export default function Sidebar({ user, projects, activeId, onSelect, onNew, onDelete, onLogout, onSettings, generating, thinkSteps }) {
+function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onLogout, onSettings, generating, thinkSteps, licenseInfo }) {
   const [hoverId, setHoverId] = useState(null);
   const stepsEndRef = useRef();
 
@@ -64,15 +64,27 @@ export default function Sidebar({ user, projects, activeId, onSelect, onNew, onD
         </span>
       </div>
 
-      {/* ─── USER ─── */}
-      <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg, ${C.yellow}, ${C.yellowDim})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: C.bg, fontFamily: SYNE, flexShrink: 0 }}>
-          {String(user).charAt(0).toUpperCase()}
+      {/* ─── USER & LICENSE ─── */}
+      <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg, ${C.yellow}, ${C.yellowDim})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: C.bg, fontFamily: SYNE, flexShrink: 0 }}>
+            Z
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text, fontFamily: DM }}>Licenca Ativa</div>
+            <div style={{ fontSize: 10, color: C.success }}>Claude Sonnet</div>
+          </div>
         </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: DM }}>{user}</div>
-          <div style={{ fontSize: 10, color: C.textMuted }}>Free Plan</div>
-        </div>
+        {licenseInfo?.tokens_used != null && (
+          <div style={{ marginTop: 4 }}>
+            <div style={{ height: 3, background: C.bg, borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(licenseInfo.percent_used || 0, 100)}%`, background: (licenseInfo.percent_used || 0) > 85 ? C.error : C.success, borderRadius: 2, transition: "width 0.5s" }} />
+            </div>
+            <div style={{ fontSize: 9, color: C.textDim, marginTop: 2 }}>
+              {((licenseInfo.tokens_used / 1000) | 0)}k / {((licenseInfo.tokens_limit / 1000) | 0)}k tokens
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ─── NOVO PROJETO ─── */}
@@ -175,3 +187,5 @@ export default function Sidebar({ user, projects, activeId, onSelect, onNew, onD
     </div>
   );
 }
+
+export default memo(SidebarInner);

@@ -16,7 +16,7 @@ function Terminal({ logs }) {
     }}>
       {logs.length === 0 && <div style={{ color: C.textDim, fontStyle: "italic" }}>Terminal pronto...</div>}
       {logs.map((l, i) => (
-        <div key={i} style={{
+        <div key={`log_${i}_${l.text.slice(0,20)}`} style={{
           color: l.type === "error" ? C.error : l.type === "success" ? C.success : l.type === "info" ? C.info : "#7A9FBA",
           lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-all",
         }}>
@@ -106,6 +106,13 @@ export default function PreviewPanel({ files, runId, onClose }) {
               fontSize: 10, color: C.textMuted, textDecoration: "none", fontFamily: DM,
             }}>↗ Abrir</a>
           )}
+          {url && (
+            <button onClick={() => { const iframe = document.querySelector('iframe[title="Preview"]'); if (iframe) iframe.src = iframe.src; }} style={{
+              padding: "4px 10px", background: "transparent",
+              border: `1px solid ${C.border}`, borderRadius: 5,
+              fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM,
+            }}>↻ Reload</button>
+          )}
           <button onClick={onClose} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
         </div>
       </div>
@@ -126,7 +133,7 @@ export default function PreviewPanel({ files, runId, onClose }) {
           </div>
         )}
         {url && (
-          <iframe src={url} style={{ width: "100%", height: "100%", border: "none" }} title="Preview" />
+          <iframe src={url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style={{ width: "100%", height: "100%", border: "none" }} title="Preview" />
         )}
       </div>
 
