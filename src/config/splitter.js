@@ -40,9 +40,16 @@ export function splitComponents(code, mainPath = "src/pages/Dashboard.tsx") {
   const importLines = [];
 
   for (const comp of toExtract) {
-    const filePath = `src/components/${comp.name}.tsx`;
+    // Safety check: verify the extracted code has balanced braces
+    const opens = (comp.fullMatch.match(/\{/g) || []).length;
+    const closes = (comp.fullMatch.match(/\}/g) || []).length;
+    if (Math.abs(opens - closes) > 1) {
+      // Unbalanced — splitter cut wrong. Return unsplit file.
+      console.warn(`Splitter: ${comp.name} has unbalanced braces (${opens} open, ${closes} close). Skipping split.`);
+      return { [mainPath]: code };
+    }
 
-    // Build the extracted file: imports from original + component + export
+    const filePath = `src/components/${comp.name}.tsx`;
     const extractedCode = buildExtractedFile(comp, code);
     result[filePath] = extractedCode;
 
@@ -118,14 +125,45 @@ function extractComponents(code) {
   return components;
 }
 
+// String-aware brace counter — skips content inside strings and comments
 function findClosingBrace(code, openBraceIndex) {
   let depth = 0;
-  for (let i = openBraceIndex; i < code.length; i++) {
-    if (code[i] === "{") depth++;
-    else if (code[i] === "}") {
+  let i = openBraceIndex;
+
+  while (i < code.length) {
+    const ch = code[i];
+
+    // Skip string literals (single, double, template)
+    if (ch === '"' || ch === "'" || ch === '`') {
+      i++;
+      while (i < code.length && code[i] !== ch) {
+        if (code[i] === '\\') i++; // skip escaped char
+        i++;
+      }
+      i++; // skip closing quote
+      continue;
+    }
+
+    // Skip line comments
+    if (ch === '/' && code[i + 1] === '/') {
+      while (i < code.length && code[i] !== '\n') i++;
+      continue;
+    }
+
+    // Skip block comments
+    if (ch === '/' && code[i + 1] === '*') {
+      i += 2;
+      while (i < code.length - 1 && !(code[i] === '*' && code[i + 1] === '/')) i++;
+      i += 2;
+      continue;
+    }
+
+    if (ch === '{') depth++;
+    else if (ch === '}') {
       depth--;
       if (depth === 0) return { end: i };
     }
+    i++;
   }
   return null;
 }
@@ -182,6 +220,20 @@ function buildExtractedFile(comp, originalCode) {
   // Build the file
   let file = uniqueImports.join("\n");
   if (file) file += "\n\n";
+
+  // Extract TypeScript interfaces/types used by this component
+  // Matches: interface SidebarProps { ... } or type SidebarProps = { ... }
+  const propsName = `${comp.name}Props`;
+  const interfaceRegex = new RegExp(`(?:interface|type)\\s+${propsName}[^{]*\\{`, 's');
+  const interfaceMatch = originalCode.match(interfaceRegex);
+  if (interfaceMatch) {
+    const ifaceStart = originalCode.indexOf(interfaceMatch[0]);
+    const ifaceBrace = findClosingBrace(originalCode, ifaceStart + interfaceMatch[0].length - 1);
+    if (ifaceBrace) {
+      const fullInterface = originalCode.slice(ifaceStart, ifaceBrace.end + 1);
+      file += fullInterface + "\n\n";
+    }
+  }
 
   // Add the component, ensuring export default
   let compCode = comp.fullMatch;
