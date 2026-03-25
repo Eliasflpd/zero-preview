@@ -111,7 +111,22 @@ export default function DisparadorBridge({ adminKey }) {
                 {messages.length} msgs
               </span>
             </div>
-            <button onClick={load} style={{ background: "none", border: "none", fontSize: 10, color: C.textDim, cursor: "pointer", fontFamily: DM }}>Atualizar</button>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => {
+                const ctx = [...messages].reverse().slice(-10).map(m => {
+                  const label = SENDER_LABELS[m.sender] || m.sender;
+                  return `[${label}] ${m.message.length > 200 ? m.message.slice(0, 200) + "..." : m.message}`;
+                }).join("\n");
+                const full = `[CONTEXTO ZERO PREVIEW — cole isso no inicio de cada sessao com a Extension]\n\n${ctx}`;
+                navigator.clipboard.writeText(full).then(() => {
+                  const btn = document.getElementById("copy-ctx-btn");
+                  if (btn) { btn.textContent = "Copiado!"; setTimeout(() => { btn.textContent = "Copiar contexto"; }, 1500); }
+                });
+              }} id="copy-ctx-btn" style={{ background: "rgba(255,208,80,0.08)", border: `1px solid rgba(255,208,80,0.2)`, borderRadius: 5, fontSize: 9, color: C.yellow, cursor: "pointer", fontFamily: DM, padding: "3px 8px", fontWeight: 600 }}>
+                Copiar contexto
+              </button>
+              <button onClick={load} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 5, fontSize: 9, color: C.textDim, cursor: "pointer", fontFamily: DM, padding: "3px 8px" }}>Atualizar</button>
+            </div>
           </div>
 
           {/* Messages */}
