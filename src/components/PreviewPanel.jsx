@@ -3,6 +3,7 @@ import WCManager from "../lib/wcManager";
 import { C, DM } from "../config/theme";
 
 const DeployModal = lazy(() => import("./DeployModal"));
+const GitHubSync = lazy(() => import("./GitHubSync"));
 
 function Terminal({ logs }) {
   const ref = useRef();
@@ -36,6 +37,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const [runtimeError, setRuntimeError] = useState(null);
   const [deviceWidth, setDeviceWidth] = useState("100%");
   const [showDeploy, setShowDeploy] = useState(false);
+  const [showGitHub, setShowGitHub] = useState(false);
   const [autoFixing, setAutoFixing] = useState(false);
   const prevRunId = useRef(null);
   const loadTimer = useRef(null);
@@ -185,6 +187,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
             }}>Abrir</a>
           )}
           {url && (
+            <button onClick={() => setShowGitHub(true)} style={{
+              padding: "4px 10px", background: "transparent",
+              border: `1px solid ${C.border}`, borderRadius: 5,
+              fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM, fontWeight: 600,
+            }}>GitHub</button>
+          )}
+          {url && (
             <button onClick={() => setShowDeploy(true)} style={{
               padding: "4px 10px", background: "rgba(52,211,153,0.1)",
               border: "1px solid rgba(52,211,153,0.3)", borderRadius: 5,
@@ -264,6 +273,11 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
       {showDeploy && (
         <Suspense fallback={null}>
           <DeployModal files={files} projectName={projectName} onClose={() => setShowDeploy(false)} />
+        </Suspense>
+      )}
+      {showGitHub && (
+        <Suspense fallback={null}>
+          <GitHubSync files={files} projectName={projectName} onClose={() => setShowGitHub(false)} />
         </Suspense>
       )}
 
