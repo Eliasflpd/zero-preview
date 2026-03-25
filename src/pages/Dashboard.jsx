@@ -12,6 +12,7 @@ const Sidebar = lazy(() => import("../components/Sidebar"));
 const PreviewPanel = lazy(() => import("../components/PreviewPanel"));
 const SettingsModal = lazy(() => import("../components/SettingsModal"));
 const DisparadorBridge = lazy(() => import("../components/DisparadorBridge"));
+const AgenticMode = lazy(() => import("../components/AgenticMode"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -28,6 +29,7 @@ export default function Dashboard({ user, onLogout }) {
   const [licenseInfo, setLicenseInfo] = useState(user);
   const [streamingCode, setStreamingCode] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [agenticMode, setAgenticMode] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -120,6 +122,13 @@ export default function Dashboard({ user, onLogout }) {
       setGeneratedFiles(next.files);
       setRunId(`run_redo_${Date.now()}`);
     }
+  };
+
+  // Agentic mode generates with a rich briefing instead of raw prompt
+  const handleAgenticGenerate = (briefing) => {
+    promptRef.current = briefing;
+    setPrompt(briefing);
+    requestAnimationFrame(() => handleGenerate());
   };
 
   const handleGenerate = async () => {
@@ -227,23 +236,39 @@ export default function Dashboard({ user, onLogout }) {
           canUndo={canUndo} canRedo={canRedo}
           onUndo={handleUndo} onRedo={handleRedo}
           versionInfo={versionCount > 0 ? `v${currentVersion}/${versionCount}` : null}
+          agenticMode={agenticMode}
+          onToggleAgentic={() => setAgenticMode(a => !a)}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-          <ChatArea
-            history={history}
-            generating={generating}
-            streamingCode={streamingCode}
-            error={error}
-            thinkSteps={thinkSteps}
-            prompt={prompt}
-            onPromptChange={(v) => { promptRef.current = v; setPrompt(v); setError(""); }}
-            onGenerate={handleGenerate}
-            onSuggestionClick={(s) => setPrompt(s)}
-            licenseInfo={licenseInfo}
-            hasPreview={hasPreview}
-            disabled={generating}
-          />
+          {agenticMode ? (
+            <div style={{ width: hasPreview ? 340 : "100%", flexShrink: 0, display: "flex", flexDirection: "column", borderRight: hasPreview ? `1px solid ${C.border}` : "none", overflow: "hidden", padding: "8px 16px" }}>
+              <Suspense fallback={null}>
+                <AgenticMode
+                  onGenerate={handleAgenticGenerate}
+                  generating={generating}
+                  thinkSteps={thinkSteps}
+                  hasPreview={hasPreview}
+                  score={history[history.length - 1]?.score}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            <ChatArea
+              history={history}
+              generating={generating}
+              streamingCode={streamingCode}
+              error={error}
+              thinkSteps={thinkSteps}
+              prompt={prompt}
+              onPromptChange={(v) => { promptRef.current = v; setPrompt(v); setError(""); }}
+              onGenerate={handleGenerate}
+              onSuggestionClick={(s) => setPrompt(s)}
+              licenseInfo={licenseInfo}
+              hasPreview={hasPreview}
+              disabled={generating}
+            />
+          )}
 
           {hasPreview && (
             <Suspense fallback={null}>

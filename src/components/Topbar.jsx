@@ -1,6 +1,6 @@
 import { C, SYNE, DM } from "../config/theme";
 
-export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo }) {
+export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic }) {
   const undoRedoBtn = (label, icon, enabled, onClick) => (
     <button onClick={onClick} disabled={!enabled} style={{
       background: "none", border: `1px solid ${enabled ? C.border : "transparent"}`,
@@ -48,6 +48,17 @@ export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleS
             )}
           </div>
         )}
+
+        {/* Agentic Mode Toggle */}
+        <button onClick={onToggleAgentic} style={{
+          padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
+          fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
+          background: agenticMode ? "rgba(255,208,80,0.15)" : "transparent",
+          border: `1px solid ${agenticMode ? "rgba(255,208,80,0.4)" : C.border}`,
+          color: agenticMode ? C.yellow : C.textDim,
+        }}>
+          {agenticMode ? "Modo Agente ON" : "Modo Agente"}
+        </button>
 
         {hasPreview && (
           <span style={{ fontSize: 9, color: C.success, background: "rgba(52,211,153,0.08)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(52,211,153,0.2)", fontFamily: DM }}>
