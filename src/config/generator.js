@@ -62,15 +62,52 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }`;
 }
 
+// ─── EDIT vs REBUILD DISCRIMINATOR ───────────────────────────────────────────
+// Detects if a prompt with previousCode is a small edit or a full rebuild
+function shouldRebuild(prompt, previousCode) {
+  const p = prompt.toLowerCase();
+
+  // Rebuild triggers: explicit "refaz", niche change, "do zero", etc.
+  const rebuildKeywords = [
+    "refaz", "refaca", "recria", "recrie", "recomeca", "do zero", "desde o inicio",
+    "muda tudo", "troca tudo", "novo app", "novo sistema", "outro tipo",
+    "transforma em", "converte para", "vira um", "agora quero",
+    "esquece isso", "descarta", "apaga tudo",
+  ];
+  if (rebuildKeywords.some(k => p.includes(k))) return true;
+
+  // Niche shift: previous code is niche X, prompt asks for niche Y
+  const prevNiche = guessNicheLocal(extractPromptHint(previousCode));
+  const newNiche = guessNicheLocal(prompt);
+  if (prevNiche !== "generic" && newNiche !== "generic" && prevNiche !== newNiche) return true;
+
+  // Very long prompts (>150 words) with previousCode suggest a full redesign
+  if (prompt.split(/\s+/).length > 150) return true;
+
+  return false;
+}
+
+// Extract a hint about what the previous code was (from comments or component names)
+function extractPromptHint(code) {
+  // Try to find niche clues in the code itself
+  const themeMatch = code.match(/sidebar:\s*['"]([^'"]+)['"]/);
+  const titleMatch = code.match(/(?:Dashboard|Painel|Sistema)\s+(?:de\s+)?(\w+)/i);
+  return (themeMatch?.[1] || "") + " " + (titleMatch?.[1] || "");
+}
+
 // ─── MAIN PIPELINE ───────────────────────────────────────────────────────────
 export async function generateFiles(prompt, onProgress, previousCode = null, onCodeStream = null) {
   const startTime = Date.now();
   const files = { ...FIXED_FILES };
-  const isEdit = !!previousCode;
 
-  // ══ FAST PATH: Edit mode (1 AI call instead of 4) ══════════════════════════
-  if (isEdit) {
-    return await editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime);
+  // ══ DISCRIMINATOR: Edit leve vs Pipeline completo ══════════════════════════
+  if (previousCode) {
+    if (shouldRebuild(prompt, previousCode)) {
+      onProgress?.("Mudanca estrutural detectada — gerando do zero", "info");
+      // Fall through to full pipeline (previousCode ignored)
+    } else {
+      return await editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime);
+    }
   }
 
   // ══ STEP 0: VELOCISTA — Cache check ════════════════════════════════════════
