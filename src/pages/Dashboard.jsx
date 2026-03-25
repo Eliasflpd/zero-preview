@@ -110,20 +110,18 @@ export default function Dashboard({ user, onLogout }) {
     setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode("");
 
     try {
-      // onProgress receives structured events: { step, message, type }
       const onProgressFn = (event) => {
-        // Support both structured events and legacy strings
         const msg = typeof event === "string" ? event : event?.message || "";
         const step = typeof event === "object" ? event?.step : null;
         setThinkSteps(prev => [...prev, { step, message: msg }]);
       };
-      onProgressFn._projectHistory = history;
 
       const result = await generateFiles(
         currentPrompt,
         onProgressFn,
         generatedFiles?.["src/App.jsx"] || null,
-        (_delta, fullText) => setStreamingCode(fullText)
+        (_delta, fullText) => setStreamingCode(fullText),
+        history
       );
 
       if (!result?.files?.["src/App.jsx"]) throw new Error("App.jsx nao gerado. Tente novamente.");

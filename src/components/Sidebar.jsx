@@ -153,8 +153,13 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
                 <div style={{ fontSize: 12, fontWeight: 500, color: activeId === p.id ? C.yellow : C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: DM }}>
                   {p.name}
                 </div>
-                <div style={{ fontSize: 10, color: C.textDim, marginTop: 1 }}>
+                <div style={{ fontSize: 10, color: C.textDim, marginTop: 1, display: "flex", alignItems: "center", gap: 4 }}>
                   {new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR")}
+                  {p.history?.[p.history.length - 1]?.score != null && (
+                    <span style={{ fontSize: 8, padding: "0 4px", borderRadius: 3, fontWeight: 700, background: p.history[p.history.length - 1].score >= 70 ? "rgba(52,211,153,0.15)" : p.history[p.history.length - 1].score >= 40 ? "rgba(245,158,11,0.15)" : "rgba(248,113,113,0.15)", color: p.history[p.history.length - 1].score >= 70 ? C.success : p.history[p.history.length - 1].score >= 40 ? "#F59E0B" : C.error }}>
+                      {p.history[p.history.length - 1].score}
+                    </span>
+                  )}
                 </div>
               </div>
             </button>

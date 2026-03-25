@@ -140,7 +140,7 @@ function extractPromptHint(code) {
 }
 
 // ─── MAIN PIPELINE ───────────────────────────────────────────────────────────
-export async function generateFiles(prompt, onProgress, previousCode = null, onCodeStream = null) {
+export async function generateFiles(prompt, onProgress, previousCode = null, onCodeStream = null, projectHistory = null) {
   const startTime = Date.now();
   const files = { ...FIXED_FILES };
 
@@ -194,8 +194,8 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   }
 
   // Project history insights: learn from past failures
-  if (onProgress._projectHistory) {
-    const pastFails = onProgress._projectHistory
+  if (projectHistory) {
+    const pastFails = projectHistory
       .filter(h => h.score && h.score < 50)
       .slice(0, 3);
     if (pastFails.length > 0) {

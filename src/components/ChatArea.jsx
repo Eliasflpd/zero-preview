@@ -1,7 +1,8 @@
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { C, SYNE, DM } from "../config/theme";
 import StreamingCode from "./StreamingCode";
 import GenerationProgress from "./GenerationProgress";
+import FeedbackForm from "./FeedbackForm";
 
 const suggestions = [
   "Dashboard para petshop com agendamento",
@@ -19,6 +20,19 @@ export default function ChatArea({
   onSuggestionClick,
 }) {
   const historyEndRef = useRef();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const prevHistoryLen = useRef(history.length);
+
+  // Show feedback after first successful generation (not on every one)
+  useEffect(() => {
+    if (history.length > prevHistoryLen.current && history.length === 1) {
+      const lastFeedback = localStorage.getItem("zp_last_feedback");
+      if (!lastFeedback || Date.now() - parseInt(lastFeedback) > 86400000) {
+        setTimeout(() => setShowFeedback(true), 2000);
+      }
+    }
+    prevHistoryLen.current = history.length;
+  }, [history.length]);
 
   useEffect(() => {
     historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,6 +91,14 @@ export default function ChatArea({
             </div>
           </div>
         ))}
+
+        {showFeedback && !generating && history.length > 0 && (
+          <FeedbackForm
+            prompt={history[history.length - 1]?.prompt}
+            score={history[history.length - 1]?.score}
+            onClose={() => setShowFeedback(false)}
+          />
+        )}
 
         {(generating || (thinkSteps && thinkSteps.length > 0 && !hasPreview)) && (
           <GenerationProgress steps={thinkSteps || []} generating={generating} />

@@ -1,23 +1,23 @@
 import { C, SYNE, DM } from "../config/theme";
+import { STEPS } from "../config/generator";
 
 // ─── AGENT DISPLAY CONFIG ────────────────────────────────────────────────────
-// Maps step enum (from generator.js STEPS) to visual properties.
-// This is the ONLY place that knows how to display agents.
-// The step field is the contract. The message text can change freely.
+// Intentional coupling: imports STEPS enum so renaming a step in generator
+// without updating this map breaks at build time, not silently at runtime.
 const AGENT_MAP = {
-  REBUILD:      { name: "Arquiteto",       pct: 10 },
-  CACHE_HIT:    { name: "Velocista",       pct: 100 },
-  CACHE_REUSE:  { name: "Velocista",       pct: 25 },
-  SOMMELIER:    { name: "Sommelier",       pct: 15 },
-  ARCHITECT:    { name: "Arquiteto",       pct: 25 },
-  CSS:          { name: "Executor",        pct: 30 },
-  MEMORIALISTA: { name: "Memorialista",    pct: 35 },
-  EXECUTOR:     { name: "Executor",        pct: 50 },
-  CRITICO:      { name: "Critico",         pct: 75 },
-  REVIEWER:     { name: "Perfeccionista",  pct: 85 },
-  DONE:         { name: "Concluido",       pct: 100 },
-  EDIT:         { name: "Executor",        pct: 40 },
-  RETRY:        { name: "Critico",         pct: 60 },
+  [STEPS.REBUILD]:      { name: "Arquiteto",       pct: 10 },
+  [STEPS.CACHE_HIT]:    { name: "Velocista",       pct: 100 },
+  [STEPS.CACHE_REUSE]:  { name: "Velocista",       pct: 25 },
+  [STEPS.SOMMELIER]:    { name: "Sommelier",       pct: 15 },
+  [STEPS.ARCHITECT]:    { name: "Arquiteto",       pct: 25 },
+  [STEPS.CSS]:          { name: "Executor",        pct: 30 },
+  [STEPS.MEMORIALISTA]: { name: "Memorialista",    pct: 35 },
+  [STEPS.EXECUTOR]:     { name: "Executor",        pct: 50 },
+  [STEPS.CRITICO]:      { name: "Critico",         pct: 75 },
+  [STEPS.REVIEWER]:     { name: "Perfeccionista",  pct: 85 },
+  [STEPS.DONE]:         { name: "Concluido",       pct: 100 },
+  [STEPS.EDIT]:         { name: "Executor",        pct: 40 },
+  [STEPS.RETRY]:        { name: "Critico",         pct: 60 },
 };
 
 function resolveAgent(stepObj) {
