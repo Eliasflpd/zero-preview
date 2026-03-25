@@ -96,7 +96,8 @@ export default function Dashboard({ user, onLogout }) {
 
       const files = result.files;
       const now = Date.now();
-      const newHistory = [...history, { prompt, at: now }];
+      const score = result.validation?.score;
+      const newHistory = [...history, { prompt, at: now, score }];
       const name = prompt.slice(0, 42).trim() + (prompt.length > 42 ? "..." : "");
       const newRunId = `run_${now}`;
 

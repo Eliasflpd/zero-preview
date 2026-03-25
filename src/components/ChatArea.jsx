@@ -38,8 +38,13 @@ export default function ChatArea({
               <div style={{ width: 20, height: 20, background: C.yellow, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: 9, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
               </div>
-              <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", borderRadius: "2px 12px 12px 12px", padding: "7px 11px", fontSize: 11, color: C.yellow, fontFamily: DM }}>
+              <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", borderRadius: "2px 12px 12px 12px", padding: "7px 11px", fontSize: 11, color: C.yellow, fontFamily: DM, display: "flex", alignItems: "center", gap: 8 }}>
                 App gerado com sucesso
+                {h.score != null && (
+                  <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700, background: h.score >= 70 ? "rgba(5,150,105,0.15)" : h.score >= 40 ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)", color: h.score >= 70 ? C.success : h.score >= 40 ? "#F59E0B" : C.error }}>
+                    {h.score}/100
+                  </span>
+                )}
               </div>
             </div>
           </div>

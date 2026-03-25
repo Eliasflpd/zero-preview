@@ -1,5 +1,6 @@
-// ─── ZERO PREVIEW — ORQUESTRADOR DE AGENTES ─────────────────────────────────
-// Conecta: SOMMELIER → ARQUITETO → EXECUTOR → CRITICO → MEMORIALISTA/VELOCISTA
+// ─── ZERO PREVIEW — ORQUESTRADOR DE AGENTES v2 ──────────────────────────────
+// Pipeline: VELOCISTA → SOMMELIER → ARQUITETO → EXECUTOR → CRITICO → MEMORIALISTA
+// v2: auto-regenerate, CSS templates, silent review, edit mode, real cache L2
 
 import { callClaude, callClaudeStream } from "../lib/api";
 import { SYSTEM_PROMPT, REVIEWER_PROMPT } from "./prompts";
@@ -17,134 +18,208 @@ function isAuthError(e) {
   return e.message === "LICENSE_INVALID" || e.message === "LICENSE_EXPIRED" || e.message === "RATE_LIMITED";
 }
 
+// ─── CSS TEMPLATES BY NICHE (eliminates 1 AI call) ──────────────────────────
+function buildNicheCSS(niche) {
+  const p = niche.palette;
+  const font = niche.fonts || "'Inter', sans-serif";
+  return `:root {
+  --bg: ${p.bg};
+  --sidebar: ${p.sidebar};
+  --sidebar-text: ${p.text || '#FFFFFF'};
+  --accent: ${p.accent};
+  --accent-light: ${p.accent}15;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --text: #1A1A2E;
+  --text-muted: #6B7280;
+  --success: #059669;
+  --warning: #F59E0B;
+  --error: #EF4444;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: ${font};
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+#root { min-height: 100vh; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }`;
+}
+
 // ─── MAIN PIPELINE ───────────────────────────────────────────────────────────
-// onProgress(msg, type) — status steps
-// onCodeStream(delta, fullText) — code appearing in real time
 export async function generateFiles(prompt, onProgress, previousCode = null, onCodeStream = null) {
   const startTime = Date.now();
   const files = { ...FIXED_FILES };
+  const isEdit = !!previousCode;
 
-  // ── STEP 0: VELOCISTA — Check cache first ──────────────────────────────────
-  // (skip cache for modifications/iterations)
-  if (!previousCode) {
-    // Quick niche guess for cache lookup (no AI call)
-    const quickNiche = guessNicheLocal(prompt);
-    const cached = getCacheEntry(prompt, quickNiche);
-    if (cached && cached.level === 1) {
-      onProgress?.(`Cache hit! ${cached.savings}`, "success");
-      onProgress?.("Pronto!", "success");
-      recordGeneration({ prompt, nicho: quickNiche, score: cached.entry.score, duration: Date.now() - startTime, success: true, cached: true });
-      return { files: cached.entry.files };
-    }
-    // Level 2/3: inject as context for the AI, but still generate
-    if (cached && cached.level === 2) {
-      onProgress?.(`Prompt similar encontrado (${Math.round(cached.similarity * 100)}%). Adaptando...`, "info");
-    }
+  // ══ FAST PATH: Edit mode (1 AI call instead of 4) ══════════════════════════
+  if (isEdit) {
+    return await editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime);
   }
 
-  // ── STEP 1: SOMMELIER — Detect niche ───────────────────────────────────────
-  let nicho = "generic";
-  try {
-    const nichoRaw = await callClaude(NICHE_DETECT_PROMPT, `Nicho deste pedido: ${prompt}`, 50);
-    nicho = nichoRaw.trim().toLowerCase().split(/\s/)[0] || "generic";
-  } catch (e) {
-    if (isAuthError(e)) throw e;
-    nicho = guessNicheLocal(prompt);
+  // ══ STEP 0: VELOCISTA — Cache check ════════════════════════════════════════
+  const quickNiche = guessNicheLocal(prompt);
+  const cached = getCacheEntry(prompt, quickNiche);
+
+  if (cached && cached.level === 1) {
+    onProgress?.(`Cache hit! ${cached.savings}`, "success");
+    onProgress?.("Pronto!", "success");
+    recordGeneration({ prompt, nicho: quickNiche, score: cached.entry.score, duration: Date.now() - startTime, success: true, cached: true });
+    return { files: cached.entry.files, validation: { score: cached.entry.score } };
+  }
+
+  // ══ STEP 1: SOMMELIER — Detect niche (local first, AI fallback) ════════════
+  let nicho = quickNiche;
+  if (nicho === "generic") {
+    try {
+      const nichoRaw = await callClaude(NICHE_DETECT_PROMPT, `Nicho: ${prompt}`, 30);
+      nicho = nichoRaw.trim().toLowerCase().split(/\s/)[0] || "generic";
+    } catch (e) {
+      if (isAuthError(e)) throw e;
+    }
   }
   const nicheConfig = getNiche(nicho);
   onProgress?.(`Nicho: ${nicheConfig.label}`, "info");
 
-  // ── STEP 2: ARQUITETO — Analyze prompt ─────────────────────────────────────
+  // ══ STEP 2: ARQUITETO — Analyze prompt ═════════════════════════════════════
   const brief = analyzePrompt(prompt, nicho);
-  onProgress?.(`Arquiteto: ${brief.complexity} · ${brief.pages} secoes · ${brief.components.length} componentes`, "info");
+  onProgress?.(`${brief.complexity} · ${brief.pages} secoes · ${brief.components.length} componentes`, "info");
 
-  // ── STEP 3: MEMORIALISTA — Inject top examples ─────────────────────────────
+  // ══ STEP 3: CSS template (no AI call — saves ~4000 tokens) ═════════════════
+  files["src/index.css"] = buildNicheCSS(nicheConfig);
+  onProgress?.("Estilos aplicados", "success");
+
+  // ══ STEP 4: MEMORIALISTA — Build enhanced prompt ═══════════════════════════
   const topPrompts = getTopPrompts(3);
-  let examplesBlock = "";
+  let extras = "";
   if (topPrompts.length > 0) {
-    examplesBlock = `\n\nEXEMPLOS DE PROMPTS BEM-SUCEDIDOS (use como referencia de qualidade):\n${topPrompts.map((p, i) => `${i + 1}. "${p}"`).join("\n")}`;
+    extras += `\n\nEXEMPLOS BEM-SUCEDIDOS:\n${topPrompts.map((p, i) => `${i + 1}. "${p}"`).join("\n")}`;
   }
 
-  // ── STEP 4: EXECUTOR — Generate CSS ────────────────────────────────────────
-  onProgress?.("Gerando estilos (1/4)...", "info");
-  try {
-    const cssPrompt = `CSS moderno para React.
-Nicho: "${nicheConfig.label}".
-Paleta: bg=${nicheConfig.palette.bg}, accent=${nicheConfig.palette.accent}, sidebar=${nicheConfig.palette.sidebar}.
-Inclua: reset, CSS variables com :root, fontes ${nicheConfig.fonts || "Inter"}, body, #root, scrollbar dark, @keyframes fadeInUp e pulse.
-Retorne APENAS CSS puro, sem markdown.`;
-    const css = await callClaude("Especialista CSS. Retorne APENAS CSS puro, sem markdown, sem explicacoes.", cssPrompt, 4000);
-    files["src/index.css"] = cleanCodeFences(css);
-  } catch (e) {
-    if (isAuthError(e)) throw e;
-    files["src/index.css"] = buildFallbackCSS(nicheConfig);
+  // VELOCISTA Level 2: inject cached code as reference
+  if (cached && (cached.level === 2 || cached.level === 3)) {
+    const refCode = cached.entry.files?.["src/App.jsx"];
+    if (refCode) {
+      extras += `\n\nCODIGO DE REFERENCIA (projeto similar, use como base de estrutura):\n\`\`\`jsx\n${refCode.slice(0, 4000)}\n\`\`\``;
+      onProgress?.(`Reutilizando estrutura de projeto similar`, "info");
+    }
   }
 
-  // ── STEP 5: EXECUTOR — Generate App.jsx (STREAMING) ────────────────────────
-  onProgress?.("Gerando aplicacao React (2/4)...", "info");
+  // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
+  onProgress?.("Gerando aplicacao React...", "info");
 
-  const archInstruction = brief.instruction;
-  const appPrompt = previousCode
-    ? `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 8000)}\n\`\`\`\n\nMODIFICACAO: ${prompt}\n\nBRIEFING DO ARQUITETO:\n${archInstruction}\n\nRetorne App.jsx COMPLETO. Apenas JSX.`
-    : `${prompt}\n\nBRIEFING DO ARQUITETO:\n${archInstruction}${examplesBlock}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
+  const appPrompt = `${prompt}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
+  let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
-  const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream);
-  let appCode = cleanCodeFences(appRaw);
-  if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+  files["src/App.jsx"] = appCode.code;
 
-  // ── STEP 6: CRITICO — Validate before review ──────────────────────────────
-  const preValidation = validateCode(appCode);
-  const preSummary = getValidationSummary(preValidation);
-  onProgress?.(`Critico pre-revisao: ${preSummary.emoji} ${preValidation.score}/100 (${preSummary.label})`, "info");
-
-  // ── STEP 7: EXECUTOR — Review + Fix (STREAMING) ────────────────────────────
-  onProgress?.("Revisando codigo (3/4)...", "info");
-
-  // Build targeted review instructions based on what CRITICO found
-  const failedChecks = preValidation.details.filter(d => !d.passed).map(d => `- ${d.name}: ${d.message}`);
-  const reviewExtra = failedChecks.length > 0
-    ? `\n\nPROBLEMAS DETECTADOS PELO VALIDADOR (corrija OBRIGATORIAMENTE):\n${failedChecks.join("\n")}`
-    : "";
-
-  try {
-    const reviewedRaw = await callClaudeStream(
-      REVIEWER_PROMPT,
-      `Revise e corrija:\n\n${appCode.slice(0, 14000)}${reviewExtra}`,
-      16000,
-      onCodeStream
-    );
-    const reviewed = cleanCodeFences(reviewedRaw);
-    if (reviewed && reviewed.length > 100) appCode = reviewed;
-  } catch (e) {
-    if (isAuthError(e)) throw e;
-    // Keep pre-review code
-  }
-
-  // ── STEP 8: CRITICO — Final validation ─────────────────────────────────────
-  const finalValidation = validateCode(appCode);
-  const finalSummary = getValidationSummary(finalValidation);
-  onProgress?.(`Critico final: ${finalSummary.emoji} ${finalValidation.score}/100 (${finalSummary.label})`, "info");
-
-  files["src/App.jsx"] = appCode;
-
-  // ── STEP 9: MEMORIALISTA — Record result ───────────────────────────────────
+  // ══ STEP 6: MEMORIALISTA — Record + VELOCISTA — Cache ══════════════════════
   const duration = Date.now() - startTime;
-  recordGeneration({
-    prompt: prompt.slice(0, 200),
-    nicho,
-    score: finalValidation.score,
-    duration,
-    success: true,
-  });
+  recordGeneration({ prompt: prompt.slice(0, 200), nicho, score: appCode.score, duration, success: true });
+  setCacheEntry(prompt, nicho, files, appCode.score);
 
-  // VELOCISTA — Cache if good score
-  setCacheEntry(prompt, nicho, files, finalValidation.score);
-
-  onProgress?.(`Pronto! (${(duration / 1000).toFixed(1)}s)`, "success");
-  return { files, validation: finalValidation };
+  onProgress?.(`Pronto! ${appCode.summary.emoji} ${appCode.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
+  return { files, validation: appCode.validation };
 }
 
-// ─── LOCAL NICHE GUESS (no AI call, for cache lookup) ────────────────────────
+// ─── EDIT MODE (lightweight — 1 AI call) ─────────────────────────────────────
+async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
+  onProgress?.("Modo edicao rapida...", "info");
+
+  const editPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\nREGRAS:\n- Retorne o App.jsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Mantenha o objeto THEME existente\n- Mantenha todos os componentes existentes\n- CSS inline, sem Tailwind\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo.`;
+
+  const raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 16000, onCodeStream);
+  const code = cleanCodeFences(raw);
+  if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+
+  const validation = validateCode(code);
+  const summary = getValidationSummary(validation);
+  files["src/App.jsx"] = code;
+
+  const duration = Date.now() - startTime;
+  recordGeneration({ prompt: prompt.slice(0, 200), nicho: "edit", score: validation.score, duration, success: true });
+
+  onProgress?.(`Editado! ${summary.emoji} ${validation.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
+  return { files, validation };
+}
+
+// ─── GENERATE + VALIDATE + AUTO-RETRY ────────────────────────────────────────
+// Generates code, validates, reviews if needed, retries once if score < 40
+async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
+  let appCode = "";
+  let validation;
+  let summary;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) {
+      onProgress?.("Score baixo. Regenerando...", "info");
+    }
+
+    // Generate
+    const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream);
+    appCode = cleanCodeFences(appRaw);
+    if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+
+    // CRITICO — pre-review
+    validation = validateCode(appCode);
+    summary = getValidationSummary(validation);
+    onProgress?.(`Critico: ${summary.emoji} ${validation.score}/100`, "info");
+
+    // If score is decent, do a targeted silent review
+    if (validation.score >= 40) {
+      const failedChecks = validation.details.filter(d => !d.passed);
+      if (failedChecks.length > 0) {
+        onProgress?.("Revisando...", "info");
+        const reviewExtra = `\n\nCORRIJA ESTES PROBLEMAS:\n${failedChecks.map(d => `- ${d.name}: ${d.message}`).join("\n")}`;
+        try {
+          // Silent review — no streaming to UI (avoid confusing double-stream)
+          const reviewedRaw = await callClaude(
+            REVIEWER_PROMPT,
+            `Revise e corrija:\n\n${appCode.slice(0, 14000)}${reviewExtra}`,
+            16000
+          );
+          const reviewed = cleanCodeFences(reviewedRaw);
+          if (reviewed && reviewed.length > 100) {
+            const reviewValidation = validateCode(reviewed);
+            // Only use reviewed code if it's actually better
+            if (reviewValidation.score >= validation.score) {
+              appCode = reviewed;
+              validation = reviewValidation;
+              summary = getValidationSummary(validation);
+              onProgress?.(`Revisado: ${summary.emoji} ${validation.score}/100`, "info");
+            }
+          }
+        } catch (e) {
+          if (isAuthError(e)) throw e;
+        }
+      }
+      break; // Good enough, exit retry loop
+    }
+
+    // Score < 40 on first attempt — will retry
+    if (attempt === 0 && validation.score < 40) continue;
+  }
+
+  return { code: appCode, score: validation.score, validation, summary };
+}
+
+// ─── LOCAL NICHE GUESS (no AI call) ──────────────────────────────────────────
 function guessNicheLocal(prompt) {
   const p = prompt.toLowerCase();
   const map = [
@@ -152,19 +227,19 @@ function guessNicheLocal(prompt) {
     [["restaurante", "lanchonete", "pizzaria", "cardapio", "food"], "food"],
     [["banco", "financ", "investim", "fintech", "pagament"], "finance"],
     [["academia", "fitness", "crossfit", "personal", "treino"], "fitness"],
-    [["igreja", "culto", "ministerio", "congreg", "dizimo"], "church"],
+    [["igreja", "culto", "congreg", "dizimo", "celula"], "church"],
     [["loja", "varejo", "comercio", "pdv", "estoque"], "retail"],
-    [["construt", "obra", "engenharia", "imovel"], "construction"],
+    [["construt", "obra", "engenharia"], "construction"],
     [["escola", "educac", "faculdade", "cursinho", "aluno"], "education"],
     [["clinica", "hospital", "medic", "saude", "consultorio"], "health"],
     [["agencia", "design", "marketing", "criativ", "portfolio"], "creative"],
-    [["advog", "juridic", "escritorio", "processo", "lei"], "law"],
+    [["advog", "juridic", "escritorio de", "processo", "direito"], "law"],
     [["veterinar", "vet", "animal", "pet clinic"], "vet"],
     [["idioma", "ingles", "espanhol", "lingua", "fluenc"], "languages"],
     [["petshop", "pet shop", "racao", "banho e tosa"], "petshop"],
     [["farmacia", "drogaria", "medicament", "remedios"], "pharmacy"],
-    [["imobiliaria", "corretor", "aluguel", "imov"], "realestate"],
-    [["ong", "voluntari", "social", "doacao", "caridade"], "ministry"],
+    [["imobiliaria", "corretor", "aluguel", "imovel"], "realestate"],
+    [["ong", "voluntari", "social", "doacao", "ministerio"], "ministry"],
     [["mecanica", "oficina", "automovel", "carro", "motor"], "automotive"],
     [["buffet", "evento", "festa", "casamento", "aniversario"], "events"],
     [["artesanato", "handmade", "atelie", "feito a mao", "croche"], "crafts"],
@@ -173,15 +248,4 @@ function guessNicheLocal(prompt) {
     if (keywords.some(k => p.includes(k))) return id;
   }
   return "generic";
-}
-
-// ─── FALLBACK CSS ────────────────────────────────────────────────────────────
-function buildFallbackCSS(niche) {
-  return `:root{--bg:${niche.palette.bg};--sidebar:${niche.palette.sidebar};--accent:${niche.palette.accent};--card:#FFFFFF;--border:#E5E7EB;--text:#1A1A2E;--text-muted:#6B7280;}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-#root{min-height:100vh}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`;
 }
