@@ -109,8 +109,13 @@ export default function Dashboard({ user, onLogout }) {
     setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode("");
 
     try {
-      // Attach project history to onProgress for the Memorialista
-      const onProgressFn = (msg) => setThinkSteps(prev => [...prev, msg]);
+      // onProgress receives structured events: { step, message, type }
+      const onProgressFn = (event) => {
+        // Support both structured events and legacy strings
+        const msg = typeof event === "string" ? event : event?.message || "";
+        const step = typeof event === "object" ? event?.step : null;
+        setThinkSteps(prev => [...prev, { step, message: msg }]);
+      };
       onProgressFn._projectHistory = history;
 
       const result = await generateFiles(

@@ -1,84 +1,90 @@
 import { C, SYNE, DM } from "../config/theme";
 
-// Map progress messages to agent names and icons
-function parseStep(msg) {
-  const lower = (msg || "").toLowerCase();
-  if (lower.includes("nicho")) return { agent: "Sommelier", desc: "Analisando nicho...", pct: 10 };
-  if (lower.includes("arquiteto") || lower.includes("secoes") || lower.includes("componentes")) return { agent: "Arquiteto", desc: "Estruturando app...", pct: 20 };
-  if (lower.includes("estilos") || lower.includes("css")) return { agent: "Executor", desc: "Aplicando estilos...", pct: 30 };
-  if (lower.includes("gerando") || lower.includes("react")) return { agent: "Executor", desc: "Escrevendo codigo...", pct: 50 };
-  if (lower.includes("critico") || lower.includes("score")) return { agent: "Critico", desc: msg, pct: 75 };
-  if (lower.includes("revisando")) return { agent: "Perfeccionista", desc: "Revisando qualidade...", pct: 85 };
-  if (lower.includes("pronto") || lower.includes("editado")) return { agent: "Concluido", desc: msg, pct: 100 };
-  if (lower.includes("cache")) return { agent: "Velocista", desc: msg, pct: 95 };
-  if (lower.includes("reutilizando")) return { agent: "Velocista", desc: msg, pct: 25 };
-  if (lower.includes("regenerando")) return { agent: "Critico", desc: "Score baixo, regenerando...", pct: 60 };
-  if (lower.includes("mudanca estrutural")) return { agent: "Arquiteto", desc: "Reconstruindo do zero...", pct: 15 };
-  if (lower.includes("edicao")) return { agent: "Executor", desc: "Edicao rapida...", pct: 40 };
-  return { agent: "Zero", desc: msg, pct: 50 };
+// ─── AGENT DISPLAY CONFIG ────────────────────────────────────────────────────
+// Maps step enum (from generator.js STEPS) to visual properties.
+// This is the ONLY place that knows how to display agents.
+// The step field is the contract. The message text can change freely.
+const AGENT_MAP = {
+  REBUILD:      { name: "Arquiteto",       pct: 10 },
+  CACHE_HIT:    { name: "Velocista",       pct: 100 },
+  CACHE_REUSE:  { name: "Velocista",       pct: 25 },
+  SOMMELIER:    { name: "Sommelier",       pct: 15 },
+  ARCHITECT:    { name: "Arquiteto",       pct: 25 },
+  CSS:          { name: "Executor",        pct: 30 },
+  MEMORIALISTA: { name: "Memorialista",    pct: 35 },
+  EXECUTOR:     { name: "Executor",        pct: 50 },
+  CRITICO:      { name: "Critico",         pct: 75 },
+  REVIEWER:     { name: "Perfeccionista",  pct: 85 },
+  DONE:         { name: "Concluido",       pct: 100 },
+  EDIT:         { name: "Executor",        pct: 40 },
+  RETRY:        { name: "Critico",         pct: 60 },
+};
+
+function resolveAgent(stepObj) {
+  // Structured event: { step: "SOMMELIER", message: "..." }
+  if (stepObj && typeof stepObj === "object" && stepObj.step) {
+    const config = AGENT_MAP[stepObj.step];
+    if (config) return { ...config, desc: stepObj.message };
+  }
+  // Legacy string fallback
+  const msg = typeof stepObj === "string" ? stepObj : stepObj?.message || "";
+  return { name: "Zero", pct: 50, desc: msg };
 }
 
 export default function GenerationProgress({ steps, generating }) {
   if (!generating && (!steps || steps.length === 0)) return null;
 
-  const lastStep = steps[steps.length - 1] || "";
-  const parsed = parseStep(lastStep);
+  const lastStep = steps[steps.length - 1];
+  const agent = resolveAgent(lastStep);
   const isDone = !generating;
 
   return (
     <div style={{
       padding: "16px 20px",
-      background: `linear-gradient(135deg, rgba(255,208,80,0.03), rgba(96,165,250,0.03))`,
+      background: "linear-gradient(135deg, rgba(255,208,80,0.03), rgba(96,165,250,0.03))",
       borderBottom: `1px solid ${C.border}`,
     }}>
-      {/* Agent name + description */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
           background: isDone ? "rgba(52,211,153,0.1)" : "rgba(255,208,80,0.1)",
           border: `1px solid ${isDone ? "rgba(52,211,153,0.3)" : "rgba(255,208,80,0.3)"}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
         }}>
           <span style={{ fontSize: 12, fontWeight: 800, color: isDone ? C.success : C.yellow, fontFamily: SYNE }}>
-            {isDone ? "✓" : parsed.agent.charAt(0)}
+            {isDone ? "v" : agent.name.charAt(0)}
           </span>
         </div>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: isDone ? C.success : C.yellow, fontFamily: SYNE }}>
-            {isDone ? "Concluido" : parsed.agent}
+            {isDone ? "Concluido" : agent.name}
           </div>
-          <div style={{ fontSize: 11, color: C.textMuted, fontFamily: DM }}>
-            {parsed.desc}
-          </div>
+          <div style={{ fontSize: 11, color: C.textMuted, fontFamily: DM }}>{agent.desc}</div>
         </div>
       </div>
 
-      {/* Progress bar */}
       <div style={{ height: 4, background: C.bg, borderRadius: 2, overflow: "hidden" }}>
         <div style={{
-          height: "100%",
-          width: `${isDone ? 100 : parsed.pct}%`,
-          background: isDone
-            ? C.success
-            : `linear-gradient(90deg, ${C.yellow}, ${C.info})`,
-          borderRadius: 2,
-          transition: "width 0.5s ease",
+          height: "100%", width: `${isDone ? 100 : agent.pct}%`,
+          background: isDone ? C.success : `linear-gradient(90deg, ${C.yellow}, ${C.info})`,
+          borderRadius: 2, transition: "width 0.5s ease",
         }} />
       </div>
 
-      {/* Step history (compact) */}
       {steps.length > 1 && (
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-          {steps.slice(0, -1).map((s, i) => (
-            <span key={i} style={{
-              fontSize: 9, color: C.textDim, padding: "1px 6px",
-              background: C.bg, borderRadius: 4, border: `1px solid ${C.border}`,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140,
-            }}>
-              {s.length > 30 ? s.slice(0, 30) + "..." : s}
-            </span>
-          ))}
+          {steps.slice(0, -1).map((s, i) => {
+            const a = resolveAgent(s);
+            return (
+              <span key={i} style={{
+                fontSize: 9, color: C.textDim, padding: "1px 6px",
+                background: C.bg, borderRadius: 4, border: `1px solid ${C.border}`,
+                whiteSpace: "nowrap",
+              }}>
+                {a.name}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

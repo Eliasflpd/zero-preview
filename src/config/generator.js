@@ -30,6 +30,28 @@ function isAuthError(e) {
   return e.message === "LICENSE_INVALID" || e.message === "LICENSE_EXPIRED" || e.message === "RATE_LIMITED";
 }
 
+// ─── STEP ENUM — contract between generator and UI ───────────────────────────
+// GenerationProgress reads .step to show agent name. Text can change freely.
+export const STEPS = {
+  REBUILD:      "REBUILD",
+  CACHE_HIT:    "CACHE_HIT",
+  CACHE_REUSE:  "CACHE_REUSE",
+  SOMMELIER:    "SOMMELIER",
+  ARCHITECT:    "ARCHITECT",
+  CSS:          "CSS",
+  MEMORIALISTA: "MEMORIALISTA",
+  EXECUTOR:     "EXECUTOR",
+  CRITICO:      "CRITICO",
+  REVIEWER:     "REVIEWER",
+  DONE:         "DONE",
+  EDIT:         "EDIT",
+  RETRY:        "RETRY",
+};
+
+function emit(onProgress, step, message, type = "info") {
+  onProgress?.({ step, message, type });
+}
+
 // ─── CSS TEMPLATES BY NICHE (eliminates 1 AI call) ──────────────────────────
 function buildNicheCSS(niche) {
   const p = niche.palette;
@@ -125,7 +147,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   // ══ DISCRIMINATOR: Edit leve vs Pipeline completo ══════════════════════════
   if (previousCode) {
     if (shouldRebuild(prompt, previousCode)) {
-      onProgress?.("Mudanca estrutural detectada — gerando do zero", "info");
+      emit(onProgress, STEPS.REBUILD, "Mudanca estrutural detectada — gerando do zero");
       // Fall through to full pipeline (previousCode ignored)
     } else {
       return await editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime);
@@ -137,8 +159,8 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   const cached = getCacheEntry(prompt, quickNiche);
 
   if (cached && cached.level === 1) {
-    onProgress?.(`Cache hit! ${cached.savings}`, "success");
-    onProgress?.("Pronto!", "success");
+    emit(onProgress, STEPS.CACHE_HIT, `Cache hit! ${cached.savings}`, "success");
+    emit(onProgress, STEPS.DONE, "Pronto!", "success");
     recordGeneration({ prompt, nicho: quickNiche, score: cached.entry.score, duration: Date.now() - startTime, success: true, cached: true });
     return { files: cached.entry.files, validation: { score: cached.entry.score } };
   }
@@ -154,15 +176,15 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
     }
   }
   const nicheConfig = getNiche(nicho);
-  onProgress?.(`Nicho: ${nicheConfig.label}`, "info");
+  emit(onProgress, STEPS.SOMMELIER, `Nicho: ${nicheConfig.label}`);
 
   // ══ STEP 2: ARQUITETO — Analyze prompt ═════════════════════════════════════
   const brief = analyzePrompt(prompt, nicho);
-  onProgress?.(`${brief.complexity} · ${brief.pages} secoes · ${brief.components.length} componentes`, "info");
+  emit(onProgress, STEPS.ARCHITECT, `${brief.complexity} · ${brief.pages} secoes · ${brief.components.length} componentes`);
 
   // ══ STEP 3: CSS template (no AI call — saves ~4000 tokens) ═════════════════
   files["src/index.css"] = buildNicheCSS(nicheConfig);
-  onProgress?.("Estilos aplicados", "success");
+  emit(onProgress, STEPS.CSS, "Estilos aplicados", "success");
 
   // ══ STEP 4: MEMORIALISTA — Build enhanced prompt ═══════════════════════════
   const topPrompts = getTopPrompts(3);
@@ -187,12 +209,12 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
     const refCode = cached.entry.files?.["src/App.jsx"];
     if (refCode) {
       extras += `\n\nCODIGO DE REFERENCIA (projeto similar, use como base de estrutura):\n\`\`\`jsx\n${refCode.slice(0, 4000)}\n\`\`\``;
-      onProgress?.(`Reutilizando estrutura de projeto similar`, "info");
+      emit(onProgress, STEPS.CACHE_REUSE, "Reutilizando estrutura de projeto similar");
     }
   }
 
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
-  onProgress?.("Gerando aplicacao React...", "info");
+  emit(onProgress, STEPS.EXECUTOR, "Gerando aplicacao React...");
 
   const appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS src/App.jsx completo. Sem markdown.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
@@ -204,13 +226,13 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   recordGeneration({ prompt: prompt.slice(0, 200), nicho, score: appCode.score, duration, success: true });
   setCacheEntry(prompt, nicho, files, appCode.score);
 
-  onProgress?.(`Pronto! ${appCode.summary.emoji} ${appCode.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
+  emit(onProgress, STEPS.DONE, `Pronto! ${appCode.summary.emoji} ${appCode.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
   return { files, validation: appCode.validation };
 }
 
 // ─── EDIT MODE (lightweight — 1 AI call) ─────────────────────────────────────
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
-  onProgress?.("Modo edicao rapida...", "info");
+  emit(onProgress, STEPS.EDIT, "Modo edicao rapida...");
 
   const editPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\n${CONTEXTO_BR}\n\nREGRAS:\n- Retorne o App.jsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Mantenha o objeto THEME existente\n- Mantenha todos os componentes existentes\n- CSS inline, sem Tailwind\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo.`;
 
@@ -225,12 +247,11 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   const duration = Date.now() - startTime;
   recordGeneration({ prompt: prompt.slice(0, 200), nicho: "edit", score: validation.score, duration, success: true });
 
-  onProgress?.(`Editado! ${summary.emoji} ${validation.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
+  emit(onProgress, STEPS.DONE, `Editado! ${summary.emoji} ${validation.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
   return { files, validation };
 }
 
 // ─── GENERATE + VALIDATE + AUTO-RETRY ────────────────────────────────────────
-// Generates code, validates, reviews if needed, retries once if score < 40
 async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
   let appCode = "";
   let validation;
@@ -238,27 +259,23 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
 
   for (let attempt = 0; attempt < 2; attempt++) {
     if (attempt > 0) {
-      onProgress?.("Score baixo. Regenerando...", "info");
+      emit(onProgress, STEPS.RETRY, "Score baixo. Regenerando...");
     }
 
-    // Generate
     const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream);
     appCode = cleanCodeFences(appRaw);
     if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
-    // CRITICO — pre-review
     validation = validateCode(appCode);
     summary = getValidationSummary(validation);
-    onProgress?.(`Critico: ${summary.emoji} ${validation.score}/100`, "info");
+    emit(onProgress, STEPS.CRITICO, `${summary.emoji} ${validation.score}/100`);
 
-    // If score is decent, do a targeted silent review
     if (validation.score >= 40) {
       const failedChecks = validation.details.filter(d => !d.passed);
       if (failedChecks.length > 0) {
-        onProgress?.("Revisando...", "info");
+        emit(onProgress, STEPS.REVIEWER, "Revisando qualidade...");
         const reviewExtra = `\n\nCORRIJA ESTES PROBLEMAS:\n${failedChecks.map(d => `- ${d.name}: ${d.message}`).join("\n")}`;
         try {
-          // Silent review — no streaming to UI (avoid confusing double-stream)
           const reviewedRaw = await callClaude(
             REVIEWER_PROMPT,
             `Revise e corrija:\n\n${appCode.slice(0, 14000)}${reviewExtra}`,
@@ -267,19 +284,18 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
           const reviewed = cleanCodeFences(reviewedRaw);
           if (reviewed && reviewed.length > 100) {
             const reviewValidation = validateCode(reviewed);
-            // Only use reviewed code if it's actually better
             if (reviewValidation.score >= validation.score) {
               appCode = reviewed;
               validation = reviewValidation;
               summary = getValidationSummary(validation);
-              onProgress?.(`Revisado: ${summary.emoji} ${validation.score}/100`, "info");
+              emit(onProgress, STEPS.CRITICO, `Revisado: ${summary.emoji} ${validation.score}/100`);
             }
           }
         } catch (e) {
           if (isAuthError(e)) throw e;
         }
       }
-      break; // Good enough, exit retry loop
+      break;
     }
 
     // Score < 40 on first attempt — will retry
