@@ -178,7 +178,10 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
   emit(onProgress, STEPS.EXECUTOR, "Gerando aplicacao React...");
 
-  const appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING DO ARQUITETO:\n${brief.instruction}${extras}\n\nRetorne APENAS o codigo de src/pages/Dashboard.tsx. Sem markdown. Comece com imports.`;
+  // Build compact prompt — avoid wasting tokens on repetitive context
+  let appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING:\n${brief.instruction}`;
+  if (extras) appPrompt += extras;
+  appPrompt += `\n\nRetorne APENAS codigo TSX. Sem markdown. Max 400 linhas. Comece com imports.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
   files["src/pages/Dashboard.tsx"] = appCode.code;
