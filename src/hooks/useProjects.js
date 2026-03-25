@@ -43,19 +43,34 @@ export default function useProjects() {
             try { await saveProject(p); } catch {}
           }
 
-          // Remote projects are canonical — map to our format
-          const merged = remote.map(p => ({
-            id: p.id,
-            name: p.name,
-            files: p.files || {},
-            lastPrompt: p.last_prompt || "",
-            history: p.history || [],
-            createdAt: new Date(p.created_at).getTime(),
-            updatedAt: new Date(p.updated_at).getTime(),
-          }));
+          // Merge: for shared IDs, keep whichever has newer updatedAt
+          const localMap = new Map(local.map(p => [p.id, p]));
+          const merged = remote.map(p => {
+            const remoteFormatted = {
+              id: p.id,
+              name: p.name,
+              files: p.files || {},
+              lastPrompt: p.last_prompt || "",
+              history: p.history || [],
+              createdAt: new Date(p.created_at).getTime(),
+              updatedAt: new Date(p.updated_at).getTime(),
+            };
+            const localVersion = localMap.get(p.id);
+            // If local is newer, keep local and push to Supabase
+            if (localVersion && localVersion.updatedAt > remoteFormatted.updatedAt) {
+              saveProject(localVersion).catch(() => {});
+              return localVersion;
+            }
+            return remoteFormatted;
+          });
 
-          setProjects(merged);
-          saveLocal(merged);
+          // Add local-only projects that were uploaded
+          for (const p of localOnly) {
+            merged.push(p);
+          }
+
+          setProjects(merged.slice(0, 50));
+          saveLocal(merged.slice(0, 50));
         }
       } catch {
         // Supabase down — localStorage is fine as fallback
@@ -75,8 +90,10 @@ export default function useProjects() {
       const next = prev.map(p => {
         if (p.id !== id) return p;
         const updated = typeof updater === "function" ? updater(p) : { ...p, ...updater };
-        // Async save to Supabase (fire and forget)
-        saveProject(updated).catch(() => {});
+        // Async save to Supabase — track errors for Farejador
+        saveProject(updated).catch(err => {
+          try { localStorage.setItem("zp_sync_error", JSON.stringify({ at: Date.now(), op: "update", id, error: err.message })); } catch {}
+        });
         return updated;
       });
       return next;
@@ -92,14 +109,18 @@ export default function useProjects() {
         if (saved?.id && saved.id !== project.id) {
           setProjects(current => current.map(p => p.id === project.id ? { ...p, id: saved.id } : p));
         }
-      }).catch(() => {});
+      }).catch(err => {
+        try { localStorage.setItem("zp_sync_error", JSON.stringify({ at: Date.now(), op: "create", error: err.message })); } catch {}
+      });
       return next;
     });
   }, []);
 
   const removeProject = useCallback((id) => {
     setProjects(prev => prev.filter(p => p.id !== id));
-    apiDeleteProject(id).catch(() => {});
+    apiDeleteProject(id).catch(err => {
+      try { localStorage.setItem("zp_sync_error", JSON.stringify({ at: Date.now(), op: "delete", id, error: err.message })); } catch {}
+    });
   }, []);
 
   return { projects, setProjects, addProject, updateProject, removeProject, syncing };

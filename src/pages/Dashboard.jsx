@@ -26,6 +26,8 @@ export default function Dashboard({ user, onLogout }) {
   const [streamingCode, setStreamingCode] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const lastGenRef = useRef(0);
+  const promptRef = useRef(prompt);
+  promptRef.current = prompt;
 
   // Auto-close sidebar on mobile resize
   useEffect(() => {
@@ -77,7 +79,8 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) { setError("Digite um prompt para comecar."); return; }
+    const currentPrompt = promptRef.current || prompt;
+    if (!currentPrompt.trim()) { setError("Digite um prompt para comecar."); return; }
     const now = Date.now();
     if (now - lastGenRef.current < 10000) { setError("Aguarde 10 segundos entre geracoes."); return; }
     lastGenRef.current = now;
@@ -90,7 +93,7 @@ export default function Dashboard({ user, onLogout }) {
       onProgressFn._projectHistory = history;
 
       const result = await generateFiles(
-        prompt,
+        currentPrompt,
         onProgressFn,
         generatedFiles?.["src/App.jsx"] || null,
         (_delta, fullText) => setStreamingCode(fullText)
@@ -102,14 +105,14 @@ export default function Dashboard({ user, onLogout }) {
       const now = Date.now();
       const score = result.validation?.score;
       const failedNames = (result.validation?.details || []).filter(d => !d.passed).map(d => d.name);
-      const newHistory = [...history, { prompt, at: now, score, problems: failedNames }];
-      const name = prompt.slice(0, 42).trim() + (prompt.length > 42 ? "..." : "");
+      const newHistory = [...history, { prompt: currentPrompt, at: now, score, problems: failedNames }];
+      const name = currentPrompt.slice(0, 42).trim() + (currentPrompt.length > 42 ? "..." : "");
       const newRunId = `run_${now}`;
 
       if (activeId) {
-        updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: prompt, history: newHistory, updatedAt: now }));
+        updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: currentPrompt, history: newHistory, updatedAt: now }));
       } else {
-        const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: prompt, history: newHistory, createdAt: now, updatedAt: now });
+        const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: currentPrompt, history: newHistory, createdAt: now, updatedAt: now });
         addProject(np);
         setActiveId(np.id);
       }
@@ -184,7 +187,7 @@ export default function Dashboard({ user, onLogout }) {
 
           {hasPreview && (
             <Suspense fallback={null}>
-              <PreviewPanel files={generatedFiles} runId={runId} projectName={activeProject?.name} onClose={() => { setGeneratedFiles(null); setRunId(null); }} onAutoFix={(fixPrompt) => { setPrompt(fixPrompt); setTimeout(() => handleGenerate(), 100); }} />
+              <PreviewPanel files={generatedFiles} runId={runId} projectName={activeProject?.name} onClose={() => { setGeneratedFiles(null); setRunId(null); }} onAutoFix={(fixPrompt) => { promptRef.current = fixPrompt; setPrompt(fixPrompt); requestAnimationFrame(() => handleGenerate()); }} />
             </Suspense>
           )}
         </div>
