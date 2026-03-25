@@ -144,14 +144,37 @@ ERROR BOUNDARY:
 Inclua um try/catch visual ou ErrorBoundary class component.
 
 ═══════════════════════════════════════════════════════
-REGRA #9 — SIDEBAR
+REGRA #9 — SIDEBAR COM NAVEGACAO FUNCIONAL
 ═══════════════════════════════════════════════════════
+A sidebar DEVE funcionar como navegacao REAL. Clicar em cada item DEVE mudar o conteudo.
+
+Padrao OBRIGATORIO:
+const [activeSection, setActiveSection] = useState("dashboard");
+
+const menuItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "clientes", label: "Clientes", icon: Users },
+  { id: "configuracoes", label: "Configuracoes", icon: Settings },
+];
+
+Na sidebar, cada item:
+onClick={() => setActiveSection(item.id)}
+className={cn("...", activeSection === item.id ? "bg-white/10" : "text-white/60")}
+
+No conteudo principal, OBRIGATORIAMENTE renderize conteudo diferente:
+{activeSection === "dashboard" && <DashboardContent />}
+{activeSection === "clientes" && <ClientesContent />}
+{activeSection === "configuracoes" && <ConfigContent />}
+
+Cada secao deve ter conteudo REAL — pelo menos um titulo, uma tabela ou cards.
+NUNCA faca sidebar decorativa que nao muda o conteudo.
+
+Sidebar HTML:
 <aside className="hidden md:flex w-60 flex-col bg-[var(--sidebar)] text-[var(--sidebar-text)] h-screen sticky top-0">
   Menu items com:
-  className={cn("flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors",
-    active ? "bg-white/10 font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
+  className={cn("flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-colors",
+    activeSection === item.id ? "bg-white/10 font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
   )}
-  Cada item DEVE ter onClick que muda o estado ativo.
 
 ═══════════════════════════════════════════════════════
 REGRA #10 — TABELA DE DADOS

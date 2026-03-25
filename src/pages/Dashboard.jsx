@@ -98,9 +98,12 @@ export default function Dashboard({ user, onLogout }) {
     const p = projects.find(x => x.id === id);
     if (!p) return;
     setActiveId(id); setPrompt("");
-    setGeneratedFiles(p.files || null);
+    // Only set files if project has real content (not empty object)
+    const hasFiles = p.files && Object.keys(p.files).length > 0;
+    setGeneratedFiles(hasFiles ? p.files : null);
+    if (hasFiles) setRunId(`run_load_${Date.now()}`); // trigger WebContainer reload
     setHistory(p.history || []); setError(""); setThinkSteps([]);
-    initProject(id, p.files);
+    initProject(id, hasFiles ? p.files : null);
   };
 
   const handleUndo = () => {
