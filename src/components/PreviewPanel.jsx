@@ -4,6 +4,7 @@ import { C, DM } from "../config/theme";
 
 const DeployModal = lazy(() => import("./DeployModal"));
 const GitHubSync = lazy(() => import("./GitHubSync"));
+const EditPanel = lazy(() => import("./EditPanel"));
 
 function Terminal({ logs }) {
   const ref = useRef();
@@ -39,6 +40,8 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const [showDeploy, setShowDeploy] = useState(false);
   const [showGitHub, setShowGitHub] = useState(false);
   const [autoFixing, setAutoFixing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedElement, setSelectedElement] = useState(null);
   const prevRunId = useRef(null);
   const loadTimer = useRef(null);
   const autoFixCount = useRef(0); // max 2 per generation to prevent infinite loop
@@ -59,6 +62,28 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
       setAutoFixing(false);
     }, 2000);
   }, [onAutoFix, autoFixing]);
+
+  // Toggle edit mode in iframe
+  const toggleEditMode = () => {
+    const iframe = document.querySelector('iframe[title="Preview"]');
+    if (iframe?.contentWindow) {
+      const newMode = !editMode;
+      setEditMode(newMode);
+      iframe.contentWindow.postMessage({ type: newMode ? "ENABLE_EDIT_MODE" : "DISABLE_EDIT_MODE" }, "*");
+      if (!newMode) setSelectedElement(null);
+    }
+  };
+
+  // Listen for element clicks from iframe
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === "ELEMENT_CLICKED" && editMode) {
+        setSelectedElement(e.data.data);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [editMode]);
 
   const addLog = useCallback((text, type = "default") => {
     const clean = String(text).trim();
@@ -187,6 +212,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
             }}>Abrir</a>
           )}
           {url && (
+            <button onClick={toggleEditMode} style={{
+              padding: "4px 10px", background: editMode ? "rgba(59,130,246,0.15)" : "transparent",
+              border: `1px solid ${editMode ? "rgba(59,130,246,0.4)" : C.border}`, borderRadius: 5,
+              fontSize: 10, color: editMode ? "#3B82F6" : C.textMuted, cursor: "pointer", fontFamily: DM, fontWeight: 600,
+            }}>{editMode ? "Editando..." : "Editar"}</button>
+          )}
+          {url && (
             <button onClick={() => setShowGitHub(true)} style={{
               padding: "4px 10px", background: "transparent",
               border: `1px solid ${C.border}`, borderRadius: 5,
@@ -231,6 +263,17 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
         )}
 
         {/* Runtime error overlay */}
+        {/* Visual Edit Panel */}
+        {editMode && selectedElement && (
+          <Suspense fallback={null}>
+            <EditPanel
+              element={selectedElement}
+              onEdit={(editPrompt) => { setEditMode(false); setSelectedElement(null); if (onAutoFix) onAutoFix(editPrompt); }}
+              onClose={() => setSelectedElement(null)}
+            />
+          </Suspense>
+        )}
+
         {(runtimeError || autoFixing) && (
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,

@@ -200,6 +200,7 @@ const ALLOWED_PACKAGES = new Set([
   "react", "react-dom", "recharts", "lucide-react",
   "react/jsx-runtime", "react-dom/client",
   "react-router-dom", "clsx", "tailwind-merge",
+  "@supabase/supabase-js",
 ]);
 
 function v10_noForbiddenPatterns(code) {

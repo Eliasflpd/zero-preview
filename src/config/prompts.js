@@ -21,6 +21,7 @@ Estes pacotes JA ESTAO instalados. Use-os:
 - recharts (graficos)
 - lucide-react (icones)
 - clsx + tailwind-merge (via cn() em @/lib/utils)
+- @supabase/supabase-js (banco de dados — disponivel em @/lib/supabase)
 
 Estes componentes Shadcn/UI JA EXISTEM em @/components/ui/:
 - Button (variantes: default, outline, ghost, destructive)

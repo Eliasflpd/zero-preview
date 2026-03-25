@@ -13,6 +13,7 @@ export const FIXED_FILES = {
       "react-router-dom": "^6.26.0",
       "recharts": "^2.12.7",
       "lucide-react": "^0.441.0",
+      "@supabase/supabase-js": "^2.45.0",
       "clsx": "^2.1.1",
       "tailwind-merge": "^2.5.2",
     },
@@ -88,6 +89,10 @@ export default {
 <body class="antialiased">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <script>
+  // Zero Preview — Visual Edit Mode bridge
+  (function(){var e=!1,h=null;window.addEventListener("message",function(m){if(m.data&&m.data.type==="ENABLE_EDIT_MODE")e=!0;if(m.data&&m.data.type==="DISABLE_EDIT_MODE"){e=!1;if(h){h.style.outline="";h=null}}});document.addEventListener("mouseover",function(m){if(!e)return;if(h)h.style.outline="";h=m.target;h.style.outline="2px solid #3B82F6";h.style.outlineOffset="2px";m.stopPropagation()},!0);document.addEventListener("click",function(m){if(!e)return;m.preventDefault();m.stopPropagation();var t=m.target,r=t.getBoundingClientRect();window.parent.postMessage({type:"ELEMENT_CLICKED",data:{tagName:t.tagName,text:(t.textContent||"").slice(0,200),className:t.className||"",rect:{top:r.top,left:r.left,width:r.width,height:r.height}}},"*")},!0)})();
+  </script>
 </body>
 </html>`,
 
@@ -249,6 +254,56 @@ const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 );
 Input.displayName = "Input";
 export { Input };`,
+
+  // ─── Supabase client ────────────────────────────────────────────────────────
+  "src/lib/supabase.ts": `import { createClient } from '@supabase/supabase-js';
+
+// Supabase configuration — user can replace with their own project
+// To connect to a real database:
+// 1. Create a project at supabase.com
+// 2. Get URL and anon key from Settings → API
+// 3. Replace the values below
+
+const SUPABASE_URL = 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key';
+
+// This flag indicates if Supabase is configured with real credentials
+export const isSupabaseConfigured = !SUPABASE_URL.includes('your-project');
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Helper: fetch data with error handling
+export async function fetchData<T>(table: string): Promise<T[]> {
+  if (!isSupabaseConfigured) return []; // Return empty if not configured
+  const { data, error } = await supabase.from(table).select('*');
+  if (error) { console.error('Supabase error:', error); return []; }
+  return (data || []) as T[];
+}
+
+// Helper: insert data
+export async function insertData<T>(table: string, row: Partial<T>): Promise<T | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase.from(table).insert(row).select().single();
+  if (error) { console.error('Supabase error:', error); return null; }
+  return data as T;
+}
+
+// Helper: update data
+export async function updateData<T>(table: string, id: string, updates: Partial<T>): Promise<T | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase.from(table).update(updates).eq('id', id).select().single();
+  if (error) { console.error('Supabase error:', error); return null; }
+  return data as T;
+}
+
+// Helper: delete data
+export async function deleteData(table: string, id: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) { console.error('Supabase error:', error); return false; }
+  return true;
+}
+`,
 };
 
 // ─── Niche CSS variables (injected into src/index.css) ───────────────────────
