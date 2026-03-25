@@ -8,15 +8,15 @@ import useVersions from "../hooks/useVersions";
 import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
 
-const Sidebar = lazy(() => import("../components/Sidebar"));
-const PreviewPanel = lazy(() => import("../components/PreviewPanel"));
-const SettingsModal = lazy(() => import("../components/SettingsModal"));
-const DisparadorBridge = lazy(() => import("../components/DisparadorBridge"));
-const AgenticMode = lazy(() => import("../components/AgenticMode").catch(() => {
-  // Fallback if chunk fails to load (stale cache after deploy)
-  window.location.reload();
-  return { default: () => null };
-}));
+// All lazy imports have stale-chunk protection — auto-reload on deploy
+function safeLazy(importFn) {
+  return lazy(() => importFn().catch(() => { window.location.reload(); return { default: () => null }; }));
+}
+const Sidebar = safeLazy(() => import("../components/Sidebar"));
+const PreviewPanel = safeLazy(() => import("../components/PreviewPanel"));
+const SettingsModal = safeLazy(() => import("../components/SettingsModal"));
+const DisparadorBridge = safeLazy(() => import("../components/DisparadorBridge"));
+const AgenticMode = safeLazy(() => import("../components/AgenticMode"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -179,12 +179,18 @@ export default function Dashboard({ user, onLogout }) {
     requestAnimationFrame(() => handleGenerate());
   };
 
-  const handleGenerate = async () => {
-    const currentPrompt = promptRef.current || prompt;
+  const handleGenerate = async (retryOverride) => {
+    let currentPrompt = retryOverride || promptRef.current || prompt;
+    // If prompt is empty, try last history entry (for "Tentar novamente" button)
+    if (!currentPrompt.trim() && history.length > 0) {
+      currentPrompt = history[history.length - 1]?.prompt || "";
+    }
     if (!currentPrompt.trim()) { setError("Digite um prompt para comecar."); return; }
     const now = Date.now();
-    if (now - lastGenRef.current < 10000) { setError("Aguarde 10 segundos entre geracoes."); return; }
+    // Skip cooldown for retries (retryOverride set)
+    if (!retryOverride && now - lastGenRef.current < 10000) { setError("Aguarde 10 segundos entre geracoes."); return; }
     lastGenRef.current = now;
+    promptRef.current = currentPrompt;
 
     setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode("");
 
@@ -315,7 +321,8 @@ export default function Dashboard({ user, onLogout }) {
               prompt={prompt}
               onPromptChange={(v) => { promptRef.current = v; setPrompt(v); setError(""); }}
               onGenerate={handleGenerate}
-              onSuggestionClick={(s) => setPrompt(s)}
+              onRetry={() => { const lastPrompt = history[history.length - 1]?.prompt; if (lastPrompt) handleGenerate(lastPrompt); else handleGenerate(); }}
+              onSuggestionClick={(s) => { promptRef.current = s; setPrompt(s); }}
               licenseInfo={licenseInfo}
               hasPreview={hasPreview}
               disabled={generating}

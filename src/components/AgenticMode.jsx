@@ -194,7 +194,7 @@ export default function AgenticMode({ onGenerate, generating, thinkSteps, hasPre
       {/* Done actions */}
       {phase === PHASES.DONE && (
         <div style={{ padding: "8px 0", display: "flex", gap: 8, flexShrink: 0 }}>
-          <button onClick={() => {}} style={{
+          <button onClick={() => { setPhase(PHASES.CHAT); setMessages([{ from: "system", text: "Que bom! Quando quiser criar outro app, e so me contar." }]); }} style={{
             flex: 1, padding: "10px 0", background: C.success, border: "none",
             borderRadius: 10, fontSize: 12, fontWeight: 700, color: "#fff",
             cursor: "pointer", fontFamily: DM,

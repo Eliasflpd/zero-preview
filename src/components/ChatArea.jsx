@@ -18,7 +18,7 @@ const suggestions = [
 
 export default function ChatArea({
   history, generating, streamingCode, error, thinkSteps,
-  prompt, onPromptChange, onGenerate,
+  prompt, onPromptChange, onGenerate, onRetry,
   licenseInfo, hasPreview, disabled,
   onSuggestionClick,
 }) {
@@ -118,7 +118,7 @@ export default function ChatArea({
           <div style={{ marginBottom: 12, padding: "12px 14px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10 }}>
             <div style={{ fontSize: 11, color: C.error, marginBottom: 8, lineHeight: 1.5 }}>{error}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button onClick={onGenerate} style={{ padding: "4px 12px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600 }}>
+              <button onClick={() => (onRetry || onGenerate)()} style={{ padding: "4px 12px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600 }}>
                 Tentar novamente
               </button>
               {typeof onSuggestionClick === "function" && (
