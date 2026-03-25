@@ -184,6 +184,15 @@ export async function deleteProject(id) {
   });
 }
 
+// ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
+export async function fetchAdminDashboard(adminKey) {
+  const res = await fetch(`${API_BASE}/admin/dashboard`, {
+    headers: { "x-admin-key": adminKey },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 // ─── HEALTH CHECK ────────────────────────────────────────────────────────────
 export async function healthCheck() {
   try {
