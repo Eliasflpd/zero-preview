@@ -184,13 +184,29 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   files["src/pages/Dashboard.tsx"] = appCode.code;
 
   // ══ STEP 5.5: SPLITTER — Extract components into separate files ════════════
+  const originalCode = appCode.code;
   const splitFiles = splitComponents(appCode.code);
   const splitCount = Object.keys(splitFiles).length;
   if (splitCount > 1) {
-    for (const [path, content] of Object.entries(splitFiles)) {
-      files[path] = content;
+    // Validate: Dashboard.tsx must not be truncated
+    const dashFile = splitFiles["src/pages/Dashboard.tsx"];
+    const isTruncated = !dashFile
+      || dashFile.trimEnd().endsWith("const")
+      || dashFile.trimEnd().endsWith("const ")
+      || dashFile.trimEnd().endsWith("{")
+      || dashFile.trimEnd().endsWith("(")
+      || !dashFile.includes("export default");
+
+    if (isTruncated) {
+      // Split failed — use original unsplit file
+      files["src/pages/Dashboard.tsx"] = originalCode;
+      emit(onProgress, STEPS.ARCHITECT, "Split cancelado (arquivo protegido)");
+    } else {
+      for (const [path, content] of Object.entries(splitFiles)) {
+        files[path] = content;
+      }
+      emit(onProgress, STEPS.ARCHITECT, `${splitCount} arquivos gerados`);
     }
-    emit(onProgress, STEPS.ARCHITECT, `${splitCount} arquivos gerados`);
   }
 
   // ══ STEP 6: MEMORIALISTA — Record + VELOCISTA — Cache ══════════════════════

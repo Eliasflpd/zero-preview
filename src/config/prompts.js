@@ -195,6 +195,26 @@ Sidebar HTML:
   )}
 
 ═══════════════════════════════════════════════════════
+REGRA #9B — LIMITE DE TAMANHO (CRITICO)
+═══════════════════════════════════════════════════════
+O arquivo Dashboard.tsx DEVE ter NO MAXIMO 500 linhas.
+Se precisar de mais conteudo, simplifique cada secao.
+Cada subcomponente: maximo 80 linhas.
+Cada secao do CRM: 1 titulo + 1 tabela OU cards. Nao precisa de tudo.
+
+IMPORTANTE: E melhor um app COMPLETO de 400 linhas que compila
+do que um app de 1000 linhas que trunca e quebra.
+
+Se o prompt pede muitas secoes, simplifique:
+- Dashboard: 4 KPIs + 1 grafico
+- Clientes: 1 tabela com 6 registros
+- Produtos/Servicos: grid de cards simples
+- Config: 3 campos de formulario
+
+NUNCA gere mais de 500 linhas. O codigo DEVE terminar com:
+export default Dashboard;
+
+═══════════════════════════════════════════════════════
 REGRA #10 — TABELA DE DADOS
 ═══════════════════════════════════════════════════════
 <div className="overflow-x-auto">
