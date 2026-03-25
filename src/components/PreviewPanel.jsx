@@ -36,18 +36,41 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const [runtimeError, setRuntimeError] = useState(null);
   const [deviceWidth, setDeviceWidth] = useState("100%");
   const [showDeploy, setShowDeploy] = useState(false);
+  const [autoFixing, setAutoFixing] = useState(false);
   const prevRunId = useRef(null);
   const loadTimer = useRef(null);
+  const autoFixCount = useRef(0); // max 2 per generation to prevent infinite loop
+  const autoFixTimer = useRef(null);
+
+  // Reset auto-fix counter when runId changes (new generation)
+  useEffect(() => { autoFixCount.current = 0; }, [runId]);
+
+  const triggerAutoFix = useCallback((errorMsg) => {
+    if (!onAutoFix || autoFixCount.current >= 2 || autoFixing) return;
+    autoFixCount.current++;
+    setAutoFixing(true);
+    addLog(`Auto-debug: corrigindo automaticamente (tentativa ${autoFixCount.current}/2)...`, "info");
+    // Wait 2s for errors to settle, then fix
+    clearTimeout(autoFixTimer.current);
+    autoFixTimer.current = setTimeout(() => {
+      onAutoFix(`O app gerou este erro: "${errorMsg.slice(0, 300)}". Corrija o erro sem alterar a estrutura ou aparencia do app.`);
+      setAutoFixing(false);
+    }, 2000);
+  }, [onAutoFix, autoFixing]);
 
   const addLog = useCallback((text, type = "default") => {
     const clean = String(text).trim();
     if (!clean) return;
-    // Detect Vite/React errors in terminal output
+    // Detect Vite/React compile errors in terminal output
     if (type === "default" && (clean.includes("Error:") || clean.includes("error TS") || clean.includes("SyntaxError"))) {
       type = "error";
+      // AUTO-DEBUG: trigger automatic fix for compile errors
+      if (clean.includes("SyntaxError") || clean.includes("error TS") || clean.includes("Unexpected token") || clean.includes("Cannot find")) {
+        triggerAutoFix(clean);
+      }
     }
     setLogs(prev => [...prev.slice(-400), { text: clean, type }]);
-  }, []);
+  }, [triggerAutoFix]);
 
   // Listen for runtime errors from iframe via postMessage
   useEffect(() => {
@@ -56,11 +79,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
         const msg = e.data.message || e.data.error || "Erro desconhecido no preview";
         setRuntimeError(msg);
         addLog(`Runtime error: ${msg}`, "error");
+        // AUTO-DEBUG: also trigger for runtime errors
+        triggerAutoFix(msg);
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [addLog]);
+  }, [addLog, triggerAutoFix]);
 
   useEffect(() => {
     if (prevRunId.current === runId) {
@@ -197,27 +222,38 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
         )}
 
         {/* Runtime error overlay */}
-        {runtimeError && (
+        {(runtimeError || autoFixing) && (
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
-            background: "rgba(6,15,30,0.95)", borderTop: `2px solid ${C.error}`,
+            background: "rgba(6,15,30,0.95)", borderTop: `2px solid ${autoFixing ? C.yellow : C.error}`,
             padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8,
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.error }}>Erro de Runtime</span>
-              <button onClick={() => setRuntimeError(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14 }}>x</button>
+              <span style={{ fontSize: 11, fontWeight: 700, color: autoFixing ? C.yellow : C.error }}>
+                {autoFixing ? "Auto-debug em andamento..." : "Erro detectado"}
+              </span>
+              {!autoFixing && <button onClick={() => setRuntimeError(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14 }}>x</button>}
             </div>
-            <code style={{ fontSize: 10, color: C.textMuted, fontFamily: "'Courier New', monospace", wordBreak: "break-all", lineHeight: 1.4 }}>
-              {runtimeError.slice(0, 300)}
-            </code>
-            {onAutoFix && (
-              <button onClick={handleAutoFix} style={{
-                padding: "6px 12px", background: C.yellow, border: "none", borderRadius: 6,
-                fontSize: 11, fontWeight: 700, color: C.bg, cursor: "pointer", fontFamily: DM,
-                alignSelf: "flex-start",
-              }}>
-                Corrigir automaticamente
-              </button>
+            {autoFixing ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 14, height: 14, border: `2px solid ${C.yellow}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <span style={{ fontSize: 10, color: C.yellow, fontFamily: DM }}>Corrigindo erro automaticamente... (tentativa {autoFixCount.current}/2)</span>
+              </div>
+            ) : (
+              <>
+                <code style={{ fontSize: 10, color: C.textMuted, fontFamily: "'Courier New', monospace", wordBreak: "break-all", lineHeight: 1.4 }}>
+                  {runtimeError?.slice(0, 300)}
+                </code>
+                {onAutoFix && autoFixCount.current < 2 && (
+                  <button onClick={handleAutoFix} style={{
+                    padding: "6px 12px", background: C.yellow, border: "none", borderRadius: 6,
+                    fontSize: 11, fontWeight: 700, color: C.bg, cursor: "pointer", fontFamily: DM,
+                    alignSelf: "flex-start",
+                  }}>
+                    Corrigir manualmente
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
