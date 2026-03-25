@@ -226,17 +226,21 @@ function v11_importSafety(code) {
   const problems = [];
 
   // Allowed @/ imports (Shadcn components + utils that exist in template)
-  const ALLOWED_LOCAL = new Set([
-    "@/components/ui/button", "@/components/ui/card", "@/components/ui/badge", "@/components/ui/input",
-    "@/lib/utils",
-  ]);
+  const ALLOWED_LOCAL_PREFIXES = [
+    "@/components/ui/",  // Shadcn components
+    "@/components/",     // Splitter-generated components
+    "@/lib/",            // Utils
+    "@/pages/",          // Pages
+  ];
 
-  // Check for @/ imports that don't exist in template
+  // Check for @/ imports — allow known prefixes
   const atImports = code.match(/from\s+['"]@\/[^'"]+['"]/g) || [];
   for (const imp of atImports) {
     const match = imp.match(/from\s+['"]([^'"]+)['"]/);
-    if (match && !ALLOWED_LOCAL.has(match[1])) {
-      problems.push(`${match[1]} (not in template)`);
+    if (match) {
+      const path = match[1];
+      const allowed = ALLOWED_LOCAL_PREFIXES.some(prefix => path.startsWith(prefix));
+      if (!allowed) problems.push(`${path} (unknown @/ path)`);
     }
   }
 

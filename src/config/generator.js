@@ -9,6 +9,7 @@ import { NICHE_DETECT_PROMPT, getNiche } from "./niches";
 import { analyzePrompt } from "./architect";
 import { validateCode, getValidationSummary } from "./validator";
 import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from "../lib/cache";
+import { splitComponents } from "./splitter";
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -182,6 +183,16 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
   files["src/pages/Dashboard.tsx"] = appCode.code;
 
+  // ══ STEP 5.5: SPLITTER — Extract components into separate files ════════════
+  const splitFiles = splitComponents(appCode.code);
+  const splitCount = Object.keys(splitFiles).length;
+  if (splitCount > 1) {
+    for (const [path, content] of Object.entries(splitFiles)) {
+      files[path] = content;
+    }
+    emit(onProgress, STEPS.ARCHITECT, `${splitCount} arquivos gerados`);
+  }
+
   // ══ STEP 6: MEMORIALISTA — Record + VELOCISTA — Cache ══════════════════════
   const duration = Date.now() - startTime;
   recordGeneration({ prompt: prompt.slice(0, 200), nicho, score: appCode.score, duration, success: true });
@@ -195,7 +206,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
   emit(onProgress, STEPS.EDIT, "Modo edicao rapida...");
 
-  const editPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\n${CONTEXTO_BR}\n\nREGRAS:\n- Retorne o App.jsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Mantenha o objeto THEME existente\n- Mantenha todos os componentes existentes\n- CSS inline, sem Tailwind\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo.`;
+  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 10000)}\n\`\`\`\n\nALTERACAO SOLICITADA: ${prompt}\n\n${CONTEXTO_BR}\n\nREGRAS:\n- Retorne o Dashboard.tsx COMPLETO modificado\n- Mantenha TODAS as funcionalidades existentes\n- Apenas aplique a alteracao pedida\n- Use Tailwind CSS (className), NUNCA style={{}}\n- Mantenha todos os subcomponentes\n- Sem markdown, sem explicacoes\n\nRetorne APENAS o codigo TSX.`;
 
   const raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 16000, onCodeStream);
   const code = cleanCodeFences(raw);
