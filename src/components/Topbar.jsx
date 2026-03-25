@@ -1,6 +1,6 @@
 import { C, SYNE, DM } from "../config/theme";
 
-export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode }) {
+export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub }) {
   const undoRedoBtn = (label, icon, enabled, onClick) => (
     <button onClick={onClick} disabled={!enabled} style={{
       background: "none", border: `1px solid ${enabled ? C.border : "transparent"}`,
@@ -48,6 +48,15 @@ export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleS
             )}
           </div>
         )}
+
+        {/* Import GitHub */}
+        <button onClick={onImportGitHub} title="Importar repositorio do GitHub" style={{
+          padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
+          fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
+          background: "transparent", border: `1px solid ${C.border}`, color: C.textDim,
+        }}>
+          Importar
+        </button>
 
         {/* Agentic Mode Toggle */}
         <button onClick={onToggleAgentic} style={{

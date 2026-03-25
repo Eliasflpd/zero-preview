@@ -22,6 +22,11 @@ Estes pacotes JA ESTAO instalados. Use-os:
 - lucide-react (icones)
 - clsx + tailwind-merge (via cn() em @/lib/utils)
 - @supabase/supabase-js (banco de dados — disponivel em @/lib/supabase)
+- Integracoes BR disponíveis em @/lib/integrations:
+  openWhatsApp(phone, message) — abre chat WhatsApp
+  WHATSAPP_BUTTON_STYLE — estilo do botão flutuante verde
+  generatePixPayload(key, name, value) — gera payload PIX
+  formatPhoneBR, formatCEP, formatCPF, formatCNPJ
 
 Estes componentes Shadcn/UI JA EXISTEM em @/components/ui/:
 - Button (variantes: default, outline, ghost, destructive)

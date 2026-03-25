@@ -304,6 +304,71 @@ export async function deleteData(table: string, id: string): Promise<boolean> {
   return true;
 }
 `,
+
+  // ─── Brazilian Integrations ────────────────────────────────────────────────
+  "src/lib/integrations.ts": `// Zero Preview — Brazilian Business Integrations
+// WhatsApp, PIX, Mercado Pago ready-to-use helpers
+
+// WhatsApp — open chat with pre-filled message
+export function openWhatsApp(phone: string, message?: string): void {
+  const cleanPhone = phone.replace(/\\D/g, '');
+  const encoded = message ? encodeURIComponent(message) : '';
+  window.open(\`https://wa.me/55\${cleanPhone}\${encoded ? '?text=' + encoded : ''}\`, '_blank');
+}
+
+// WhatsApp floating button component helper
+export const WHATSAPP_BUTTON_STYLE = {
+  position: 'fixed' as const,
+  bottom: 24,
+  right: 24,
+  width: 56,
+  height: 56,
+  borderRadius: '50%',
+  background: '#25D366',
+  color: '#FFFFFF',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  boxShadow: '0 4px 12px rgba(37,211,102,0.4)',
+  zIndex: 1000,
+  border: 'none',
+  fontSize: 28,
+};
+
+// PIX — generate PIX copy-paste payload (simplified)
+export function generatePixPayload(key: string, name: string, value?: number): string {
+  // Simplified PIX payload — for production use a proper library
+  return \`PIX: \${key} | \${name}\${value ? ' | R$ ' + value.toFixed(2) : ''}\`;
+}
+
+// Format Brazilian phone number
+export function formatPhoneBR(phone: string): string {
+  const digits = phone.replace(/\\D/g, '');
+  if (digits.length === 11) return \`(\${digits.slice(0,2)}) \${digits.slice(2,7)}-\${digits.slice(7)}\`;
+  if (digits.length === 10) return \`(\${digits.slice(0,2)}) \${digits.slice(2,6)}-\${digits.slice(6)}\`;
+  return phone;
+}
+
+// Format CEP
+export function formatCEP(cep: string): string {
+  const digits = cep.replace(/\\D/g, '');
+  if (digits.length === 8) return \`\${digits.slice(0,5)}-\${digits.slice(5)}\`;
+  return cep;
+}
+
+// Format CPF (masked)
+export function formatCPF(cpf: string): string {
+  const digits = cpf.replace(/\\D/g, '');
+  return \`***.\${digits.slice(3,6)}.\${digits.slice(6,9)}-\${digits.slice(9,11)}\`;
+}
+
+// Format CNPJ
+export function formatCNPJ(cnpj: string): string {
+  const digits = cnpj.replace(/\\D/g, '');
+  return \`\${digits.slice(0,2)}.\${digits.slice(2,5)}.\${digits.slice(5,8)}/\${digits.slice(8,12)}-\${digits.slice(12)}\`;
+}
+`,
 };
 
 // ─── Niche CSS variables (injected into src/index.css) ───────────────────────

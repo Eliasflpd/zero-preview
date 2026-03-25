@@ -51,10 +51,10 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   useEffect(() => { autoFixCount.current = 0; }, [runId]);
 
   const triggerAutoFix = useCallback((errorMsg) => {
-    if (!onAutoFix || autoFixCount.current >= 2 || autoFixing) return;
+    if (!onAutoFix || autoFixCount.current >= 5 || autoFixing) return;
     autoFixCount.current++;
     setAutoFixing(true);
-    addLog(`Auto-debug: corrigindo automaticamente (tentativa ${autoFixCount.current}/2)...`, "info");
+    addLog(`Auto-debug: corrigindo automaticamente (tentativa ${autoFixCount.current}/5)...`, "info");
     // Wait 2s for errors to settle, then fix
     clearTimeout(autoFixTimer.current);
     autoFixTimer.current = setTimeout(() => {
@@ -289,14 +289,14 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
             {autoFixing ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 14, height: 14, border: `2px solid ${C.yellow}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                <span style={{ fontSize: 10, color: C.yellow, fontFamily: DM }}>Corrigindo erro automaticamente... (tentativa {autoFixCount.current}/2)</span>
+                <span style={{ fontSize: 10, color: C.yellow, fontFamily: DM }}>Corrigindo erro automaticamente... (tentativa {autoFixCount.current}/5)</span>
               </div>
             ) : (
               <>
                 <code style={{ fontSize: 10, color: C.textMuted, fontFamily: "'Courier New', monospace", wordBreak: "break-all", lineHeight: 1.4 }}>
                   {runtimeError?.slice(0, 300)}
                 </code>
-                {onAutoFix && autoFixCount.current < 2 && (
+                {onAutoFix && autoFixCount.current < 5 && (
                   <button onClick={handleAutoFix} style={{
                     padding: "6px 12px", background: C.yellow, border: "none", borderRadius: 6,
                     fontSize: 11, fontWeight: 700, color: C.bg, cursor: "pointer", fontFamily: DM,

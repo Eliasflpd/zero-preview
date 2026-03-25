@@ -24,6 +24,7 @@ const PreviewPanel = safeLazy(() => import("../components/PreviewPanel"));
 const SettingsModal = safeLazy(() => import("../components/SettingsModal"));
 const DisparadorBridge = safeLazy(() => import("../components/DisparadorBridge"));
 const AgenticMode = safeLazy(() => import("../components/AgenticMode"));
+const GitHubImport = safeLazy(() => import("../components/GitHubImport"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -41,6 +42,7 @@ export default function Dashboard({ user, onLogout }) {
   const [streamingCode, setStreamingCode] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [agenticMode, setAgenticMode] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -133,6 +135,20 @@ export default function Dashboard({ user, onLogout }) {
       setGeneratedFiles(next.files);
       setRunId(`run_redo_${Date.now()}`);
     }
+  };
+
+  // GitHub Import — load repo files into editor
+  const handleGitHubImport = (importedFiles) => {
+    const now = Date.now();
+    const files = { ...importedFiles };
+    const name = "Projeto importado do GitHub";
+    const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: "Importado do GitHub", history: [{ prompt: "Import GitHub", at: now }], createdAt: now, updatedAt: now });
+    addProject(np);
+    setActiveId(np.id);
+    setGeneratedFiles(files);
+    setHistory(np.history);
+    setRunId(`run_import_${now}`);
+    pushVersion(files, "Import GitHub", null);
   };
 
   // Claude Agent mode — autonomous multi-file editing
@@ -299,6 +315,7 @@ export default function Dashboard({ user, onLogout }) {
           versionInfo={versionCount > 0 ? `v${currentVersion}/${versionCount}` : null}
           agenticMode={agenticMode}
           onToggleAgentic={() => setAgenticMode(a => !a)}
+          onImportGitHub={() => setShowImport(true)}
           onAgentMode={() => {
             const p = promptRef.current || prompt;
             if (p.trim()) handleAgentMode(p);
@@ -343,6 +360,12 @@ export default function Dashboard({ user, onLogout }) {
           )}
         </div>
       </div>
+
+      {showImport && (
+        <Suspense fallback={null}>
+          <GitHubImport onImport={handleGitHubImport} onClose={() => setShowImport(false)} />
+        </Suspense>
+      )}
 
       {showSettings && (
         <Suspense fallback={null}>
