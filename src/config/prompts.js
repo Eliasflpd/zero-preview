@@ -144,36 +144,54 @@ ERROR BOUNDARY:
 Inclua um try/catch visual ou ErrorBoundary class component.
 
 ═══════════════════════════════════════════════════════
-REGRA #9 — SIDEBAR COM NAVEGACAO FUNCIONAL
+REGRA #9 — CRM COMPLETO COM MULTIPLAS TELAS (OBRIGATORIO)
 ═══════════════════════════════════════════════════════
-A sidebar DEVE funcionar como navegacao REAL. Clicar em cada item DEVE mudar o conteudo.
+TODO app gerado DEVE ser um mini-CRM com MINIMO 4 secoes navegaveis.
+A sidebar NAO e decorativa — ela MUDA o conteudo principal.
 
-Padrao OBRIGATORIO:
+COPIE ESTE PADRAO EXATAMENTE:
+
+// Estado de navegacao
 const [activeSection, setActiveSection] = useState("dashboard");
 
-const menuItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "clientes", label: "Clientes", icon: Users },
-  { id: "configuracoes", label: "Configuracoes", icon: Settings },
-];
+// Na area de conteudo principal, use este switch:
+const renderContent = () => {
+  switch (activeSection) {
+    case "dashboard": return <DashboardSection />;
+    case "clientes": return <ClientesSection />;
+    case "produtos": return <ProdutosSection />;
+    case "configuracoes": return <ConfigSection />;
+    default: return <DashboardSection />;
+  }
+};
 
-Na sidebar, cada item:
-onClick={() => setActiveSection(item.id)}
-className={cn("...", activeSection === item.id ? "bg-white/10" : "text-white/60")}
+// No JSX principal:
+<main className="flex-1 overflow-y-auto p-4 md:p-6">
+  {renderContent()}
+</main>
 
-No conteudo principal, OBRIGATORIAMENTE renderize conteudo diferente:
-{activeSection === "dashboard" && <DashboardContent />}
-{activeSection === "clientes" && <ClientesContent />}
-{activeSection === "configuracoes" && <ConfigContent />}
+CADA SECAO deve ser um componente COMPLETO:
+- DashboardSection: KPIs + graficos + tabela resumo
+- ClientesSection: tabela com 8+ clientes, busca, botao adicionar
+- ProdutosSection (ou equivalente do nicho): lista/grid de produtos/servicos
+- ConfigSection: formulario de configuracoes basicas
 
-Cada secao deve ter conteudo REAL — pelo menos um titulo, uma tabela ou cards.
-NUNCA faca sidebar decorativa que nao muda o conteudo.
+Na SIDEBAR, cada item DEVE chamar setActiveSection:
+{menuItems.map(item => (
+  <div key={item.id}
+    onClick={() => setActiveSection(item.id)}
+    className={cn("flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-colors",
+      activeSection === item.id ? "bg-white/10 font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
+    )}>
+    <item.icon size={18} />
+    {item.label}
+  </div>
+))}
+
+TESTE MENTAL: se o usuario clicar em cada item do menu e o conteudo NAO mudar, o app esta QUEBRADO.
 
 Sidebar HTML:
 <aside className="hidden md:flex w-60 flex-col bg-[var(--sidebar)] text-[var(--sidebar-text)] h-screen sticky top-0">
-  Menu items com:
-  className={cn("flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-colors",
-    activeSection === item.id ? "bg-white/10 font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
   )}
 
 ═══════════════════════════════════════════════════════
