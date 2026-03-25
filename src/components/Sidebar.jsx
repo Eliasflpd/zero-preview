@@ -116,7 +116,7 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
                   </div>
                   {/* Texto */}
                   <span style={{ fontSize: 11, color: isDone ? C.textMuted : C.text, lineHeight: 1.4, fontFamily: DM }}>
-                    {step}
+                    {typeof step === "string" ? step : step?.message || ""}
                   </span>
                 </div>
               );
