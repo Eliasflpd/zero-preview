@@ -133,18 +133,19 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           {[
-            { label: "Mobile", w: "375px", icon: "M" },
-            { label: "Tablet", w: "768px", icon: "T" },
-            { label: "Desktop", w: "100%", icon: "D" },
+            { label: "Mobile", w: "375px", svg: <svg width="10" height="14" viewBox="0 0 10 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="8" height="14" rx="1.5"/><line x1="4" y1="13" x2="6" y2="13"/></svg> },
+            { label: "Tablet", w: "768px", svg: <svg width="13" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="14" height="10" rx="1.5"/><line x1="7" y1="9" x2="9" y2="9"/></svg> },
+            { label: "Desktop", w: "100%", svg: <svg width="14" height="12" viewBox="0 0 16 14" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="14" height="9" rx="1"/><line x1="5" y1="13" x2="11" y2="13"/><line x1="8" y1="10" x2="8" y2="13"/></svg> },
           ].map(d => (
             <button key={d.w} onClick={() => setDeviceWidth(d.w)} title={d.label} style={{
-              padding: "3px 8px", borderRadius: 5, fontSize: 9, fontWeight: 600,
+              padding: "4px 6px", borderRadius: 5, fontSize: 9, fontWeight: 600,
               fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
               background: deviceWidth === d.w ? "rgba(255,208,80,0.15)" : "transparent",
               border: `1px solid ${deviceWidth === d.w ? "rgba(255,208,80,0.3)" : C.border}`,
               color: deviceWidth === d.w ? C.yellow : C.textDim,
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              {d.icon}
+              {d.svg}
             </button>
           ))}
         </div>

@@ -3,14 +3,17 @@ import { C, SYNE, DM } from "../config/theme";
 import StreamingCode from "./StreamingCode";
 import GenerationProgress from "./GenerationProgress";
 import FeedbackForm from "./FeedbackForm";
+import NextSteps from "./NextSteps";
 
 const suggestions = [
-  "Dashboard para petshop com agendamento",
-  "Landing page para escritorio de advocacia",
-  "Painel de vendas para e-commerce de roupas",
-  "Sistema de agendamento para clinica medica",
-  "Dashboard financeiro para escola de idiomas",
-  "Cardapio digital para restaurante japones",
+  { text: "Dashboard para petshop com agendamento e graficos", category: "Dashboard" },
+  { text: "Landing page para escritorio de advocacia com formulario de contato", category: "Landing Page" },
+  { text: "Painel de vendas para e-commerce de roupas com KPIs e tabela de pedidos", category: "E-commerce" },
+  { text: "Sistema de agendamento para clinica medica com calendario e pacientes", category: "Saude" },
+  { text: "Dashboard financeiro com graficos de receita, despesa e fluxo de caixa", category: "Financeiro" },
+  { text: "Cardapio digital para restaurante com categorias e carrinho de pedidos", category: "Restaurante" },
+  { text: "Painel admin para academia com alunos, planos e frequencia", category: "Fitness" },
+  { text: "Portfolio de fotografo com galeria, filtros e formulario de orcamento", category: "Criativo" },
 ];
 
 export default function ChatArea({
@@ -53,18 +56,19 @@ export default function ChatArea({
               O que vamos construir?
             </h2>
             <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app — a IA gera os arquivos React completos</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 480, margin: "20px auto 0", textAlign: "left" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 520, margin: "20px auto 0", textAlign: "left" }}>
               {suggestions.map(s => (
-                <button key={s} onClick={() => onSuggestionClick(s)} style={{
+                <button key={s.text} onClick={() => typeof onSuggestionClick === "function" && onSuggestionClick(s.text)} style={{
                   padding: "10px 14px", background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 10, fontSize: 12, color: C.textMuted, fontFamily: DM,
+                  borderRadius: 10, fontSize: 11, color: C.textMuted, fontFamily: DM,
                   cursor: "pointer", textAlign: "left", lineHeight: 1.4,
-                  transition: "all 0.2s",
+                  transition: "all 0.2s", display: "flex", flexDirection: "column", gap: 4,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = C.yellow; e.currentTarget.style.color = C.text; e.currentTarget.style.background = C.surface2; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.background = C.surface; }}
                 >
-                  {s}
+                  <span style={{ fontSize: 9, color: C.yellow, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{s.category}</span>
+                  <span>{s.text}</span>
                 </button>
               ))}
             </div>
@@ -98,6 +102,10 @@ export default function ChatArea({
             score={history[history.length - 1]?.score}
             onClose={() => setShowFeedback(false)}
           />
+        )}
+
+        {!generating && hasPreview && history.length > 0 && (
+          <NextSteps onSelect={onSuggestionClick} visible={true} />
         )}
 
         {(generating || (thinkSteps && thinkSteps.length > 0 && !hasPreview)) && (
