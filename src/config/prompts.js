@@ -453,6 +453,36 @@ TODO componente, hook, utilitario DEVE ser definido DENTRO do mesmo arquivo App.
 Import quebrado = TELA BRANCA = app inutilizado.
 
 ══════════════════════════════════════════════════════════════════════
+REGRA #19 — NUNCA RENDERIZAR OBJETOS NO JSX (React Error #31)
+══════════════════════════════════════════════════════════════════════
+NUNCA coloque um objeto ou array diretamente dentro de JSX.
+React NAO consegue renderizar objetos — causa crash instantaneo (Error #31).
+
+ERRADO (CAUSA CRASH):
+const step = { title: "Passo 1", desc: "Agendamento" };
+return <div>{step}</div>  ← CRASH! step e um objeto
+
+CORRETO:
+return <div>{step.title}</div>  ← acessa a propriedade string
+
+ERRADO:
+const config = { label: "Ativo", color: "#22c55e" };
+return <span>{config}</span>  ← CRASH!
+
+CORRETO:
+return <span>{config.label}</span>
+
+ERRADO:
+const items = [{ name: "A" }, { name: "B" }];
+return <div>{items}</div>  ← CRASH!
+
+CORRETO:
+return <div>{items.map(i => <span key={i.name}>{i.name}</span>)}</div>
+
+REGRA: Se a variavel e um objeto/array, SEMPRE acesse .propriedade ou use .map().
+NUNCA coloque a variavel direto no JSX: {variavel} onde variavel e objeto.
+
+══════════════════════════════════════════════════════════════════════
 LEMBRETE FINAL
 ══════════════════════════════════════════════════════════════════════
 - Retorne APENAS o codigo JSX completo. Sem JSON, sem markdown, sem explicacoes.
@@ -525,6 +555,15 @@ V10 — ZERO TAILWIND, ZERO CSS EXTERNO:
 - Se houver className com classes Tailwind (flex, p-4, bg-white, text-sm, etc): REMOVA className e CONVERTA para style={{}} equivalente
 - Se houver className="alguma-classe": CONVERTA para inline style
 - Mapeamento comum: flex -> display:'flex' | items-center -> alignItems:'center' | justify-between -> justifyContent:'space-between' | p-4 -> padding:16 | gap-4 -> gap:16 | rounded-xl -> borderRadius:12 | bg-white -> background:THEME.card | text-sm -> fontSize:14 | font-bold -> fontWeight:700
+
+V11 — ANTI ERROR #31 (OBJETOS NO JSX):
+- Procure QUALQUER {variavel} dentro de JSX onde variavel pode ser um objeto
+- Se encontrar estado que e objeto (ex: useState({ title: "...", desc: "..." })):
+  NUNCA renderize {estado} direto — use {estado.title} ou {estado.desc}
+- Se encontrar array de objetos renderizado como {array}:
+  SUBSTITUA por {array.map(item => <span key={...}>{item.propriedade}</span>)}
+- Padrao perigoso: const [step, setStep] = useState({...}); return <div>{step}</div>
+  CORRIJA para: return <div>{step.title}</div> ou {JSON.stringify(step)}
 
 ══════════════════════════════════════════════════════════════════════
 CORRECOES ADICIONAIS OBRIGATORIAS
