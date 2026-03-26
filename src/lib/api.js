@@ -12,6 +12,14 @@ function getPreferredProvider() {
   try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
 }
 
+// Garantir que resposta de provider e sempre string
+function safeText(value) {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
 // ─── INTERNAL: single stream attempt (no retry logic) ────────────────────────
 async function _doStream(systemPrompt, userPrompt, maxTokens, onDelta) {
   const licenseKey = getLicenseKey();
@@ -69,8 +77,9 @@ async function _doStream(systemPrompt, userPrompt, maxTokens, onDelta) {
       try {
         const event = JSON.parse(raw);
         if (event.type === "delta" && event.text) {
-          fullText += event.text;
-          onDelta?.(event.text, fullText);
+          const chunk = safeText(event.text);
+          fullText += chunk;
+          onDelta?.(chunk, fullText);
         } else if (event.type === "error") {
           throw new Error(event.error || "Erro no streaming");
         }
@@ -182,7 +191,7 @@ export async function callClaude(systemPrompt, userPrompt, maxTokens = 12000) {
       }
 
       const data = await res.json();
-      const text = data?.content?.[0]?.text || "";
+      const text = safeText(data?.content?.[0]?.text);
       if (!text) throw new Error("EMPTY_RESPONSE");
       return text;
 

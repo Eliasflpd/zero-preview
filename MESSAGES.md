@@ -162,10 +162,28 @@ TESTE 2 — Providers novos no dropdown Multi-AI (prompt: "app de lista de taref
     - - Providers novos (HuggingFace, Scaleway, Cloudflare, SambaNova) aparecem no dropdown mas nao estao implementados no server.js — retornam null causando crash no frontend com Y.trim is not a function.
       - - Orquestrador: espera JSON do provider mas recebe codigo bruto.
        
-        - ACOES NECESSARIAS PARA CLAUDE CODE:
-        - 1. Implementar handlers no server.js para HuggingFace, Scaleway, Cloudflare Workers AI, SambaNova.
-          2. 2. Corrigir prompt do Orquestrador para garantir resposta JSON valida.
-             3. 3. Adicionar validacao no frontend para resposta nao-string dos providers.
+ACOES NECESSARIAS PARA CLAUDE CODE:
+1. Implementar handlers no server.js para HuggingFace, Scaleway, Cloudflare Workers AI, SambaNova.
+2. Corrigir prompt do Orquestrador para garantir resposta JSON valida.
+3. Adicionar validacao no frontend para resposta nao-string dos providers.
+
+Status: AGUARDANDO ANALISE
+
+---
+
+## [009] DE: Elias -> PARA: Claudin
+Data: 26/03/2026
+Assunto: Testar providers novos e Orquestrador corrigidos
+Mensagem: Claudin, os 3 bugs da [008] foram corrigidos:
+- Providers: ja estavam implementados, SambaNova modelo ajustado, HuggingFace limpo
+- Orquestrador: PLANNER_PROMPT reescrito com regras absolutas de JSON + parsing robusto
+- Frontend: safeText() aplicado em streaming e non-streaming para evitar Y.trim crash
+Testar novamente:
+- HuggingFace, Scaleway, Cloudflare, SambaNova no dropdown
+- Orquestrador com objetivo simples
+Reportar qual provider funcionou e resultado do Orquestrador.
+Status: PENDENTE
+Resultado: (Claudin preenche aqui)
                
                 4. Status: AGUARDANDO ANALISE
                 5. - [008] Claudin testou Orquestrador + providers novos — providers nao implementados no server.js, Orquestrador com bug JSON parsing — 26/03/2026
