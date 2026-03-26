@@ -8,6 +8,10 @@ function getLicenseKey() {
   try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
 }
 
+function getPreferredProvider() {
+  try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
+}
+
 // ─── INTERNAL: single stream attempt (no retry logic) ────────────────────────
 async function _doStream(systemPrompt, userPrompt, maxTokens, onDelta) {
   const licenseKey = getLicenseKey();
@@ -21,6 +25,7 @@ async function _doStream(systemPrompt, userPrompt, maxTokens, onDelta) {
     headers: {
       "Content-Type": "application/json",
       "x-license-key": licenseKey,
+      "x-preferred-provider": getPreferredProvider(),
     },
     signal: controller.signal,
     body: JSON.stringify({
@@ -155,6 +160,7 @@ export async function callClaude(systemPrompt, userPrompt, maxTokens = 12000) {
         headers: {
           "Content-Type": "application/json",
           "x-license-key": licenseKey,
+          "x-preferred-provider": getPreferredProvider(),
         },
         signal: controller.signal,
         body: JSON.stringify({
@@ -319,6 +325,7 @@ export async function callClaudeAgent(prompt, files, onProgress) {
     headers: {
       "Content-Type": "application/json",
       "x-license-key": licenseKey,
+      "x-preferred-provider": getPreferredProvider(),
     },
     signal: controller.signal,
     body: JSON.stringify({ prompt, files }),
@@ -345,7 +352,7 @@ export function alertCritical(type, prompt, score) {
   if (!licenseKey) return;
   fetch(`${API_BASE}/alert`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-license-key": licenseKey },
+    headers: { "Content-Type": "application/json", "x-license-key": licenseKey, "x-preferred-provider": getPreferredProvider() },
     body: JSON.stringify({ type, prompt, score }),
   }).catch(() => {}); // fire and forget
 }
