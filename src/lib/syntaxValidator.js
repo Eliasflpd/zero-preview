@@ -170,12 +170,59 @@ function detectUnbalancedBrackets(code, fileName) {
   return errors;
 }
 
+// ─── TYPESCRIPT GENERICS — nao confundir com JSX ────────────────────────────
+
+const TS_GENERIC_NAMES = new Set([
+  // Single-letter type params
+  "T", "K", "V", "U", "E", "R", "P", "S",
+  // Primitive types
+  "boolean", "string", "number", "object", "any", "never", "unknown",
+  "null", "undefined", "void",
+  // Utility types
+  "Record", "Partial", "Required", "Readonly", "Pick", "Omit",
+  "Exclude", "Extract", "Array", "Promise", "Map", "Set",
+  "ReturnType", "Parameters", "InstanceType", "NonNullable",
+  "Awaited", "Uppercase", "Lowercase", "Capitalize",
+]);
+
+// Patterns que precedem <T> em contexto de generic (NAO jsx)
+const GENERIC_CONTEXT_RE = new RegExp(
+  // function foo<T>, const foo = <T>, class Foo<T>, interface Foo<T>
+  `(?:function\\s+\\w+|const\\s+\\w+\\s*=|let\\s+\\w+\\s*=|var\\s+\\w+\\s*=` +
+  // extends X<T>, implements X<T>, type X = ...<T>
+  `|extends\\s+\\w+|implements\\s+\\w+|type\\s+\\w+\\s*=` +
+  // interface Foo<T>
+  `|interface\\s+\\w+` +
+  // as <T>, : <T> (type assertion/annotation)
+  `|\\bas\\b|:\\s*` +
+  // => <T> (arrow fn generic)
+  `|=>` +
+  // new Map<T>, Array<T>, Promise<T> etc
+  `|\\w+` +
+  `)\\s*$`
+);
+
+function isGenericContext(code, matchIndex) {
+  // Get the text before the < on the same line
+  const before = code.slice(Math.max(0, matchIndex - 120), matchIndex);
+  const lastLine = before.split("\n").pop() || "";
+  return GENERIC_CONTEXT_RE.test(lastLine.trimEnd());
+}
+
+// Arquivos que suportam JSX (nao .ts puro)
+const JSX_EXTENSIONS = /\.(tsx|jsx|js)$/;
+
 function detectUnclosedJSX(code, fileName) {
+  // .ts puros NAO contêm JSX — pular completamente
+  if (!JSX_EXTENSIONS.test(fileName)) return [];
+
   const errors = [];
-  // Match opening JSX tags (not self-closing, not fragments)
   const openTagRegex = /<([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9-]*)\b[^>]*(?<!\/)>/g;
   const closeTagRegex = /<\/([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9-]*)\s*>/g;
-  const selfClosingTags = new Set(["img", "br", "hr", "input", "meta", "link", "area", "base", "col", "embed", "source", "track", "wbr"]);
+  const selfClosingTags = new Set([
+    "img", "br", "hr", "input", "meta", "link", "area",
+    "base", "col", "embed", "source", "track", "wbr",
+  ]);
 
   const opens = {};
   const closes = {};
@@ -183,7 +230,21 @@ function detectUnclosedJSX(code, fileName) {
 
   while ((match = openTagRegex.exec(code)) !== null) {
     const tag = match[1];
+
+    // 1. Skip HTML self-closing tags
     if (selfClosingTags.has(tag.toLowerCase())) continue;
+
+    // 2. Skip known TypeScript generic names
+    if (TS_GENERIC_NAMES.has(tag)) continue;
+
+    // 3. Skip if preceded by a generic context (function<T>, extends Foo<T>, etc)
+    if (isGenericContext(code, match.index)) continue;
+
+    // 4. Skip if the tag has no JSX attributes and looks like a type annotation
+    //    e.g. <SomeType> followed by ( or , or ) or ; — not JSX content
+    const afterTag = code.slice(match.index + match[0].length, match.index + match[0].length + 20).trimStart();
+    if (/^[,);}\]=]/.test(afterTag)) continue;
+
     if (!opens[tag]) opens[tag] = [];
     const line = code.slice(0, match.index).split("\n").length;
     opens[tag].push(line);
@@ -199,7 +260,7 @@ function detectUnclosedJSX(code, fileName) {
     const closeCount = closes[tag] || 0;
     const diff = lines.length - closeCount;
     if (diff > 0) {
-      // Only report if the tag appears in JSX context (after return)
+      // Only report if code has a return statement (JSX context)
       const returnIndex = code.indexOf("return");
       if (returnIndex === -1) continue;
       errors.push({
@@ -229,11 +290,15 @@ export function validateSyntax(files) {
     if (!VALIDATABLE_EXTENSIONS.test(fileName)) continue;
     if (!content || typeof content !== "string") continue;
 
-    // Run all detectors
+    // Detectores universais (todos os .js/.ts/.jsx/.tsx)
     allErrors.push(
       ...detectUnterminatedStrings(content, fileName),
       ...detectUnterminatedTemplateLiterals(content, fileName),
       ...detectUnbalancedBrackets(content, fileName),
+    );
+
+    // JSX detector — apenas .tsx/.jsx/.js (detectUnclosedJSX já filtra internamente)
+    allErrors.push(
       ...detectUnclosedJSX(content, fileName),
     );
   }
