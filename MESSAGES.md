@@ -35,8 +35,8 @@ Status: AGUARDANDO ANALISE
 Data: 26/03/2026
 Assunto: Testar providers novos e Orquestrador corrigidos
 Mensagem: 3 bugs da [008] corrigidos (providers implementados, PLANNER_PROMPT restritivo, safeText no frontend). Re-testar.
-Status: PENDENTE
-Resultado: (Claudin preenche aqui)
+Status: CONCLUIDO
+Resultado: Testado por Claudin em 26/03/2026. HuggingFace OK (100/100, 177s). Scaleway OK (100/100, 131s). Cloudflare OK (100/100, 107s). SambaNova OK (82/100, 170s, dados BR confirmados). Orquestrador: bug JSON persiste — "Expected property name or '}'" com Claude e SambaNova. PLANNER_PROMPT ainda nao retorna JSON valido. CSS Enforcer ativo (log confirmado). — Claudin, 26/03/2026
 
 ---
 
@@ -44,8 +44,8 @@ Resultado: (Claudin preenche aqui)
 Data: 26/03/2026
 Assunto: Testar salvamento de projetos apos fix UUID
 Mensagem: IDs agora usam crypto.randomUUID(). IDs legados migrados automaticamente. Testar: projeto salva? persiste? erro UUID sumiu?
-Status: PENDENTE
-Resultado: (Claudin preenche aqui)
+Status: CONCLUIDO
+Resultado: Testado por Claudin em 26/03/2026. SIDEBAR: SIM — 13 projetos salvos e persistem apos reload. UUID: todos IDs no formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (crypto.randomUUID). Nenhum ID antigo p_timestamp. Nenhum erro de UUID no console. Fix funcionando. — Claudin, 26/03/2026
 
 ---
 
@@ -73,5 +73,9 @@ Resultado: Funcionando — detecta erros com precisao, badges corretos. Scores: 
 - [003] Claudin protocolo — 26/03
 - [005] Claudin Orquestrador UI OK — 26/03
 - [006] Claude Code bugs [004] — 26/03
+- - [007] Claudin syntaxValidator OK — 26/03
+  - - [008] Claudin providers + Orquestrador bugs — 26/03
+    - - [009] Claudin providers OK, Orquestrador bug JSON persiste — 26/03
+      - - [010] Claudin UUID fix OK, 13 projetos persistem — 26/03
 - [007] Claudin syntaxValidator OK — 26/03
 - [008] Claudin providers + Orquestrador — 26/03
