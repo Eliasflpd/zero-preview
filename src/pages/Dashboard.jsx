@@ -29,6 +29,7 @@ const SettingsModal = safeLazy(() => import("../components/SettingsModal"));
 const DisparadorBridge = safeLazy(() => import("../components/DisparadorBridge"));
 const AgenticMode = safeLazy(() => import("../components/AgenticMode"));
 const GitHubImport = safeLazy(() => import("../components/GitHubImport"));
+const OrchestratorPanel = safeLazy(() => import("../components/OrchestratorPanel"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -54,6 +55,7 @@ export default function Dashboard({ user, onLogout }) {
   const [activeProvider, setActiveProvider] = useState(() => {
     try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
   });
+  const [orchestratorOpen, setOrchestratorOpen] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -439,6 +441,8 @@ export default function Dashboard({ user, onLogout }) {
           syntaxStatus={syntaxStatus}
           activeProvider={activeProvider}
           onProviderChange={(id) => { setActiveProvider(id); try { localStorage.setItem("zp_provider", id); } catch {} }}
+          orchestratorOpen={orchestratorOpen}
+          onToggleOrchestrator={() => setOrchestratorOpen(o => !o)}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -511,6 +515,32 @@ export default function Dashboard({ user, onLogout }) {
           onRewind={handleRewind}
           onClose={() => setShowRewind(false)}
         />
+      )}
+
+      {/* Orchestrator side panel */}
+      {orchestratorOpen && (
+        <div style={{
+          position: "fixed", right: 0, top: 0, height: "100vh", width: 340,
+          background: C.surface, borderLeft: `1px solid ${C.border}`,
+          zIndex: 200, display: "flex", flexDirection: "column",
+          boxShadow: "-4px 0 24px rgba(0,0,0,0.3)",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 14px", borderBottom: `1px solid ${C.border}`,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: DM }}>{"\uD83C\uDFAF"} Orquestrador</span>
+            <button onClick={() => setOrchestratorOpen(false)} style={{
+              background: "none", border: "none", color: C.textDim, cursor: "pointer",
+              fontSize: 16, padding: 4, lineHeight: 1,
+            }}>{"\u2715"}</button>
+          </div>
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            <Suspense fallback={null}>
+              <OrchestratorPanel />
+            </Suspense>
+          </div>
+        </div>
       )}
 
       {/* Disparador floating bridge — only if admin key exists */}

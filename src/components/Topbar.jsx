@@ -41,7 +41,7 @@ const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, dis
   </button>
 );
 
-export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange }) {
+export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange, orchestratorOpen, onToggleOrchestrator }) {
   const [providerOpen, setProviderOpen] = useState(false);
   const dropdownRef = useRef(null);
   const currentProvider = activeProvider || "auto";
@@ -150,6 +150,18 @@ export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen
             Agent
           </ToolBtn>
         )}
+
+        <ToolBtn
+          onClick={onToggleOrchestrator}
+          active={orchestratorOpen}
+          color={C.info}
+          activeBg={C.infoDim}
+          activeBorder="rgba(96,165,250,0.3)"
+          title="Orquestrador — loop autonomo de agentes"
+        >
+          <span style={{ fontSize: 10 }}>{"\uD83C\uDFAF"}</span>
+          Orquestrador
+        </ToolBtn>
 
         {hasPreview && syntaxStatus && (
           syntaxStatus.valid
