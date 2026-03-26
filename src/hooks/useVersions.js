@@ -59,6 +59,13 @@ export default function useVersions() {
   const versionCount = versions.length;
   const currentVersion = currentIndex + 1;
 
+  // Rewind — jump to any version by index
+  const rewindTo = useCallback((index) => {
+    if (index < 0 || index >= versions.length) return null;
+    setCurrentIndex(index);
+    return versions[index];
+  }, [versions]);
+
   return {
     pushVersion,
     undo,
@@ -67,6 +74,9 @@ export default function useVersions() {
     canRedo,
     versionCount,
     currentVersion,
+    currentIndex,
+    versions,
+    rewindTo,
     initProject,
   };
 }

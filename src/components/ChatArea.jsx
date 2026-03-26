@@ -4,6 +4,7 @@ import StreamingCode from "./StreamingCode";
 import GenerationProgress from "./GenerationProgress";
 import FeedbackForm from "./FeedbackForm";
 import NextSteps from "./NextSteps";
+import SlashMenu from "./SlashMenu";
 
 const suggestions = [
   { text: "Dashboard para petshop com agendamento e graficos", category: "Dashboard", icon: "📊" },
@@ -20,13 +21,28 @@ export default function ChatArea({
   history, generating, streamingCode, error, thinkSteps,
   prompt, onPromptChange, onGenerate, onRetry,
   licenseInfo, hasPreview, disabled,
-  onSuggestionClick,
+  onSuggestionClick, onSlashCommand,
 }) {
   const historyEndRef = useRef();
   const textareaRef = useRef();
   const [showFeedback, setShowFeedback] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [showSlash, setShowSlash] = useState(false);
   const prevHistoryLen = useRef(history.length);
+
+  // Detect "/" at start of input for slash commands
+  useEffect(() => {
+    if (prompt.startsWith("/")) {
+      const query = prompt.slice(1).split(/\s/)[0] || "";
+      if (!prompt.includes(" ")) {
+        setSlashQuery(query);
+        setShowSlash(true);
+        return;
+      }
+    }
+    setShowSlash(false);
+  }, [prompt]);
 
   useEffect(() => {
     if (history.length > prevHistoryLen.current && history.length === 1) {
@@ -192,7 +208,18 @@ export default function ChatArea({
       </div>
 
       {/* ─── INPUT AREA ─── */}
-      <div style={{ padding: "8px 14px 14px", flexShrink: 0 }}>
+      <div style={{ padding: "8px 14px 14px", flexShrink: 0, position: "relative" }}>
+        <SlashMenu
+          query={slashQuery}
+          visible={showSlash}
+          onSelect={(cmd) => {
+            setShowSlash(false);
+            onPromptChange("");
+            onSlashCommand?.(cmd.key);
+          }}
+          onClose={() => setShowSlash(false)}
+          anchorRect={{ bottom: 70, left: 16 }}
+        />
         <div style={{
           background: C.surface,
           border: `1px solid ${inputFocused ? C.borderHover : C.border}`,

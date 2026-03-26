@@ -8,6 +8,7 @@ import useVersions from "../hooks/useVersions";
 import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
 import DiffReview from "../components/DiffReview";
+import RewindPanel from "../components/RewindPanel";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
@@ -29,7 +30,7 @@ const GitHubImport = safeLazy(() => import("../components/GitHubImport"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
-  const { pushVersion, undo, redo, canUndo, canRedo, versionCount, currentVersion, initProject } = useVersions();
+  const { pushVersion, undo, redo, canUndo, canRedo, versionCount, currentVersion, currentIndex, versions, rewindTo, initProject } = useVersions();
   const [activeId, setActiveId] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [history, setHistory] = useState([]);
@@ -45,6 +46,7 @@ export default function Dashboard({ user, onLogout }) {
   const [agenticMode, setAgenticMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [pendingDiff, setPendingDiff] = useState(null); // { oldFiles, newFiles, prompt, score }
+  const [showRewind, setShowRewind] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -230,6 +232,63 @@ export default function Dashboard({ user, onLogout }) {
     setPendingDiff(null);
   };
 
+  // Rewind to a specific version
+  const handleRewind = (index) => {
+    const version = rewindTo(index);
+    if (version) {
+      setGeneratedFiles(version.files);
+      setRunId(`run_rewind_${Date.now()}`);
+      setShowRewind(false);
+    }
+  };
+
+  // Slash command handler
+  const handleSlashCommand = (key) => {
+    switch (key) {
+      case "rewind":
+        setShowRewind(true);
+        break;
+      case "exportar":
+        if (generatedFiles) {
+          import("../lib/exporter").then(m => m.exportToZip(generatedFiles, activeProject?.name)).catch(console.error);
+        }
+        break;
+      case "limpar":
+        handleNew();
+        break;
+      case "github":
+        setShowImport(true);
+        break;
+      case "modo-escuro":
+        if (generatedFiles) {
+          promptRef.current = "Adicione modo escuro com toggle no header. Mantenha a estrutura atual.";
+          setPrompt(promptRef.current);
+        }
+        break;
+      case "modelo":
+        setShowSettings(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Esc+Esc para abrir rewind
+  useEffect(() => {
+    let lastEsc = 0;
+    const handler = (e) => {
+      if (e.key === "Escape") {
+        const now = Date.now();
+        if (now - lastEsc < 500) {
+          setShowRewind(true);
+        }
+        lastEsc = now;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   // Agentic mode generates with a rich briefing instead of raw prompt
   const handleAgenticGenerate = (briefing) => {
     promptRef.current = briefing;
@@ -373,6 +432,7 @@ export default function Dashboard({ user, onLogout }) {
               onGenerate={handleGenerate}
               onRetry={() => { const lastPrompt = history[history.length - 1]?.prompt; if (lastPrompt) handleGenerate(lastPrompt); else handleGenerate(); }}
               onSuggestionClick={(s) => { promptRef.current = s; setPrompt(s); }}
+              onSlashCommand={handleSlashCommand}
               licenseInfo={licenseInfo}
               hasPreview={hasPreview}
               disabled={generating}
@@ -406,6 +466,16 @@ export default function Dashboard({ user, onLogout }) {
           newFiles={pendingDiff.newFiles}
           onApply={handleDiffApply}
           onCancel={handleDiffCancel}
+        />
+      )}
+
+      {/* Rewind panel — Esc+Esc or /rewind */}
+      {showRewind && (
+        <RewindPanel
+          versions={versions}
+          currentIndex={currentIndex}
+          onRewind={handleRewind}
+          onClose={() => setShowRewind(false)}
         />
       )}
 
