@@ -269,7 +269,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           </div>
         )}
         {url && (
-          <iframe key={runId + url} src={url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" scrolling="auto" style={{ width: deviceWidth, maxWidth: "100%", height: "100%", border: "none", margin: deviceWidth !== "100%" ? "0 auto" : "0", display: "block", transition: "width 0.3s ease", overflow: "auto" }} title="Preview" />
+          <iframe key={runId + url} src={url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" scrolling="auto" style={{ width: deviceWidth, maxWidth: "100%", height: "100%", border: "none", margin: deviceWidth !== "100%" ? "0 auto" : "0", display: "block", transition: "width 0.3s ease", overflow: "auto", background: "#ffffff" }} title="Preview" />
         )}
 
         {/* Runtime error overlay */}

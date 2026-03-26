@@ -1,95 +1,127 @@
-import { C, SYNE, DM } from "../config/theme";
+import { C, SYNE, DM, R, EASE } from "../config/theme";
+
+const Badge = ({ children, color, bg, border }) => (
+  <span style={{
+    fontSize: 9, padding: "2px 8px", borderRadius: R.full,
+    background: bg, border: `1px solid ${border}`,
+    color, fontFamily: DM, fontWeight: 600, whiteSpace: "nowrap",
+    display: "inline-flex", alignItems: "center", gap: 4,
+  }}>
+    {children}
+  </span>
+);
+
+const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, disabled, title }) => (
+  <button onClick={onClick} disabled={disabled} title={title} style={{
+    padding: "4px 10px", borderRadius: R.sm, fontSize: 10, fontWeight: 600,
+    fontFamily: DM, cursor: disabled ? "default" : "pointer",
+    transition: `all 0.15s ${EASE.out}`,
+    background: active ? activeBg || C.yellowGlow : "transparent",
+    border: `1px solid ${active ? activeBorder || C.borderFocus : C.border}`,
+    color: active ? color || C.yellow : C.textDim,
+    opacity: disabled ? 0.3 : 1,
+    display: "flex", alignItems: "center", gap: 4,
+  }}>
+    {children}
+  </button>
+);
 
 export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub }) {
-  const undoRedoBtn = (label, icon, enabled, onClick) => (
-    <button onClick={onClick} disabled={!enabled} style={{
-      background: "none", border: `1px solid ${enabled ? C.border : "transparent"}`,
-      borderRadius: 6, padding: "3px 6px", cursor: enabled ? "pointer" : "default",
-      color: enabled ? C.text : C.textDim, fontSize: 14, display: "flex", alignItems: "center",
-      opacity: enabled ? 1 : 0.3, transition: "all 0.15s",
-    }} title={label}>
-      {icon}
-    </button>
-  );
-
   return (
-    <div style={{ height: 52, background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", flexShrink: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button onClick={onToggleSidebar} style={{ background: "none", border: "none", color: C.text, cursor: "pointer", padding: 4, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, transition: "background 0.2s" }}
-          onMouseEnter={e => e.currentTarget.style.background = C.surface2}
-          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    <div style={{
+      height: 48, background: C.surface,
+      borderBottom: `1px solid ${C.border}`,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 14px", flexShrink: 0,
+    }}>
+      {/* Left */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={onToggleSidebar} style={{
+          background: "none", border: "none", color: C.textMuted,
+          cursor: "pointer", padding: 5, display: "flex", alignItems: "center",
+          justifyContent: "center", borderRadius: R.xs,
+          transition: `all 0.15s ${EASE.out}`,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = C.surface2; e.currentTarget.style.color = C.text; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textMuted; }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             {sidebarOpen
               ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
-              : <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>
+              : <><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></>
             }
           </svg>
         </button>
-        <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: SYNE }}>
-          {projectName || "Novo Projeto"}
-        </span>
-        {syncing && (
-          <span style={{ fontSize: 9, color: C.info, display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <span style={{ width: 4, height: 4, borderRadius: "50%", background: C.info, animation: "pulse 1s ease-in-out infinite" }} />
-            Sync
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{
+            fontSize: 13, fontWeight: 600, color: C.text, fontFamily: SYNE,
+            letterSpacing: -0.3, maxWidth: 200, overflow: "hidden",
+            textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {projectName || "Novo Projeto"}
           </span>
-        )}
+
+          {syncing && (
+            <span style={{
+              width: 5, height: 5, borderRadius: "50%", background: C.info,
+              display: "inline-block", animation: "pulse 1s ease-in-out infinite",
+            }} />
+          )}
+        </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* Right */}
+      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
         {/* Undo / Redo */}
         {hasPreview && (
-          <div style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 4 }}>
-            {undoRedoBtn("Desfazer (Ctrl+Z)", "\u2190", canUndo, onUndo)}
-            {undoRedoBtn("Refazer (Ctrl+Y)", "\u2192", canRedo, onRedo)}
+          <div style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 6 }}>
+            <button onClick={onUndo} disabled={!canUndo} title="Desfazer" style={{
+              background: "none", border: `1px solid ${canUndo ? C.border : "transparent"}`,
+              borderRadius: R.xs, padding: "3px 7px", cursor: canUndo ? "pointer" : "default",
+              color: canUndo ? C.textSub : C.textDim, fontSize: 13, display: "flex",
+              opacity: canUndo ? 1 : 0.3, transition: `all 0.15s ${EASE.out}`,
+            }}>{"\u2190"}</button>
+            <button onClick={onRedo} disabled={!canRedo} title="Refazer" style={{
+              background: "none", border: `1px solid ${canRedo ? C.border : "transparent"}`,
+              borderRadius: R.xs, padding: "3px 7px", cursor: canRedo ? "pointer" : "default",
+              color: canRedo ? C.textSub : C.textDim, fontSize: 13, display: "flex",
+              opacity: canRedo ? 1 : 0.3, transition: `all 0.15s ${EASE.out}`,
+            }}>{"\u2192"}</button>
             {versionInfo && (
               <span style={{ fontSize: 9, color: C.textDim, marginLeft: 4, fontFamily: DM }}>{versionInfo}</span>
             )}
           </div>
         )}
 
-        {/* Import GitHub */}
-        <button onClick={onImportGitHub} title="Importar repositorio do GitHub" style={{
-          padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
-          fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
-          background: "transparent", border: `1px solid ${C.border}`, color: C.textDim,
-        }}>
-          Importar
-        </button>
+        <ToolBtn onClick={onImportGitHub} title="Importar do GitHub">Importar</ToolBtn>
 
-        {/* Agentic Mode Toggle */}
-        <button onClick={onToggleAgentic} style={{
-          padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
-          fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
-          background: agenticMode ? "rgba(255,208,80,0.15)" : "transparent",
-          border: `1px solid ${agenticMode ? "rgba(255,208,80,0.4)" : C.border}`,
-          color: agenticMode ? C.yellow : C.textDim,
-        }}>
+        <ToolBtn
+          onClick={onToggleAgentic}
+          active={agenticMode}
+          color={C.yellow}
+          activeBg={C.yellowGlow}
+          activeBorder={C.borderFocus}
+        >
           {agenticMode ? "Consultor ON" : "Consultor"}
-        </button>
+        </ToolBtn>
 
-        {/* Claude Agent — autonomous mode */}
         {hasPreview && (
-          <button onClick={onAgentMode} title="Claude Agent — edita arquivos autonomamente" style={{
-            padding: "3px 10px", borderRadius: 8, fontSize: 9, fontWeight: 700,
-            fontFamily: DM, cursor: "pointer", transition: "all 0.15s",
-            background: "rgba(168,85,247,0.1)",
-            border: "1px solid rgba(168,85,247,0.3)",
-            color: "#A855F7",
-          }}>
+          <ToolBtn
+            onClick={onAgentMode}
+            active={false}
+            color={C.purple}
+            activeBg={C.purpleDim}
+            activeBorder="rgba(167,139,250,0.3)"
+            title="Claude Agent — edita arquivos autonomamente"
+          >
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.purple }} />
             Agent
-          </button>
+          </ToolBtn>
         )}
 
-        {hasPreview && (
-          <span style={{ fontSize: 9, color: C.success, background: "rgba(52,211,153,0.08)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(52,211,153,0.2)", fontFamily: DM }}>
-            TS + Tailwind
-          </span>
-        )}
-        <span style={{ fontSize: 9, color: C.info, background: "rgba(96,165,250,0.08)", padding: "2px 8px", borderRadius: 12, border: "1px solid rgba(96,165,250,0.2)", fontFamily: DM }}>
-          Multi-AI
-        </span>
+        {hasPreview && <Badge color={C.success} bg={C.successDim} border="rgba(52,211,153,0.15)">TS + Tailwind</Badge>}
+        <Badge color={C.info} bg={C.infoDim} border="rgba(96,165,250,0.15)">Multi-AI</Badge>
       </div>
     </div>
   );

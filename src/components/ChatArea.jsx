@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { C, SYNE, DM } from "../config/theme";
+import { C, SYNE, DM, SHADOW, R, EASE } from "../config/theme";
 import StreamingCode from "./StreamingCode";
 import GenerationProgress from "./GenerationProgress";
 import FeedbackForm from "./FeedbackForm";
 import NextSteps from "./NextSteps";
 
 const suggestions = [
-  { text: "Dashboard para petshop com agendamento e graficos", category: "Dashboard" },
-  { text: "Landing page para escritorio de advocacia com formulario de contato", category: "Landing Page" },
-  { text: "Painel de vendas para e-commerce de roupas com KPIs e tabela de pedidos", category: "E-commerce" },
-  { text: "Sistema de agendamento para clinica medica com calendario e pacientes", category: "Saude" },
-  { text: "Dashboard financeiro com graficos de receita, despesa e fluxo de caixa", category: "Financeiro" },
-  { text: "Cardapio digital para restaurante com categorias e carrinho de pedidos", category: "Restaurante" },
-  { text: "Painel admin para academia com alunos, planos e frequencia", category: "Fitness" },
-  { text: "Portfolio de fotografo com galeria, filtros e formulario de orcamento", category: "Criativo" },
+  { text: "Dashboard para petshop com agendamento e graficos", category: "Dashboard", icon: "📊" },
+  { text: "Landing page para escritorio de advocacia com formulario de contato", category: "Landing Page", icon: "🏢" },
+  { text: "Painel de vendas para e-commerce de roupas com KPIs e tabela de pedidos", category: "E-commerce", icon: "🛒" },
+  { text: "Sistema de agendamento para clinica medica com calendario e pacientes", category: "Saude", icon: "🏥" },
+  { text: "Dashboard financeiro com graficos de receita, despesa e fluxo de caixa", category: "Financeiro", icon: "💰" },
+  { text: "Cardapio digital para restaurante com categorias e carrinho de pedidos", category: "Restaurante", icon: "🍽️" },
+  { text: "Painel admin para academia com alunos, planos e frequencia", category: "Fitness", icon: "💪" },
+  { text: "Portfolio de fotografo com galeria, filtros e formulario de orcamento", category: "Criativo", icon: "📸" },
 ];
 
 export default function ChatArea({
@@ -23,10 +23,11 @@ export default function ChatArea({
   onSuggestionClick,
 }) {
   const historyEndRef = useRef();
+  const textareaRef = useRef();
   const [showFeedback, setShowFeedback] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const prevHistoryLen = useRef(history.length);
 
-  // Show feedback after first successful generation (not on every one)
   useEffect(() => {
     if (history.length > prevHistoryLen.current && history.length === 1) {
       const lastFeedback = localStorage.getItem("zp_last_feedback");
@@ -41,53 +42,122 @@ export default function ChatArea({
     historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, generating]);
 
-  return (
-    <div style={{ width: hasPreview ? 340 : "100%", flexShrink: 0, display: "flex", flexDirection: "column", borderRight: hasPreview ? `1px solid ${C.border}` : "none", overflow: "hidden" }}>
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: hasPreview ? "16px" : "0 20%", display: "flex", flexDirection: "column", justifyContent: history.length === 0 ? "center" : "flex-start", paddingTop: history.length === 0 ? 0 : 16 }}>
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 140) + "px";
+    }
+  }, [prompt]);
 
+  return (
+    <div style={{
+      width: hasPreview ? 360 : "100%", flexShrink: 0,
+      display: "flex", flexDirection: "column",
+      borderRight: hasPreview ? `1px solid ${C.border}` : "none",
+      overflow: "hidden",
+    }}>
+      {/* Messages area */}
+      <div className="scroll-fade" style={{
+        flex: 1, overflowY: "auto", padding: hasPreview ? "16px" : "0 20%",
+        display: "flex", flexDirection: "column",
+        justifyContent: history.length === 0 ? "center" : "flex-start",
+        paddingTop: history.length === 0 ? 0 : 20,
+      }}>
+        {/* Empty state */}
         {history.length === 0 && !generating && (
           <div style={{ textAlign: "center", padding: "0 0 32px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: 20, padding: "5px 14px", marginBottom: 18 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.info, display: "inline-block" }} />
-              <span style={{ fontSize: 11, color: C.info, fontWeight: 600 }}>Claude Sonnet &middot; React + Vite</span>
+            {/* Status badge */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: C.infoDim, border: `1px solid rgba(96,165,250,0.12)`,
+              borderRadius: R.full, padding: "5px 14px", marginBottom: 20,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.info }} />
+              <span style={{ fontSize: 10, color: C.info, fontWeight: 600 }}>Claude Sonnet 4 &middot; React + TypeScript</span>
             </div>
-            <h2 style={{ fontSize: 28, fontWeight: 800, fontFamily: SYNE, color: C.text, margin: "0 0 8px", letterSpacing: -1, background: `linear-gradient(135deg, ${C.text}, ${C.yellow})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+
+            <h2 style={{
+              fontSize: hasPreview ? 22 : 32, fontWeight: 800, fontFamily: SYNE,
+              margin: "0 0 10px", letterSpacing: -1.2, lineHeight: 1.15,
+              background: `linear-gradient(135deg, ${C.text} 30%, ${C.yellow})`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>
               O que vamos construir?
             </h2>
-            <p style={{ fontSize: 13, color: C.textMuted }}>Descreva seu app — a IA gera os arquivos React completos</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 520, margin: "20px auto 0", textAlign: "left" }}>
+            <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.6, maxWidth: 360, margin: "0 auto" }}>
+              Descreva seu app e a IA gera os arquivos React completos com preview ao vivo
+            </p>
+
+            {/* Suggestions grid */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr",
+              gap: 8, maxWidth: 520, margin: "24px auto 0", textAlign: "left",
+            }}>
               {suggestions.map(s => (
                 <button key={s.text} onClick={() => typeof onSuggestionClick === "function" && onSuggestionClick(s.text)} style={{
-                  padding: "10px 14px", background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 10, fontSize: 11, color: C.textMuted, fontFamily: DM,
-                  cursor: "pointer", textAlign: "left", lineHeight: 1.4,
-                  transition: "all 0.2s", display: "flex", flexDirection: "column", gap: 4,
+                  padding: "12px 14px", background: C.surface,
+                  border: `1px solid ${C.border}`, borderRadius: R.md,
+                  fontSize: 11, color: C.textMuted, fontFamily: DM,
+                  cursor: "pointer", textAlign: "left", lineHeight: 1.5,
+                  transition: `all 0.2s ${EASE.out}`,
+                  display: "flex", flexDirection: "column", gap: 5,
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = C.yellow; e.currentTarget.style.color = C.text; e.currentTarget.style.background = C.surface2; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.background = C.surface; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,208,80,0.2)"; e.currentTarget.style.color = C.textSub; e.currentTarget.style.background = C.surface2; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.background = C.surface; e.currentTarget.style.transform = "translateY(0)"; }}
                 >
-                  <span style={{ fontSize: 9, color: C.yellow, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{s.category}</span>
-                  <span>{s.text}</span>
+                  <span style={{
+                    fontSize: 9, color: C.yellow, fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: 0.8,
+                    display: "flex", alignItems: "center", gap: 4,
+                  }}>
+                    <span style={{ fontSize: 12 }}>{s.icon}</span> {s.category}
+                  </span>
+                  <span style={{ color: "inherit" }}>{s.text}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
+        {/* Chat history */}
         {history.map((h, i) => (
-          <div key={`hist_${h.at}_${i}`} style={{ marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
-              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: "12px 12px 2px 12px", padding: "9px 13px", fontSize: 12, color: C.text, maxWidth: "88%", lineHeight: 1.6, fontFamily: DM, whiteSpace: "pre-wrap" }}>{h.prompt}</div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <div style={{ width: 20, height: 20, background: C.yellow, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 9, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
+          <div key={`hist_${h.at}_${i}`} style={{ marginBottom: 16, animation: `fadeIn 0.3s ${EASE.out}` }}>
+            {/* User message */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+              <div style={{
+                background: C.surface2, border: `1px solid ${C.border}`,
+                borderRadius: "14px 14px 4px 14px", padding: "10px 14px",
+                fontSize: 12, color: C.text, maxWidth: "88%", lineHeight: 1.6,
+                fontFamily: DM, whiteSpace: "pre-wrap",
+              }}>
+                {h.prompt}
               </div>
-              <div style={{ background: "rgba(255,208,80,0.06)", border: "1px solid rgba(255,208,80,0.15)", borderRadius: "2px 12px 12px 12px", padding: "7px 11px", fontSize: 11, color: C.yellow, fontFamily: DM, display: "flex", alignItems: "center", gap: 8 }}>
+            </div>
+            {/* AI response */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <div style={{
+                width: 22, height: 22, flexShrink: 0,
+                background: `linear-gradient(135deg, ${C.yellow}, #FFE088)`,
+                borderRadius: R.xs, display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 0 12px rgba(255,208,80,0.15)",
+              }}>
+                <span style={{ fontSize: 10, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
+              </div>
+              <div style={{
+                background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.1)`,
+                borderRadius: "4px 14px 14px 14px", padding: "8px 12px",
+                fontSize: 11, color: C.yellow, fontFamily: DM,
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                 App gerado com sucesso
                 {h.score != null && (
-                  <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700, background: h.score >= 70 ? "rgba(5,150,105,0.15)" : h.score >= 40 ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)", color: h.score >= 70 ? C.success : h.score >= 40 ? "#F59E0B" : C.error }}>
+                  <span style={{
+                    fontSize: 9, padding: "1px 7px", borderRadius: R.xs, fontWeight: 700,
+                    background: h.score >= 70 ? C.successDim : h.score >= 40 ? C.warningDim : C.errorDim,
+                    color: h.score >= 70 ? C.success : h.score >= 40 ? C.warning : C.error,
+                  }}>
                     {h.score}/100
                   </span>
                 )}
@@ -97,11 +167,7 @@ export default function ChatArea({
         ))}
 
         {showFeedback && !generating && history.length > 0 && (
-          <FeedbackForm
-            prompt={history[history.length - 1]?.prompt}
-            score={history[history.length - 1]?.score}
-            onClose={() => setShowFeedback(false)}
-          />
+          <FeedbackForm prompt={history[history.length - 1]?.prompt} score={history[history.length - 1]?.score} onClose={() => setShowFeedback(false)} />
         )}
 
         {!generating && hasPreview && history.length > 0 && (
@@ -114,15 +180,34 @@ export default function ChatArea({
 
         {generating && streamingCode && <StreamingCode code={streamingCode} />}
 
+        {/* Error state */}
         {error && (
-          <div style={{ marginBottom: 12, padding: "12px 14px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10 }}>
-            <div style={{ fontSize: 11, color: C.error, marginBottom: 8, lineHeight: 1.5 }}>{error}</div>
+          <div style={{
+            marginBottom: 12, padding: "12px 14px",
+            background: C.errorDim, border: `1px solid rgba(248,113,113,0.15)`,
+            borderRadius: R.md, animation: `fadeIn 0.3s ${EASE.out}`,
+          }}>
+            <div style={{
+              fontSize: 11, color: C.error, marginBottom: 10, lineHeight: 1.6,
+              display: "flex", alignItems: "flex-start", gap: 8,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.error, flexShrink: 0, marginTop: 5 }} />
+              {error}
+            </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button onClick={() => (onRetry || onGenerate)()} style={{ padding: "4px 12px", background: "rgba(248,113,113,0.1)", border: `1px solid rgba(248,113,113,0.3)`, borderRadius: 6, fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600 }}>
+              <button onClick={() => (onRetry || onGenerate)()} style={{
+                padding: "5px 14px", background: "rgba(248,113,113,0.08)",
+                border: `1px solid rgba(248,113,113,0.2)`, borderRadius: R.sm,
+                fontSize: 10, color: C.error, cursor: "pointer", fontFamily: DM, fontWeight: 600,
+              }}>
                 Tentar novamente
               </button>
               {typeof onSuggestionClick === "function" && (
-                <button onClick={() => onSuggestionClick("Dashboard simples para minha empresa")} style={{ padding: "4px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM }}>
+                <button onClick={() => onSuggestionClick("Dashboard simples para minha empresa")} style={{
+                  padding: "5px 14px", background: C.surface,
+                  border: `1px solid ${C.border}`, borderRadius: R.sm,
+                  fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM,
+                }}>
                   Usar prompt simples
                 </button>
               )}
@@ -132,38 +217,80 @@ export default function ChatArea({
         <div ref={historyEndRef} />
       </div>
 
-      {/* Input */}
-      <div style={{ padding: "8px 16px 14px", flexShrink: 0 }}>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+      {/* ─── INPUT AREA ─── */}
+      <div style={{ padding: "8px 14px 14px", flexShrink: 0 }}>
+        <div style={{
+          background: C.surface,
+          border: `1px solid ${inputFocused ? C.borderHover : C.border}`,
+          borderRadius: R.md, overflow: "hidden",
+          boxShadow: inputFocused ? `0 0 0 3px ${C.yellowGlow2}` : "none",
+          transition: `all 0.25s ${EASE.out}`,
+        }}>
           <textarea
+            ref={textareaRef}
             value={prompt}
             onChange={e => onPromptChange(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onGenerate(); } }}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             disabled={disabled}
             placeholder={history.length === 0 ? "Descreva seu app..." : "Descreva uma alteracao..."}
-            style={{ width: "100%", minHeight: 56, maxHeight: 140, padding: "13px 14px", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, color: C.text, fontFamily: DM, lineHeight: 1.6, boxSizing: "border-box" }}
+            rows={1}
+            style={{
+              width: "100%", minHeight: 48, maxHeight: 140,
+              padding: "14px 16px", background: "transparent",
+              border: "none", outline: "none", resize: "none",
+              fontSize: 13, color: C.text, fontFamily: DM,
+              lineHeight: 1.6, boxSizing: "border-box",
+            }}
           />
-          <div style={{ padding: "7px 10px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", background: C.bg, gap: 8 }}>
+          <div style={{
+            padding: "6px 10px", borderTop: `1px solid ${C.border}`,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: C.bg, gap: 8,
+          }}>
             <span style={{ fontSize: 10, color: C.textDim }}>
               {licenseInfo?.tokens_used != null
                 ? `${((licenseInfo.tokens_used / 1000) | 0)}k / ${((licenseInfo.tokens_limit / 1000) | 0)}k tokens`
-                : "Claude Sonnet"}
+                : "Claude Sonnet 4"
+              }
             </span>
-            <button onClick={onGenerate} disabled={disabled || !prompt.trim()} style={{ padding: "6px 14px", background: disabled || !prompt.trim() ? "rgba(255,208,80,0.2)" : C.yellow, border: "none", borderRadius: 7, fontSize: 12, fontWeight: 700, fontFamily: DM, color: C.bg, cursor: disabled || !prompt.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-              {generating
-                ? <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>&#8635;</span>
-                : "Gerar"}
+            <button onClick={onGenerate} disabled={disabled || !prompt.trim()} style={{
+              padding: "7px 16px",
+              background: disabled || !prompt.trim()
+                ? "rgba(255,208,80,0.15)"
+                : `linear-gradient(135deg, ${C.yellow}, #FFE088)`,
+              border: "none", borderRadius: R.sm,
+              fontSize: 12, fontWeight: 700, fontFamily: DM, color: C.bg,
+              cursor: disabled || !prompt.trim() ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+              boxShadow: !disabled && prompt.trim() ? "0 2px 8px rgba(255,208,80,0.2)" : "none",
+              transition: `all 0.2s ${EASE.out}`,
+            }}>
+              {generating ? (
+                <span style={{
+                  width: 14, height: 14, border: "2px solid rgba(5,10,18,0.3)",
+                  borderTopColor: C.bg, borderRadius: "50%",
+                  animation: "spin 0.7s linear infinite", display: "inline-block",
+                }} />
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              )}
+              {generating ? "Gerando..." : "Gerar"}
             </button>
           </div>
         </div>
-        {!prompt.trim() && (
-          <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6, lineHeight: 1.4 }}>
-            Dica: seja especifico! &lsquo;Dashboard para petshop com graficos de vendas&rsquo; funciona melhor que &lsquo;faz um app&rsquo;
-          </p>
-        )}
-        {prompt.trim() && (
-          <p style={{ textAlign: "center", fontSize: 10, color: C.textDim, marginTop: 6 }}>Enter para gerar &middot; Shift+Enter nova linha</p>
-        )}
+        <p style={{
+          textAlign: "center", fontSize: 10, color: C.textDim,
+          marginTop: 6, lineHeight: 1.4,
+        }}>
+          {prompt.trim()
+            ? "Enter para gerar \u00B7 Shift+Enter nova linha"
+            : "Dica: seja especifico — 'Dashboard para petshop com graficos' funciona melhor"
+          }
+        </p>
       </div>
     </div>
   );
