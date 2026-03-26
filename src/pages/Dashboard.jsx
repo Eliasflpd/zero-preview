@@ -51,6 +51,9 @@ export default function Dashboard({ user, onLogout }) {
   const [showRewind, setShowRewind] = useState(false);
   const [knowledge, setKnowledge] = useState(null);
   const [syntaxStatus, setSyntaxStatus] = useState(null); // { valid, errors }
+  const [activeProvider, setActiveProvider] = useState(() => {
+    try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
+  });
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -434,6 +437,8 @@ export default function Dashboard({ user, onLogout }) {
             if (p.trim()) handleAgentMode(p);
           }}
           syntaxStatus={syntaxStatus}
+          activeProvider={activeProvider}
+          onProviderChange={(id) => { setActiveProvider(id); try { localStorage.setItem("zp_provider", id); } catch {} }}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
