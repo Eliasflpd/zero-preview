@@ -11,6 +11,7 @@ import { validateCode, getValidationSummary } from "./validator";
 import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from "../lib/cache";
 import { splitComponents } from "./splitter";
 import { knowledgeToContext, loadKnowledge } from "../lib/knowledge";
+import { enforceCSS, countHex } from "../lib/cssEnforcer";
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -242,8 +243,15 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
     // If non-streaming also fails, try streaming as last resort
     raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 8192, onCodeStream);
   }
-  const code = cleanCodeFences(raw);
+  let code = cleanCodeFences(raw);
   if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+
+  // CSS Enforcer no edit mode
+  const hexEdit = countHex(code);
+  if (hexEdit > 0) {
+    code = enforceCSS(code);
+    console.log(`[Zero] CSS Enforcer (edit): ${hexEdit} hex → CSS vars`);
+  }
 
   const validation = validateCode(code);
   const summary = getValidationSummary(validation);
@@ -271,6 +279,13 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
     appCode = cleanCodeFences(appRaw);
     if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
+    // CSS Enforcer: converte hex hardcoded → CSS variables (antes do CRITICO)
+    const hexBefore = countHex(appCode);
+    if (hexBefore > 0) {
+      appCode = enforceCSS(appCode);
+      console.log(`[Zero] CSS Enforcer: ${hexBefore} hex → CSS vars`);
+    }
+
     validation = validateCode(appCode);
     summary = getValidationSummary(validation);
     emit(onProgress, STEPS.CRITICO, `${summary.emoji} ${validation.score}/100`);
@@ -286,8 +301,14 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
             `Revise e corrija:\n\n${appCode.slice(0, 14000)}${reviewExtra}`,
             16000
           );
-          const reviewed = cleanCodeFences(reviewedRaw);
+          let reviewed = cleanCodeFences(reviewedRaw);
           if (reviewed && reviewed.length > 100) {
+            // CSS Enforcer pos-REVIEWER
+            const hexReview = countHex(reviewed);
+            if (hexReview > 0) {
+              reviewed = enforceCSS(reviewed);
+              console.log(`[Zero] CSS Enforcer pos-REVIEWER: ${hexReview} hex → CSS vars`);
+            }
             const reviewValidation = validateCode(reviewed);
             if (reviewValidation.score >= validation.score) {
               appCode = reviewed;
