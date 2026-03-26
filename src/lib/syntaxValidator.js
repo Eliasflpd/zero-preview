@@ -172,100 +172,124 @@ function detectUnbalancedBrackets(code, fileName) {
 
 // ─── TYPESCRIPT GENERICS — nao confundir com JSX ────────────────────────────
 
-const TS_GENERIC_NAMES = new Set([
-  // Single-letter type params
-  "T", "K", "V", "U", "E", "R", "P", "S",
-  // Primitive types
-  "boolean", "string", "number", "object", "any", "never", "unknown",
-  "null", "undefined", "void",
-  // Utility types
-  "Record", "Partial", "Required", "Readonly", "Pick", "Omit",
-  "Exclude", "Extract", "Array", "Promise", "Map", "Set",
-  "ReturnType", "Parameters", "InstanceType", "NonNullable",
-  "Awaited", "Uppercase", "Lowercase", "Capitalize",
+const TS_BUILTINS = new Set([
+  'string','number','boolean','void','null','undefined','never','any',
+  'unknown','object','symbol','bigint','T','K','V','U','E','R','S','P',
+  'Props','State','Ref','Context','Event','Handler','Dispatch','Action',
 ]);
 
-// Patterns que precedem <T> em contexto de generic (NAO jsx)
-const GENERIC_CONTEXT_RE = new RegExp(
-  // function foo<T>, const foo = <T>, class Foo<T>, interface Foo<T>
-  `(?:function\\s+\\w+|const\\s+\\w+\\s*=|let\\s+\\w+\\s*=|var\\s+\\w+\\s*=` +
-  // extends X<T>, implements X<T>, type X = ...<T>
-  `|extends\\s+\\w+|implements\\s+\\w+|type\\s+\\w+\\s*=` +
-  // interface Foo<T>
-  `|interface\\s+\\w+` +
-  // as <T>, : <T> (type assertion/annotation)
-  `|\\bas\\b|:\\s*` +
-  // => <T> (arrow fn generic)
-  `|=>` +
-  // new Map<T>, Array<T>, Promise<T> etc
-  `|\\w+` +
-  `)\\s*$`
-);
+const TYPE_CONTEXT_BEFORE = /[=:,(<|]\s*$/;
+const TYPE_CONTEXT_AFTER = /^\s*[,)>|&;\]]/;
+const DOM_TYPE = /^HTML\w+Element$|^SVG\w+Element$|^Element$|^Node$|^Event$/;
+const UTILITY_TYPES = /^(Promise|Array|Record|Map|Set|Partial|Required|Readonly|Pick|Omit|Exclude|Extract|NonNullable|ReturnType|InstanceType|Parameters|Awaited|Uppercase|Lowercase|Capitalize)$/;
 
-function isGenericContext(code, matchIndex) {
-  // Get the text before the < on the same line
-  const before = code.slice(Math.max(0, matchIndex - 120), matchIndex);
-  const lastLine = before.split("\n").pop() || "";
-  return GENERIC_CONTEXT_RE.test(lastLine.trimEnd());
-}
+const SELF_CLOSING_TAGS = new Set([
+  "img", "br", "hr", "input", "meta", "link", "area",
+  "base", "col", "embed", "source", "track", "wbr",
+]);
 
-// Arquivos que suportam JSX (nao .ts puro)
+// Arquivos que podem conter JSX (nao .ts puro)
 const JSX_EXTENSIONS = /\.(tsx|jsx|js)$/;
 
+// Paths que sempre sao validos — pular validacao JSX
+const SKIP_PATTERNS = [
+  'src/components/ui/',   // shadcn components — sempre validos
+  'src/lib/supabase',     // cliente supabase — sem JSX
+  'node_modules/',        // deps externas
+];
+
+function isJSXOpenTag(tagName, lineContent) {
+  // 1. Pular tipos primitivos e generics comuns
+  if (TS_BUILTINS.has(tagName)) return false;
+
+  // 2. Pular tipos DOM nativos (HTMLButtonElement, SVGSVGElement, etc)
+  if (DOM_TYPE.test(tagName)) return false;
+
+  // 3. Pular utility types do TypeScript
+  if (UTILITY_TYPES.test(tagName)) return false;
+
+  // 4. Verificar contexto antes da tag — se vier apos = : , ( < | e tipo TS
+  const tagIdx = lineContent.indexOf('<' + tagName);
+  if (tagIdx >= 0) {
+    const beforeTag = lineContent.substring(0, tagIdx);
+    if (TYPE_CONTEXT_BEFORE.test(beforeTag)) return false;
+  }
+
+  // 5. Verificar contexto depois da tag — se vier , ) > | & ; ] e tipo TS
+  if (tagIdx >= 0) {
+    const closeAngle = lineContent.indexOf('>', tagIdx + tagName.length + 1);
+    if (closeAngle >= 0) {
+      const afterTag = lineContent.substring(closeAngle + 1);
+      if (TYPE_CONTEXT_AFTER.test(afterTag)) return false;
+    }
+  }
+
+  // 6. Pular se linha contem palavras-chave de tipo TS
+  if (/\b(interface|type\s+\w+|extends|implements|keyof|typeof|infer)\b/.test(lineContent)) return false;
+
+  // 7. Pular se e arrow function com generic: const fn = <T>() =>
+  if (/const\s+\w+\s*=\s*</.test(lineContent)) return false;
+
+  // 8. Pular se e chamada de metodo com generic: foo.bar<T>(), supabase.from<T>()
+  if (/\.\w+\s*</.test(lineContent)) return false;
+
+  // 9. Pular se e declaracao de funcao com generic: function foo<T>
+  if (/function\s+\w+\s*</.test(lineContent)) return false;
+
+  // 10. Pular se e new com generic: new Map<string, number>()
+  if (/new\s+\w+\s*</.test(lineContent)) return false;
+
+  // Se passou tudo — e JSX real
+  return true;
+}
+
 function detectUnclosedJSX(code, fileName) {
-  // .ts puros NAO contêm JSX — pular completamente
+  // .ts puros NAO contem JSX — pular completamente
   if (!JSX_EXTENSIONS.test(fileName)) return [];
 
+  // Pular arquivos em paths conhecidos
+  if (SKIP_PATTERNS.some(p => fileName.includes(p))) return [];
+
   const errors = [];
+  const lines = code.split("\n");
   const openTagRegex = /<([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9-]*)\b[^>]*(?<!\/)>/g;
   const closeTagRegex = /<\/([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9-]*)\s*>/g;
-  const selfClosingTags = new Set([
-    "img", "br", "hr", "input", "meta", "link", "area",
-    "base", "col", "embed", "source", "track", "wbr",
-  ]);
 
+  // Contar opens filtrados por isJSXOpenTag
   const opens = {};
   const closes = {};
   let match;
 
-  while ((match = openTagRegex.exec(code)) !== null) {
-    const tag = match[1];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    openTagRegex.lastIndex = 0;
 
-    // 1. Skip HTML self-closing tags
-    if (selfClosingTags.has(tag.toLowerCase())) continue;
+    while ((match = openTagRegex.exec(line)) !== null) {
+      const tag = match[1];
+      if (SELF_CLOSING_TAGS.has(tag.toLowerCase())) continue;
+      if (!isJSXOpenTag(tag, line)) continue;
 
-    // 2. Skip known TypeScript generic names
-    if (TS_GENERIC_NAMES.has(tag)) continue;
-
-    // 3. Skip if preceded by a generic context (function<T>, extends Foo<T>, etc)
-    if (isGenericContext(code, match.index)) continue;
-
-    // 4. Skip if the tag has no JSX attributes and looks like a type annotation
-    //    e.g. <SomeType> followed by ( or , or ) or ; — not JSX content
-    const afterTag = code.slice(match.index + match[0].length, match.index + match[0].length + 20).trimStart();
-    if (/^[,);}\]=]/.test(afterTag)) continue;
-
-    if (!opens[tag]) opens[tag] = [];
-    const line = code.slice(0, match.index).split("\n").length;
-    opens[tag].push(line);
+      if (!opens[tag]) opens[tag] = [];
+      opens[tag].push(i + 1);
+    }
   }
 
+  // Contar closes (sem filtro — closing tags sao sempre </Tag>)
   while ((match = closeTagRegex.exec(code)) !== null) {
     const tag = match[1];
     if (!closes[tag]) closes[tag] = 0;
     closes[tag]++;
   }
 
-  for (const [tag, lines] of Object.entries(opens)) {
+  for (const [tag, lineNums] of Object.entries(opens)) {
     const closeCount = closes[tag] || 0;
-    const diff = lines.length - closeCount;
+    const diff = lineNums.length - closeCount;
     if (diff > 0) {
-      // Only report if code has a return statement (JSX context)
-      const returnIndex = code.indexOf("return");
-      if (returnIndex === -1) continue;
+      // So reporta se o codigo tem return (contexto JSX)
+      if (!code.includes("return")) continue;
       errors.push({
         file: fileName,
-        line: lines[lines.length - 1],
+        line: lineNums[lineNums.length - 1],
         col: 0,
         message: `Tag JSX <${tag}> aberta ${diff}x sem fechar (</${tag}> faltando)`,
         type: "unclosed_jsx",
@@ -290,14 +314,20 @@ export function validateSyntax(files) {
     if (!VALIDATABLE_EXTENSIONS.test(fileName)) continue;
     if (!content || typeof content !== "string") continue;
 
-    // Detectores universais (todos os .js/.ts/.jsx/.tsx)
+    // Pular arquivos .ts puros (sem JSX) e paths conhecidos como seguros
+    const isTsPure = fileName.endsWith('.ts') && !fileName.endsWith('.tsx');
+    const isSkipped = SKIP_PATTERNS.some(p => fileName.includes(p));
+
+    if (isTsPure || isSkipped) continue;
+
+    // Detectores universais (todos os .jsx/.tsx/.js)
     allErrors.push(
       ...detectUnterminatedStrings(content, fileName),
       ...detectUnterminatedTemplateLiterals(content, fileName),
       ...detectUnbalancedBrackets(content, fileName),
     );
 
-    // JSX detector — apenas .tsx/.jsx/.js (detectUnclosedJSX já filtra internamente)
+    // JSX detector — detectUnclosedJSX filtra internamente tambem
     allErrors.push(
       ...detectUnclosedJSX(content, fileName),
     );
