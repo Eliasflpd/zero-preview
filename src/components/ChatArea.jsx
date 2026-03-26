@@ -89,34 +89,8 @@ export default function ChatArea({
               Descreva seu app e a IA gera os arquivos React completos com preview ao vivo
             </p>
 
-            {/* Suggestions grid */}
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr",
-              gap: 8, maxWidth: 520, margin: "24px auto 0", textAlign: "left",
-            }}>
-              {suggestions.map(s => (
-                <button key={s.text} onClick={() => typeof onSuggestionClick === "function" && onSuggestionClick(s.text)} style={{
-                  padding: "12px 14px", background: C.surface,
-                  border: `1px solid ${C.border}`, borderRadius: R.md,
-                  fontSize: 11, color: C.textMuted, fontFamily: DM,
-                  cursor: "pointer", textAlign: "left", lineHeight: 1.5,
-                  transition: `all 0.2s ${EASE.out}`,
-                  display: "flex", flexDirection: "column", gap: 5,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,208,80,0.2)"; e.currentTarget.style.color = C.textSub; e.currentTarget.style.background = C.surface2; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.background = C.surface; e.currentTarget.style.transform = "translateY(0)"; }}
-                >
-                  <span style={{
-                    fontSize: 9, color: C.yellow, fontWeight: 700,
-                    textTransform: "uppercase", letterSpacing: 0.8,
-                    display: "flex", alignItems: "center", gap: 4,
-                  }}>
-                    <span style={{ fontSize: 12 }}>{s.icon}</span> {s.category}
-                  </span>
-                  <span style={{ color: "inherit" }}>{s.text}</span>
-                </button>
-              ))}
-            </div>
+            {/* Spacer */}
+            <div style={{ height: 8 }} />
           </div>
         )}
 
