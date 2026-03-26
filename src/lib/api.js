@@ -74,7 +74,7 @@ async function _singleStreamCall(systemPrompt, userPrompt, maxTokens, onDelta, t
   let fullText = "";
   let lastChunkAt = Date.now();
 
-  const inactivityLimit = 45000;
+  const inactivityLimit = 60000;
 
   while (true) {
     // Race: next chunk vs inactivity timeout
@@ -124,12 +124,13 @@ async function _singleStreamCall(systemPrompt, userPrompt, maxTokens, onDelta, t
     }
   }
 
-  if (!fullText) throw new Error("EMPTY_RESPONSE");
+  if (!fullText || fullText.length < 100) throw new Error("EMPTY_RESPONSE");
   return fullText;
 }
 
-export async function callClaudeStream(systemPrompt, userPrompt, maxTokens = 12000, onDelta, onRetryStatus) {
+export async function callClaudeStream(systemPrompt, userPrompt, maxTokens = 12000, onDelta, _onRetryStatus) {
   const MAX_RETRIES = 2;
+  const RETRY_DELAY = 3000;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const isRetry = attempt > 0;
@@ -141,13 +142,13 @@ export async function callClaudeStream(systemPrompt, userPrompt, maxTokens = 120
       : systemPrompt;
     const currentPrompt = isLastRetry ? simplifyPrompt(userPrompt) : userPrompt;
 
-    // Timeout: 45s primeira, 60s retry, 90s ultimo
-    const timeoutMs = isLastRetry ? 90000 : isRetry ? 60000 : 45000;
+    // Timeout: 60s — nao conta como falha para o usuario
+    const timeoutMs = 60000;
 
     try {
+      // Delay entre retries — invisivel, UI continua mostrando "Gerando..."
       if (isRetry) {
-        onRetryStatus?.(`Tentando novamente (${attempt}/${MAX_RETRIES})...`);
-        onDelta?.("", ""); // reset stream display
+        await new Promise(r => setTimeout(r, RETRY_DELAY));
       }
 
       const fullText = await _singleStreamCall(currentSystem, currentPrompt, maxTokens, onDelta, timeoutMs);
@@ -167,15 +168,15 @@ export async function callClaudeStream(systemPrompt, userPrompt, maxTokens = 120
       // Auth/license errors — never retry
       if (["LICENSE_INVALID", "LICENSE_EXPIRED", "RATE_LIMITED"].includes(e.message)) throw e;
 
-      // Retryable errors: empty response, timeout
+      // Retryable errors: empty/short response, timeout
       const isRetryable = e.message === "EMPTY_RESPONSE" || e.message === "STREAM_TIMEOUT";
 
       if (isRetryable && !isLastRetry) {
-        console.warn(`[callClaudeStream] Tentativa ${attempt + 1} falhou (${e.message}), retentando...`);
+        console.warn(`[callClaudeStream] Tentativa ${attempt + 1} falhou (${e.message}), retry invisivel em ${RETRY_DELAY / 1000}s...`);
         continue;
       }
 
-      // Last attempt failed — throw user-friendly error
+      // Todas as tentativas falharam — agora sim mostra erro
       if (e.message === "EMPTY_RESPONSE") throw new Error("Resposta vazia do Claude apos multiplas tentativas.");
       if (e.message === "STREAM_TIMEOUT") throw new Error("A geracao demorou demais e foi cancelada. Tente um prompt mais simples.");
       throw e;
@@ -191,7 +192,7 @@ export async function callClaude(systemPrompt, userPrompt, maxTokens = 12000) {
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
     let res;
     try {

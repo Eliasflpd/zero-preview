@@ -240,8 +240,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   } catch (e) {
     if (isAuthError(e)) throw e;
     // If non-streaming also fails, try streaming as last resort
-    raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 8192, onCodeStream,
-      (msg) => emit(onProgress, STEPS.RETRY, msg));
+    raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 8192, onCodeStream);
   }
   const code = cleanCodeFences(raw);
   if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
@@ -268,8 +267,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
       emit(onProgress, STEPS.RETRY, "Score baixo. Regenerando...");
     }
 
-    const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream,
-      (msg) => emit(onProgress, STEPS.RETRY, msg));
+    const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream);
     appCode = cleanCodeFences(appRaw);
     if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 
