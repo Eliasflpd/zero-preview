@@ -3,7 +3,7 @@ import KnowledgeBadge from "./KnowledgeBadge";
 
 const Badge = ({ children, color, bg, border }) => (
   <span style={{
-    fontSize: 9, padding: "2px 8px", borderRadius: R.full,
+    fontSize: 11, padding: "3px 10px", borderRadius: R.full,
     background: bg, border: `1px solid ${border}`,
     color, fontFamily: DM, fontWeight: 600, whiteSpace: "nowrap",
     display: "inline-flex", alignItems: "center", gap: 4,
@@ -14,7 +14,7 @@ const Badge = ({ children, color, bg, border }) => (
 
 const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, disabled, title }) => (
   <button onClick={onClick} disabled={disabled} title={title} style={{
-    padding: "4px 10px", borderRadius: R.sm, fontSize: 10, fontWeight: 600,
+    padding: "5px 12px", borderRadius: R.sm, fontSize: 12, fontWeight: 600,
     fontFamily: DM, cursor: disabled ? "default" : "pointer",
     transition: `all 0.15s ${EASE.out}`,
     background: active ? activeBg || C.yellowGlow : "transparent",

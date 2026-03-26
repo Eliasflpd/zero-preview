@@ -21,11 +21,11 @@ export const C = {
   yellowGlow2:"rgba(255,208,80,0.04)",
   yellowSoft: "rgba(255,208,80,0.08)",
 
-  // Text — 4 níveis de hierarquia
+  // Text — 4 níveis de hierarquia (ALTA LEGIBILIDADE)
   text:       "#F0F4FA",     // primário — títulos, conteúdo principal
-  textSub:    "#B8C9DC",     // secundário — descrições
-  textMuted:  "#6B8BAA",     // terciário — labels, metadados
-  textDim:    "#3A5470",     // quaternário — placeholders, hints
+  textSub:    "#C8D8E8",     // secundário — descrições, labels
+  textMuted:  "#8BA8C4",     // terciário — metadados, counters
+  textDim:    "#5A7A96",     // quaternário — placeholders, hints
 
   // Semantic
   success:    "#34D399",

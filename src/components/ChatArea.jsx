@@ -250,22 +250,22 @@ export default function ChatArea({
             display: "flex", alignItems: "center", justifyContent: "space-between",
             background: C.bg, gap: 8,
           }}>
-            <span style={{ fontSize: 10, color: C.textDim }}>
+            <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 500 }}>
               {licenseInfo?.tokens_used != null
                 ? `${((licenseInfo.tokens_used / 1000) | 0)}k / ${((licenseInfo.tokens_limit / 1000) | 0)}k tokens`
                 : "Claude Sonnet 4"
               }
             </span>
             <button onClick={onGenerate} disabled={disabled || !prompt.trim()} style={{
-              padding: "7px 16px",
+              padding: "9px 22px",
               background: disabled || !prompt.trim()
                 ? "rgba(255,208,80,0.15)"
                 : `linear-gradient(135deg, ${C.yellow}, #FFE088)`,
               border: "none", borderRadius: R.sm,
-              fontSize: 12, fontWeight: 700, fontFamily: DM, color: C.bg,
+              fontSize: 14, fontWeight: 700, fontFamily: DM, color: C.bg,
               cursor: disabled || !prompt.trim() ? "not-allowed" : "pointer",
               display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              boxShadow: !disabled && prompt.trim() ? "0 2px 8px rgba(255,208,80,0.2)" : "none",
+              boxShadow: !disabled && prompt.trim() ? "0 4px 16px rgba(255,208,80,0.3)" : "none",
               transition: `all 0.2s ${EASE.out}`,
             }}>
               {generating ? (
@@ -284,7 +284,7 @@ export default function ChatArea({
           </div>
         </div>
         <p style={{
-          textAlign: "center", fontSize: 10, color: C.textDim,
+          textAlign: "center", fontSize: 11, color: C.textMuted,
           marginTop: 6, lineHeight: 1.4,
         }}>
           {prompt.trim()

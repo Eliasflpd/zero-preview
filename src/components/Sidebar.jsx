@@ -80,7 +80,7 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
                 transition: `width 0.8s ${EASE.out}`,
               }} />
             </div>
-            <div style={{ fontSize: 9, color: C.textDim, marginTop: 4, display: "flex", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4, display: "flex", justifyContent: "space-between" }}>
               <span>{((licenseInfo.tokens_used / 1000) | 0)}k usados</span>
               <span>{((licenseInfo.tokens_limit / 1000) | 0)}k limite</span>
             </div>
@@ -158,8 +158,8 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
       {/* ─── PROJECTS LIST ─── */}
       <div className="scroll-fade" style={{ flex: 1, overflowY: "auto", padding: "6px 12px" }}>
         <div style={{
-          fontSize: 9, fontWeight: 700, color: C.textDim,
-          letterSpacing: 1.2, textTransform: "uppercase",
+          fontSize: 11, fontWeight: 700, color: C.textMuted,
+          letterSpacing: 1, textTransform: "uppercase",
           padding: "8px 4px 6px",
         }}>
           Projetos ({projects.length})
@@ -175,8 +175,8 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
             }}>
               <IconFolder />
             </div>
-            <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>Nenhum projeto ainda</div>
-            <div style={{ fontSize: 10, color: C.textDim, marginTop: 3 }}>Descreva seu app para comecar</div>
+            <div style={{ fontSize: 13, color: C.textSub, lineHeight: 1.5, fontWeight: 500 }}>Nenhum projeto ainda</div>
+            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>Descreva seu app para comecar</div>
           </div>
         )}
 
@@ -256,9 +256,9 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
           { label: "Sair", icon: <IconLogout />, action: onLogout, hoverColor: C.error, hoverBg: C.errorDim },
         ].map(item => (
           <button key={item.label} onClick={item.action} style={{
-            width: "100%", padding: "8px 10px", background: "transparent",
+            width: "100%", padding: "9px 10px", background: "transparent",
             border: "none", borderRadius: R.sm,
-            fontSize: 11, color: C.textMuted, cursor: "pointer", fontFamily: DM,
+            fontSize: 13, color: C.textSub, cursor: "pointer", fontFamily: DM,
             textAlign: "left", marginBottom: 1,
             display: "flex", alignItems: "center", gap: 8,
             transition: `all 0.15s ${EASE.out}`,
