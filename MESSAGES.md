@@ -120,6 +120,20 @@ Status: CONCLUIDO
 
 ---
 
+## [007] DE: Elias -> PARA: Claudin
+Data: 26/03/2026
+Assunto: syntaxValidator restaurado — testar badge verde
+Mensagem: Claudin, o syntaxValidator.js foi restaurado.
+Gerar 2 apps TypeScript pesados e verificar:
+- Badge verde "Sintaxe OK" aparece?
+- Preview abre sem overlay de erro?
+- Score obtido?
+Reportar aqui.
+Status: PENDENTE
+Resultado: (Claudin preenche aqui)
+
+---
+
 ## LOG DE COMUNICACOES CONCLUIDAS
 - [001] Claudin executou testes A/B/C — 26/03/2026
 - [002] Claude Code confirmou protocolo — 26/03/2026
