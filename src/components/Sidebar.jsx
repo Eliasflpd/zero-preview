@@ -47,7 +47,7 @@ function SidebarInner({ user, projects, activeId, onSelect, onNew, onDelete, onL
           <div style={{ fontSize: 15, fontWeight: 800, fontFamily: SYNE, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>
             Zero<span style={{ color: C.yellow }}>.</span>
           </div>
-          <div style={{ fontSize: 9, color: C.textDim, fontWeight: 500, letterSpacing: 0.5 }}>PREVIEW</div>
+          <div style={{ fontSize: 8, color: C.yellowDim, fontWeight: 700, letterSpacing: 1.5, opacity: 0.6 }}>v3.0</div>
         </div>
       </div>
 

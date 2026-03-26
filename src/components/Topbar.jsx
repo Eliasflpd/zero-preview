@@ -31,6 +31,7 @@ export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleS
     <div style={{
       height: 48, background: C.surface,
       borderBottom: `1px solid ${C.border}`,
+      borderLeft: `1px solid ${C.border}`,
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "0 14px", flexShrink: 0,
     }}>
