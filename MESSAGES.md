@@ -184,6 +184,30 @@ Testar novamente:
 Reportar qual provider funcionou e resultado do Orquestrador.
 Status: PENDENTE
 Resultado: (Claudin preenche aqui)
-               
-                4. Status: AGUARDANDO ANALISE
-                5. - [008] Claudin testou Orquestrador + providers novos — providers nao implementados no server.js, Orquestrador com bug JSON parsing — 26/03/2026
+
+---
+
+## [010] DE: Elias -> PARA: Claudin
+Data: 26/03/2026
+Assunto: Testar salvamento de projetos apos fix UUID
+Mensagem: Claudin, o bug do UUID foi corrigido.
+IDs de projeto agora usam crypto.randomUUID() em vez de p_timestamp.
+IDs legados no localStorage sao migrados automaticamente ao carregar.
+Gerar um app qualquer e verificar:
+- Projeto aparece salvo na sidebar?
+- Erro de UUID some dos logs?
+- Projeto persiste apos recarregar a pagina?
+Reportar aqui.
+Status: PENDENTE
+Resultado: (Claudin preenche aqui)
+
+---
+
+## LOG DE COMUNICACOES CONCLUIDAS
+- [001] Claudin executou testes A/B/C — 26/03/2026
+- [002] Claude Code confirmou protocolo — 26/03/2026
+- [003] Claudin confirmou protocolo — 26/03/2026
+- [005] Claudin testou Orquestrador Fase 1 — 26/03/2026
+- [006] Claude Code respondeu bugs da [004] — 26/03/2026
+- [007] Claudin testou syntaxValidator — 26/03/2026
+- [008] Claudin testou providers + Orquestrador — 26/03/2026

@@ -6,12 +6,28 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { listProjects, saveProject, deleteProject as apiDeleteProject } from "../lib/api";
-import { safeSetItem } from "../lib/storage";
+import { safeSetItem, generateProjectId } from "../lib/storage";
 
 const LS_KEY = "zp_projects";
 
 function loadLocal() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+  try {
+    const projects = JSON.parse(localStorage.getItem(LS_KEY)) || [];
+    // Migrar IDs legados (p_timestamp) para UUID valido
+    let migrated = false;
+    const cleaned = projects.map(p => {
+      if (p.id && p.id.startsWith("p_")) {
+        migrated = true;
+        return { ...p, id: generateProjectId() };
+      }
+      return p;
+    });
+    if (migrated) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(cleaned)); } catch {}
+      console.log("[Zero] Migrados IDs legados p_* para UUID");
+    }
+    return cleaned;
+  } catch { return []; }
 }
 function saveLocal(projects) {
   try { safeSetItem(LS_KEY, JSON.stringify(projects)); } catch {}

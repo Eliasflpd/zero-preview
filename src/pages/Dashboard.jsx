@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { C, DM } from "../config/theme";
 import { generateFiles } from "../config/generator";
 import { checkLicense, callClaudeAgent } from "../lib/api";
-import { trimProject } from "../lib/storage";
+import { trimProject, generateProjectId } from "../lib/storage";
 import useProjects from "../hooks/useProjects";
 import useVersions from "../hooks/useVersions";
 import Topbar from "../components/Topbar";
@@ -168,7 +168,7 @@ export default function Dashboard({ user, onLogout }) {
     const now = Date.now();
     const files = { ...importedFiles };
     const name = "Projeto importado do GitHub";
-    const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: "Importado do GitHub", history: [{ prompt: "Import GitHub", at: now }], createdAt: now, updatedAt: now });
+    const np = trimProject({ id: generateProjectId(), name, files, lastPrompt: "Importado do GitHub", history: [{ prompt: "Import GitHub", at: now }], createdAt: now, updatedAt: now });
     addProject(np);
     setActiveId(np.id);
     setGeneratedFiles(files);
@@ -200,7 +200,7 @@ export default function Dashboard({ user, onLogout }) {
           updateProject(activeId, p => trimProject({ ...p, files: merged, lastPrompt: agentPrompt, history: newHistory, updatedAt: now }));
         } else {
           const name = agentPrompt.slice(0, 42) + (agentPrompt.length > 42 ? "..." : "");
-          const np = trimProject({ id: `p_${now}`, name, files: merged, lastPrompt: agentPrompt, history: newHistory, createdAt: now, updatedAt: now });
+          const np = trimProject({ id: generateProjectId(), name, files: merged, lastPrompt: agentPrompt, history: newHistory, createdAt: now, updatedAt: now });
           addProject(np);
           setActiveId(np.id);
         }
@@ -231,7 +231,7 @@ export default function Dashboard({ user, onLogout }) {
     if (activeId) {
       updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: currentPrompt, history: newHistory, updatedAt: now }));
     } else {
-      const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: currentPrompt, history: newHistory, createdAt: now, updatedAt: now });
+      const np = trimProject({ id: generateProjectId(), name, files, lastPrompt: currentPrompt, history: newHistory, createdAt: now, updatedAt: now });
       addProject(np);
       setActiveId(np.id);
     }

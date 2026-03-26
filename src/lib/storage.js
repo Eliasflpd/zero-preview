@@ -1,6 +1,18 @@
 // src/lib/storage.js
 
 const MAX_PROJECTS = 50;
+
+// Gerar UUID v4 valido para Supabase
+export function generateProjectId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 const MAX_HISTORY = 10;
 const STORAGE_LIMIT = 5 * 1024 * 1024; // ~5MB
 
@@ -63,7 +75,7 @@ export function importProject(jsonString) {
   const p = JSON.parse(jsonString);
   if (!p.id || !p.name) throw new Error("Projeto invalido.");
   return {
-    id: p.id || `p_${Date.now()}`,
+    id: p.id && !p.id.startsWith("p_") ? p.id : generateProjectId(),
     name: p.name,
     files: p.files || {},
     lastPrompt: p.lastPrompt || "",
