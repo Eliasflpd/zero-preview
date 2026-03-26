@@ -26,10 +26,22 @@ const WCManager = {
     if (this.instance) return this.instance;
     if (this.booting) return this.bootPromise;
     this.booting = true;
-    this.bootPromise = WebContainer.boot().then(wc => {
-      this.instance = wc;
+    this.bootPromise = Promise.race([
+      WebContainer.boot().then(wc => {
+        this.instance = wc;
+        this.booting = false;
+        return wc;
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => {
+          this.booting = false;
+          reject(new Error("BOOT_TIMEOUT"));
+        }, 30000)
+      ),
+    ]).catch(err => {
       this.booting = false;
-      return wc;
+      this.bootPromise = null;
+      throw err;
     });
     return this.bootPromise;
   },
@@ -136,19 +148,53 @@ const WCManager = {
       onLog("Cache de deps valido", "success");
     }
 
-    onLog("Iniciando Vite...", "info");
+    await this._startViteWithTimeout(wc, files, onLog, onUrl);
+  },
+
+  async _startViteWithTimeout(wc, files, onLog, onUrl, isRetry = false) {
+    onLog(isRetry ? "Reiniciando Vite..." : "Iniciando Vite...", "info");
+
     this.devProcess = await wc.spawn("npm", ["run", "dev"]);
     this.devProcess.output.pipeTo(new WritableStream({
       write(chunk) { onLog(chunk); }
     }));
 
-    this._serverReadyHandler = (port, url) => {
-      this.serverUrl = url;
-      this._running = false;
+    // Race: server-ready vs 30s timeout
+    const serverReady = new Promise((resolve) => {
+      this._serverReadyHandler = (port, url) => {
+        this.serverUrl = url;
+        this._running = false;
+        resolve(url);
+      };
+      wc.on("server-ready", this._serverReadyHandler);
+    });
+
+    const serverTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("SERVER_TIMEOUT")), 30000)
+    );
+
+    try {
+      const url = await Promise.race([serverReady, serverTimeout]);
       onLog(`Servidor pronto → ${url}`, "success");
       onUrl(url);
-    };
-    wc.on("server-ready", this._serverReadyHandler);
+    } catch (e) {
+      // Remove listener before retry/error
+      if (this._serverReadyHandler) {
+        try { wc.off?.("server-ready", this._serverReadyHandler); } catch {}
+      }
+
+      if (!isRetry) {
+        onLog("Preview demorou demais — reiniciando automaticamente...", "warn");
+        await this.killDev();
+        this._running = true;
+        return this._startViteWithTimeout(wc, files, onLog, onUrl, true);
+      }
+
+      // Second timeout — show clear error
+      this._running = false;
+      onLog("Preview nao conseguiu iniciar. Tente recarregar a pagina.", "error");
+      onUrl(""); // signal failure with empty URL
+    }
   },
 };
 
