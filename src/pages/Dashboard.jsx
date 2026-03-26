@@ -30,6 +30,7 @@ const DisparadorBridge = safeLazy(() => import("../components/DisparadorBridge")
 const AgenticMode = safeLazy(() => import("../components/AgenticMode"));
 const GitHubImport = safeLazy(() => import("../components/GitHubImport"));
 const OrchestratorPanel = safeLazy(() => import("../components/OrchestratorPanel"));
+const Escritorio = safeLazy(() => import("../components/Escritorio"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -56,6 +57,7 @@ export default function Dashboard({ user, onLogout }) {
     try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
   });
   const [orchestratorOpen, setOrchestratorOpen] = useState(false);
+  const [escritorioOpen, setEscritorioOpen] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -442,7 +444,9 @@ export default function Dashboard({ user, onLogout }) {
           activeProvider={activeProvider}
           onProviderChange={(id) => { setActiveProvider(id); try { localStorage.setItem("zp_provider", id); } catch {} }}
           orchestratorOpen={orchestratorOpen}
-          onToggleOrchestrator={() => setOrchestratorOpen(o => !o)}
+          onToggleOrchestrator={() => { setOrchestratorOpen(o => !o); setEscritorioOpen(false); }}
+          escritorioOpen={escritorioOpen}
+          onToggleEscritorio={() => { setEscritorioOpen(o => !o); setOrchestratorOpen(false); }}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -538,6 +542,32 @@ export default function Dashboard({ user, onLogout }) {
           <div style={{ flex: 1, overflow: "hidden" }}>
             <Suspense fallback={null}>
               <OrchestratorPanel />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* Escritorio side panel */}
+      {escritorioOpen && (
+        <div style={{
+          position: "fixed", right: 0, top: 0, height: "100vh", width: 360,
+          background: C.surface, borderLeft: `1px solid ${C.border}`,
+          zIndex: 200, display: "flex", flexDirection: "column",
+          boxShadow: "-4px 0 24px rgba(0,0,0,0.3)",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 14px", borderBottom: `1px solid ${C.border}`,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: DM }}>{"\uD83C\uDFE2"} Escritorio</span>
+            <button onClick={() => setEscritorioOpen(false)} style={{
+              background: "none", border: "none", color: C.textDim, cursor: "pointer",
+              fontSize: 16, padding: 4, lineHeight: 1,
+            }}>{"\u2715"}</button>
+          </div>
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            <Suspense fallback={null}>
+              <Escritorio />
             </Suspense>
           </div>
         </div>

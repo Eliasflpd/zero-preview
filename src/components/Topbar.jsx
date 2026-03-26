@@ -44,7 +44,7 @@ const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, dis
   </button>
 );
 
-export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange, orchestratorOpen, onToggleOrchestrator }) {
+export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange, orchestratorOpen, onToggleOrchestrator, escritorioOpen, onToggleEscritorio }) {
   const [providerOpen, setProviderOpen] = useState(false);
   const dropdownRef = useRef(null);
   const currentProvider = activeProvider || "auto";
@@ -164,6 +164,18 @@ export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen
         >
           <span style={{ fontSize: 10 }}>{"\uD83C\uDFAF"}</span>
           Orquestrador
+        </ToolBtn>
+
+        <ToolBtn
+          onClick={onToggleEscritorio}
+          active={escritorioOpen}
+          color="#3B82F6"
+          activeBg="rgba(59,130,246,0.1)"
+          activeBorder="rgba(59,130,246,0.3)"
+          title="Escritorio — comunicacao entre agentes"
+        >
+          <span style={{ fontSize: 10 }}>{"\uD83C\uDFE2"}</span>
+          Escritorio
         </ToolBtn>
 
         {hasPreview && syntaxStatus && (
