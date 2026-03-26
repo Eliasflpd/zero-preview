@@ -7,6 +7,7 @@ import useProjects from "../hooks/useProjects";
 import useVersions from "../hooks/useVersions";
 import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
+import DiffReview from "../components/DiffReview";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
@@ -43,6 +44,7 @@ export default function Dashboard({ user, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [agenticMode, setAgenticMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [pendingDiff, setPendingDiff] = useState(null); // { oldFiles, newFiles, prompt, score }
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -195,6 +197,39 @@ export default function Dashboard({ user, onLogout }) {
     } finally { setGenerating(false); }
   };
 
+  // Aplica arquivos gerados (usada diretamente ou após DiffReview)
+  const applyFiles = (files, currentPrompt, score, failedNames) => {
+    const now = Date.now();
+    const newHistory = [...history, { prompt: currentPrompt, at: now, score, problems: failedNames || [] }];
+    const name = currentPrompt.slice(0, 42).trim() + (currentPrompt.length > 42 ? "..." : "");
+    const newRunId = `run_${now}`;
+
+    if (activeId) {
+      updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: currentPrompt, history: newHistory, updatedAt: now }));
+    } else {
+      const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: currentPrompt, history: newHistory, createdAt: now, updatedAt: now });
+      addProject(np);
+      setActiveId(np.id);
+    }
+
+    setGeneratedFiles(files);
+    setHistory(newHistory);
+    setRunId(newRunId);
+    setPrompt("");
+    pushVersion(files, currentPrompt, score);
+  };
+
+  // Handler quando DiffReview é confirmado
+  const handleDiffApply = () => {
+    if (!pendingDiff) return;
+    applyFiles(pendingDiff.newFiles, pendingDiff.prompt, pendingDiff.score, pendingDiff.failedNames);
+    setPendingDiff(null);
+  };
+
+  const handleDiffCancel = () => {
+    setPendingDiff(null);
+  };
+
   // Agentic mode generates with a rich briefing instead of raw prompt
   const handleAgenticGenerate = (briefing) => {
     promptRef.current = briefing;
@@ -235,26 +270,17 @@ export default function Dashboard({ user, onLogout }) {
       if (!result?.files?.["src/pages/Dashboard.tsx"]) throw new Error("App.jsx nao gerado. Tente novamente.");
 
       const files = result.files;
-      const now = Date.now();
       const score = result.validation?.score;
       const failedNames = (result.validation?.details || []).filter(d => !d.passed).map(d => d.name);
-      const newHistory = [...history, { prompt: currentPrompt, at: now, score, problems: failedNames }];
-      const name = currentPrompt.slice(0, 42).trim() + (currentPrompt.length > 42 ? "..." : "");
-      const newRunId = `run_${now}`;
 
-      if (activeId) {
-        updateProject(activeId, p => trimProject({ ...p, files, lastPrompt: currentPrompt, history: newHistory, updatedAt: now }));
+      // Se é uma EDIÇÃO (já tinha files), mostra diff review antes de aplicar
+      if (generatedFiles && Object.keys(generatedFiles).length > 0) {
+        setPendingDiff({ oldFiles: generatedFiles, newFiles: files, prompt: currentPrompt, score, failedNames });
+        // Não aplica ainda — espera o usuário confirmar no DiffReview
       } else {
-        const np = trimProject({ id: `p_${now}`, name, files, lastPrompt: currentPrompt, history: newHistory, createdAt: now, updatedAt: now });
-        addProject(np);
-        setActiveId(np.id);
+        // Primeira geração — aplica direto
+        applyFiles(files, currentPrompt, score, failedNames);
       }
-
-      setGeneratedFiles(files);
-      setHistory(newHistory);
-      setRunId(newRunId);
-      setPrompt("");
-      pushVersion(files, currentPrompt, score);
 
       // Refresh license info after generation
       try {
@@ -371,6 +397,16 @@ export default function Dashboard({ user, onLogout }) {
         <Suspense fallback={null}>
           <SettingsModal licenseInfo={licenseInfo} onClose={() => setShowSettings(false)} onLogout={onLogout} />
         </Suspense>
+      )}
+
+      {/* Diff Review modal — shows before applying edits */}
+      {pendingDiff && (
+        <DiffReview
+          oldFiles={pendingDiff.oldFiles}
+          newFiles={pendingDiff.newFiles}
+          onApply={handleDiffApply}
+          onCancel={handleDiffCancel}
+        />
       )}
 
       {/* Disparador floating bridge — only if admin key exists */}

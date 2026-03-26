@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import WCManager from "../lib/wcManager";
 import { C, DM } from "../config/theme";
+import { exportToZip } from "../lib/exporter";
 
 const DeployModal = lazy(() => import("./DeployModal"));
 const GitHubSync = lazy(() => import("./GitHubSync"));
@@ -227,6 +228,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
               border: `1px solid ${editMode ? "rgba(59,130,246,0.4)" : C.border}`, borderRadius: 5,
               fontSize: 10, color: editMode ? "#3B82F6" : C.textMuted, cursor: "pointer", fontFamily: DM, fontWeight: 600,
             }}>{editMode ? "Editando..." : "Editar"}</button>
+          )}
+          {url && (
+            <button onClick={() => { try { exportToZip(files, projectName); } catch(e) { console.error("ZIP export error:", e); } }} style={{
+              padding: "4px 10px", background: "transparent",
+              border: `1px solid ${C.border}`, borderRadius: 5,
+              fontSize: 10, color: C.textMuted, cursor: "pointer", fontFamily: DM, fontWeight: 600,
+            }}>ZIP</button>
           )}
           {url && (
             <button onClick={() => setShowGitHub(true)} style={{
