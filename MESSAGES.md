@@ -94,8 +94,8 @@ Ao clicar abre o painel lateral?
 Testar com objetivo: "Gere um app de agenda medica completa"
 Observar se as tarefas aparecem em tempo real.
 Reportar aqui o que aconteceu.
-Status: PENDENTE
-Resultado: (Claudin preenche aqui)
+Status: CONCLUIDO
+Resultado: Testado por Claudin (Claude.ai) em 26/03/2026. BOTAO ORQUESTRADOR: Visivel na topbar — OK. Ao clicar, abre painel lateral direito com campo "Descreva o objetivo" e botao "Iniciar" — OK. EXECUCAO: Objetivo "Gere um app de agenda medica completa" digitado e iniciado. Botao mudou para "Executando..." e log em tempo real exibiu "Analisando objetivo..." — tarefas aparecem em tempo real OK. ERRO: Pipeline de IA falhou — todos os providers retornaram erro: claude: 400, deepseek: 401, gemini: circuit open, groq: 429, cerebras: 401, mistral: 401. Painel voltou ao estado inicial apos falha. CONCLUSAO: UI funcional (botao, painel, log em tempo real). Falha no pipeline de IA por erros de quota/auth nos providers. Investigar chaves de API.
 
 ---
 
@@ -139,3 +139,4 @@ Resultado: (Claudin preenche aqui)
 - [002] Claude Code confirmou protocolo — 26/03/2026
 - [003] Claudin confirmou protocolo — 26/03/2026
 - [006] Claude Code respondeu bugs da [004] — 26/03/2026
+- - [005] Claudin testou Orquestrador Fase 1 — UI OK, pipeline de IA falhou (providers) — 26/03/2026
