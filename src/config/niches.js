@@ -217,32 +217,9 @@ export const NICHES = {
 // All niche IDs for detection
 export const NICHE_IDS = Object.keys(NICHES);
 
-// Detection prompt — returns the niche ID
-export const NICHE_DETECT_PROMPT = `Voce detecta nichos de negocio brasileiros. Responda APENAS com uma das opcoes abaixo (uma unica palavra):
-${NICHE_IDS.join(", ")}
-
-Regras:
-- "salao de beleza" ou "cabeleireiro" → beauty
-- "restaurante" ou "lanchonete" ou "pizzaria" → food
-- "banco" ou "fintech" ou "investimento" → finance
-- "academia" ou "crossfit" ou "personal" → fitness
-- "igreja" ou "culto" ou "congregacao" → church
-- "loja" ou "comercio" ou "pdv" → retail
-- "construtora" ou "obra" ou "engenharia" → construction
-- "escola" ou "faculdade" ou "cursinho" → education
-- "clinica" ou "hospital" ou "consultorio medico" → health
-- "agencia" ou "design" ou "marketing" → creative
-- "advocacia" ou "advogado" ou "juridico" → law
-- "veterinario" ou "vet" ou "animal" → vet
-- "idiomas" ou "ingles" ou "espanhol" → languages
-- "petshop" ou "pet" ou "racao" → petshop
-- "farmacia" ou "drogaria" ou "medicamento" → pharmacy
-- "imobiliaria" ou "corretor" ou "aluguel" → realestate
-- "ministerio" ou "ong" ou "voluntario" → ministry
-- "mecanica" ou "oficina" ou "automovel" → automotive
-- "buffet" ou "evento" ou "festa" ou "casamento" → events
-- "artesanato" ou "handmade" ou "atelie" → crafts
-- Qualquer outro → generic`;
+// Detection prompt — returns the niche ID (simplified — keywords are in guessNicheLocal)
+export const NICHE_DETECT_PROMPT = `Detecte o nicho de negocio brasileiro. Responda APENAS com uma unica palavra:
+${NICHE_IDS.join(", ")}`;
 
 // Get niche config by ID (with fallback)
 export function getNiche(id) {

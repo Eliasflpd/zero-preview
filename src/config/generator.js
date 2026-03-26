@@ -182,7 +182,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   // Build compact prompt — avoid wasting tokens on repetitive context
   let appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING:\n${brief.instruction}`;
   if (extras) appPrompt += extras;
-  appPrompt += `\n\nRetorne APENAS codigo TSX. Sem markdown. Max 400 linhas. Comece com imports.`;
+  appPrompt += `\n\nRetorne APENAS codigo TSX. Sem markdown. Maximo 400 linhas. Comece com imports.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
   files["src/pages/Dashboard.tsx"] = appCode.code;

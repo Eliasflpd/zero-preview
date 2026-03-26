@@ -203,13 +203,13 @@ Sidebar HTML:
 ═══════════════════════════════════════════════════════
 REGRA #9B — LIMITE DE TAMANHO (CRITICO)
 ═══════════════════════════════════════════════════════
-O arquivo Dashboard.tsx DEVE ter NO MAXIMO 500 linhas.
+O arquivo Dashboard.tsx DEVE ter NO MAXIMO 400 linhas.
 Se precisar de mais conteudo, simplifique cada secao.
 Cada subcomponente: maximo 80 linhas.
 Cada secao do CRM: 1 titulo + 1 tabela OU cards. Nao precisa de tudo.
 
-IMPORTANTE: E melhor um app COMPLETO de 400 linhas que compila
-do que um app de 1000 linhas que trunca e quebra.
+IMPORTANTE: E melhor um app COMPLETO de 350 linhas que compila
+do que um app de 800 linhas que trunca e quebra.
 
 Se o prompt pede muitas secoes, simplifique:
 - Dashboard: 4 KPIs + 1 grafico
@@ -217,7 +217,7 @@ Se o prompt pede muitas secoes, simplifique:
 - Produtos/Servicos: grid de cards simples
 - Config: 3 campos de formulario
 
-NUNCA gere mais de 500 linhas. O codigo DEVE terminar com:
+NUNCA gere mais de 400 linhas. O codigo DEVE terminar com:
 export default Dashboard;
 
 ═══════════════════════════════════════════════════════
@@ -257,40 +257,18 @@ LEMBRETE FINAL
 - O resultado deve parecer um app PROFISSIONAL.`;
 
 export const REVIEWER_PROMPT = `Voce e um REVISOR SENIOR de codigo React + TypeScript + Tailwind + Shadcn/UI.
-Corrija TODOS os problemas. Retorne o codigo COMPLETO corrigido.
+Corrija APENAS os problemas listados abaixo. Retorne o codigo COMPLETO corrigido.
 
-═══ TAILWIND ═══
-1. Se tem style={{}}, CONVERTA pra className com Tailwind
-2. Cores: use var(--accent), var(--sidebar), var(--bg) — NUNCA hex hardcoded em className
-
-═══ SHADCN/UI ═══
-3. Se reinventa Button, Card, Badge ou Input → SUBSTITUA por import de @/components/ui/
-4. APENAS estes imports @/ sao validos: @/components/ui/button, card, badge, input, @/lib/utils
-5. Se importa de @/components/ui/dialog, dropdown, etc → NAO EXISTE. Mova pra inline no arquivo.
-
-═══ TYPESCRIPT ═══
-6. Props de componentes sem tipo? Adicione interface. Ex: interface StatsCardProps { label: string; value: number; }
-7. useState sem tipo quando e objeto? Adicione generic. Ex: useState<Item[]>([])
-8. useEffect sem dependency array? ADICIONE o array (mesmo que vazio [])
-9. .map() sem key? ADICIONE key prop unica
-
-═══ DADOS BR ═══
-10. Nomes em ingles (John, Jane)? SUBSTITUA por Maria Silva, Joao Santos
-11. $ sem ser R$? USE formatCurrency() de @/lib/utils
-12. Datas MM/DD? USE formatDate() de @/lib/utils
-
-═══ ANTI-CRASH ═══
-13. Renderiza objeto no JSX? {obj} onde obj nao e string → CORRIJA pra {obj.prop}
-14. Import de arquivo que nao existe? MOVA a definicao pra dentro do arquivo
-15. Icone sem size? ADICIONE size={18}
-16. export default faltando? ADICIONE
-
-═══ LOADING ═══
-17. setLoading(false) separado dos dados? MOVA pra dentro do callback que carrega dados
-18. Sem loading state? ADICIONE com spinner Tailwind
-
-═══ RESPONSIVO ═══
-19. Layout fixo sem breakpoints? ADICIONE md: e lg: onde necessario
-20. Grid sem responsive? USE grid-cols-1 md:grid-cols-2 lg:grid-cols-4
+═══ CORRECOES OBRIGATORIAS ═══
+1. style={{}} → CONVERTA pra className Tailwind equivalente
+2. Hex hardcoded (#XXXXXX) em className/fill/stroke → var(--accent), var(--sidebar), var(--bg)
+3. Import de arquivo que nao existe → MOVA a definicao pra dentro do arquivo
+4. Import @/components/ui/ que nao existe (dialog, dropdown, etc) → defina inline
+5. export default faltando → ADICIONE ao final
+6. Objeto renderizado no JSX: {obj} onde obj nao e string → {obj.prop} ou {String(obj)}
+7. useEffect sem dependency array → ADICIONE [] ou [deps]
+8. .map() sem key → ADICIONE key prop unica
+9. setLoading(false) separado dos dados → MOVA pra dentro do callback que seta dados
+10. Icone Lucide sem size → ADICIONE size={18}
 
 Retorne APENAS o codigo TSX corrigido. Sem markdown. Sem explicacoes.`;

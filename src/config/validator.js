@@ -104,22 +104,27 @@ function v5_hasResponsive(code) {
   };
 }
 
-// ─── V6: Color System ───────────────────────────────────────────────────────
+// ─── V6: Color System — CSS variables, não hex hardcoded ────────────────────
 function v6_hasColorSystem(code) {
-  const hexMatches = code.match(/#[0-9a-fA-F]{3,8}/g) || [];
-  const uniqueHex = [...new Set(hexMatches)];
-  const hasThemeVar = /\bTHEME\b/.test(code) || /\bCOLORS\b/.test(code) || /\bPALETA\b/.test(code);
-  const passed = uniqueHex.length >= 3 || hasThemeVar;
+  const hasColorVars = /var\(--\w+\)/.test(code);
+  const hasThemeVar = /\bTHEME\s*=/.test(code) || /\bCOLORS\s*=/.test(code) || /\bPALETA\s*=/.test(code);
+  // Hex em className ou fill/stroke é proibido. Hex em dados mockados (chartData, etc) é tolerado.
+  // Checamos hex em atributos de estilo: fill=, stroke=, className contendo #, bg-[#], text-[#]
+  const forbiddenHexPatterns = /(?:fill|stroke|stop-color|className)=["'][^"']*#[0-9a-fA-F]{3,8}|bg-\[#[0-9a-fA-F]{3,8}\]|text-\[#[0-9a-fA-F]{3,8}\]|border-\[#[0-9a-fA-F]{3,8}\]/;
+  const hasForbiddenHex = forbiddenHexPatterns.test(code);
+  const passed = (hasColorVars || hasThemeVar) && !hasForbiddenHex;
 
   return {
     id: "V6",
     name: "Color System",
     passed,
     message: passed
-      ? hasThemeVar
-        ? "Found THEME/COLORS/PALETA variable"
-        : `Found ${uniqueHex.length} unique hex colors`
-      : `Only ${uniqueHex.length} unique hex color(s) found — need at least 3 or a THEME/COLORS variable`,
+      ? hasColorVars
+        ? "CSS variables detected (var(--*))"
+        : "THEME/COLORS/PALETA variable detected"
+      : hasForbiddenHex
+        ? "Hex hardcoded em estilos (use CSS variables: var(--accent), var(--sidebar), etc)"
+        : "Missing CSS variables — use var(--accent), var(--sidebar), var(--bg)",
   };
 }
 

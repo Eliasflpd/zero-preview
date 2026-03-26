@@ -64,28 +64,58 @@ function detectComponents(files) {
   return components;
 }
 
-// ─── NICHE DETECTOR (heuristic) ──────────────────────────────────────────────
+// ─── NICHE DETECTOR (uses canonical niches from niches.js) ───────────────────
+
+// Mapping for legacy/alternative niche names to canonical IDs from niches.js
+const NICHE_ALIAS_MAP = {
+  ecommerce: "retail",
+  shop: "retail",
+  store: "retail",
+  medical: "health",
+  hospital: "health",
+  school: "education",
+  college: "education",
+  gym: "fitness",
+  salon: "beauty",
+  restaurant: "food",
+  lawyer: "law",
+  realtor: "realestate",
+  garage: "automotive",
+  party: "events",
+  handmade: "crafts",
+};
+
+// Keywords per niche — aligned with niches.js canonical IDs
+const NICHE_KEYWORDS = {
+  church:       ["igreja", "celula", "culto", "pastor", "membro", "dizimo", "oracao"],
+  finance:      ["financeiro", "receita", "despesa", "fluxo de caixa", "investimento", "saldo"],
+  retail:       ["produto", "carrinho", "pedido", "estoque", "loja", "compra", "varejo", "pdv"],
+  health:       ["paciente", "consulta", "medico", "clinica", "agendamento", "prontuario", "hospital"],
+  food:         ["cardapio", "restaurante", "pedido", "mesa", "cozinha", "delivery", "lanchonete"],
+  beauty:       ["salao", "beleza", "agendamento", "cabeleir", "maquia", "unha"],
+  fitness:      ["academia", "aluno", "treino", "plano", "frequencia", "personal", "crossfit"],
+  education:    ["aluno", "professor", "turma", "nota", "escola", "curso", "faculdade"],
+  construction: ["obra", "orcamento", "material", "construcao", "projeto", "engenheiro"],
+  creative:     ["portfolio", "projeto", "galeria", "design", "criativo", "agencia", "marketing"],
+  law:          ["advog", "juridic", "processo", "direito", "escritorio"],
+  vet:          ["veterinar", "animal", "vacina", "pet clinic"],
+  languages:    ["idioma", "ingles", "espanhol", "lingua", "fluenc"],
+  petshop:      ["petshop", "pet shop", "racao", "banho e tosa"],
+  pharmacy:     ["farmacia", "drogaria", "medicament", "remedios"],
+  realestate:   ["imobiliaria", "corretor", "aluguel", "imovel"],
+  ministry:     ["ong", "voluntari", "social", "doacao", "ministerio"],
+  automotive:   ["mecanica", "oficina", "automovel", "carro", "motor"],
+  events:       ["buffet", "evento", "festa", "casamento", "aniversario"],
+  crafts:       ["artesanato", "handmade", "atelie", "feito a mao", "croche"],
+};
 
 function detectNiche(files) {
   const allContent = Object.values(files).filter(v => typeof v === "string").join(" ").toLowerCase();
 
-  const nicheKeywords = {
-    church:      ["igreja", "celula", "culto", "pastor", "membro", "dizimo", "oracao"],
-    finance:     ["financeiro", "receita", "despesa", "fluxo de caixa", "investimento", "saldo"],
-    ecommerce:   ["produto", "carrinho", "pedido", "estoque", "loja", "compra"],
-    health:      ["paciente", "consulta", "medico", "clinica", "agendamento", "prontuario"],
-    food:        ["cardapio", "restaurante", "pedido", "mesa", "cozinha", "delivery"],
-    beauty:      ["salao", "beleza", "agendamento", "servico", "cliente", "horario"],
-    fitness:     ["academia", "aluno", "treino", "plano", "frequencia", "personal"],
-    education:   ["aluno", "professor", "turma", "nota", "escola", "curso"],
-    construction:["obra", "orcamento", "material", "construcao", "projeto", "engenheiro"],
-    creative:    ["portfolio", "projeto", "galeria", "design", "criativo", "orcamento"],
-  };
-
   let bestNiche = "generic";
   let bestScore = 0;
 
-  for (const [niche, keywords] of Object.entries(nicheKeywords)) {
+  for (const [niche, keywords] of Object.entries(NICHE_KEYWORDS)) {
     const score = keywords.filter(kw => allContent.includes(kw)).length;
     if (score > bestScore) {
       bestScore = score;
@@ -93,7 +123,8 @@ function detectNiche(files) {
     }
   }
 
-  return bestScore >= 2 ? bestNiche : "generic";
+  const detected = bestScore >= 2 ? bestNiche : "generic";
+  return NICHE_ALIAS_MAP[detected] || detected;
 }
 
 // ─── CONVENTION DETECTOR ─────────────────────────────────────────────────────
