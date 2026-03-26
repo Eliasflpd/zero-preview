@@ -107,6 +107,7 @@ Mapeamentos especiais:
 - ✅ Botão Multi-AI funcional com dropdown 8 providers
 - ✅ Validador de sintaxe TypeScript (syntaxValidator.js) — badge verde funcionando
 - ✅ SYSTEM_PROMPT enxuto — 257 linhas → 80 linhas
+- ✅ Orquestrador Fase 1 (src/lib/orchestrator.js + OrchestratorPanel.jsx) — loop autonomo de agentes
 
 ### Impacto
 Tokens por geração:
