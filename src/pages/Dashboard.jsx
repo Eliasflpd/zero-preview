@@ -9,6 +9,7 @@ import Topbar from "../components/Topbar";
 import ChatArea from "../components/ChatArea";
 import DiffReview from "../components/DiffReview";
 import RewindPanel from "../components/RewindPanel";
+import { analyzeProject, saveKnowledge, loadKnowledge } from "../lib/knowledge";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
@@ -47,6 +48,7 @@ export default function Dashboard({ user, onLogout }) {
   const [showImport, setShowImport] = useState(false);
   const [pendingDiff, setPendingDiff] = useState(null); // { oldFiles, newFiles, prompt, score }
   const [showRewind, setShowRewind] = useState(false);
+  const [knowledge, setKnowledge] = useState(null);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -123,6 +125,8 @@ export default function Dashboard({ user, onLogout }) {
     if (hasFiles) setRunId(`run_load_${Date.now()}`); // trigger WebContainer reload
     setHistory(p.history || []); setError(""); setThinkSteps([]);
     initProject(id, hasFiles ? p.files : null);
+    setKnowledge(loadKnowledge(id));
+    try { localStorage.setItem("zp_active_project", id); } catch {}
   };
 
   const handleUndo = () => {
@@ -219,6 +223,16 @@ export default function Dashboard({ user, onLogout }) {
     setRunId(newRunId);
     setPrompt("");
     pushVersion(files, currentPrompt, score);
+
+    // Auto-analyze and save project knowledge
+    try {
+      const k = analyzeProject(files);
+      if (k) {
+        const pid = activeId || `p_${now}`;
+        saveKnowledge(pid, k);
+        setKnowledge(k);
+      }
+    } catch {}
   };
 
   // Handler quando DiffReview é confirmado
@@ -391,6 +405,7 @@ export default function Dashboard({ user, onLogout }) {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Topbar
           projectName={activeProject?.name}
+          knowledge={knowledge}
           hasPreview={hasPreview}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(s => !s)}

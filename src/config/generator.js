@@ -10,6 +10,7 @@ import { analyzePrompt } from "./architect";
 import { validateCode, getValidationSummary } from "./validator";
 import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from "../lib/cache";
 import { splitComponents } from "./splitter";
+import { knowledgeToContext, loadKnowledge } from "../lib/knowledge";
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -225,8 +226,11 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
   emit(onProgress, STEPS.EDIT, "Modo edicao rapida...");
 
+  // Inject project knowledge context if available
+  const knowledgeCtx = knowledgeToContext(loadKnowledge(localStorage.getItem("zp_active_project") || ""));
+
   // Edit prompt is compact — fits in Groq's context easily
-  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Mantenha tudo que funciona. Aplique apenas a mudanca pedida. Use Tailwind. Sem markdown.`;
+  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`${knowledgeCtx}\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Mantenha tudo que funciona. Aplique apenas a mudanca pedida. Use Tailwind. Sem markdown.`;
 
   // Use non-streaming callClaude — goes through callWithFallback on backend
   // This avoids the Claude streaming empty response issue

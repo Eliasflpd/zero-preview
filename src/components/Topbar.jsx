@@ -1,4 +1,5 @@
 import { C, SYNE, DM, R, EASE } from "../config/theme";
+import KnowledgeBadge from "./KnowledgeBadge";
 
 const Badge = ({ children, color, bg, border }) => (
   <span style={{
@@ -26,7 +27,7 @@ const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, dis
   </button>
 );
 
-export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub }) {
+export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub }) {
   return (
     <div style={{
       height: 48, background: C.surface,
@@ -69,6 +70,7 @@ export default function Topbar({ projectName, hasPreview, sidebarOpen, onToggleS
               display: "inline-block", animation: "pulse 1s ease-in-out infinite",
             }} />
           )}
+          {knowledge && <KnowledgeBadge knowledge={knowledge} />}
         </div>
       </div>
 
