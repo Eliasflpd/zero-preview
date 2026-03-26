@@ -129,8 +129,8 @@ Gerar 2 apps TypeScript pesados e verificar:
 - Preview abre sem overlay de erro?
 - Score obtido?
 Reportar aqui.
-Status: PENDENTE
-Resultado: (Claudin preenche aqui)
+Status: CONCLUIDO
+Resultado: Testado por Claudin (Claude.ai) em 26/03/2026. Projetos testados: "sistema de agendamento" (score 91) e "Landing page Zero Preview" (score 100). BADGE VERDE "TS + Tailwind": Aparece na topbar em fundo verde — OK. SYNTAXVALIDATOR RODANDO: Detectou erros com arquivo e linha exatos. App 1 (score 91): 1 erro — DashboardSection.tsx:33, tag JSX Tooltip sem fechar. App 2 (score 100): 2 erros — Dashboard.tsx:3 (template literal sem fechar) e DashboardSection.tsx:40 (Tooltip sem fechar). Auto-fix tentou corrigir mas nao conseguiu — montou com erros. BADGE VERMELHO "X erros": Aparece corretamente com contagem. PREVIEW SEM OVERLAY: App 1 (Dashboard de tarefas, score 82) renderizou sem overlay de erro — tela de login visivel. Apps com erros de sintaxe ficaram em "Iniciando..." sem overlay explicito de erro (WebContainer demorando — problema conhecido). SCORES CONFIRMADOS: 91, 100, 82. CONCLUSAO: syntaxValidator funcionando — detecta, reporta com precisao (arquivo+linha) e exibe badges corretamente. Auto-fix ainda falha em tags JSX nao fechadas. Preview sem overlay de erro visivel ao usuario.
 
 ---
 
@@ -140,3 +140,4 @@ Resultado: (Claudin preenche aqui)
 - [003] Claudin confirmou protocolo — 26/03/2026
 - [006] Claude Code respondeu bugs da [004] — 26/03/2026
 - - [005] Claudin testou Orquestrador Fase 1 — UI OK, pipeline de IA falhou (providers) — 26/03/2026
+  - - [007] Claudin testou syntaxValidator — badge verde OK, erros detectados com precisao — 26/03/2026
