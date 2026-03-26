@@ -1,4 +1,5 @@
 import { WebContainer } from "@webcontainer/api";
+import { validateSyntax, autoFix, formatSyntaxErrors } from "./syntaxValidator";
 
 const VITE_CONFIG_TS = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -60,6 +61,9 @@ const WCManager = {
     return tree;
   },
 
+  // Last validation result — accessible from outside
+  lastValidation: null,
+
   async run(files, onLog, onUrl) {
     // Prevent concurrent runs
     if (this._running) {
@@ -77,6 +81,38 @@ const WCManager = {
 
     await this.killDev();
     this._running = true; // reset after killDev
+
+    // ── SYNTAX VALIDATION ─────────────────────────────────────────────────
+    onLog("Validando sintaxe...", "info");
+    const validation = validateSyntax(files);
+    this.lastValidation = validation;
+
+    if (!validation.valid) {
+      const errorSummary = formatSyntaxErrors(validation.errors);
+      onLog(`Erros de sintaxe detectados (${validation.errors.length}):\n${errorSummary}`, "warn");
+
+      // Tenta auto-fix
+      onLog("Tentando correcao automatica...", "info");
+      try {
+        const fixResult = await autoFix(files, validation.errors);
+        if (fixResult.fixed) {
+          files = fixResult.files;
+          const recheck = validateSyntax(files);
+          this.lastValidation = recheck;
+          onLog(`Corrigidos ${fixResult.fixedCount} arquivo(s)!`, "success");
+          if (!recheck.valid) {
+            onLog(`Ainda restam ${recheck.errors.length} erro(s) — montando mesmo assim`, "warn");
+          }
+        } else {
+          onLog("Auto-fix nao conseguiu corrigir — montando com erros", "warn");
+        }
+      } catch {
+        onLog("Auto-fix indisponivel — montando com erros", "warn");
+      }
+    } else {
+      onLog("Sintaxe OK!", "success");
+    }
+
     onLog("Montando arquivos...", "info");
 
     const tree = this.buildTree(files);

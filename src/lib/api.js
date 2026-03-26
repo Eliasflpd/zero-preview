@@ -2,6 +2,8 @@
 // Todas as chamadas de IA passam pelo backend Railway via SSE streaming.
 // Nenhuma API key é exposta no cliente.
 
+import { validateSyntax } from "./syntaxValidator";
+
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 
 function getLicenseKey() {
@@ -79,6 +81,16 @@ export async function callClaudeStream(systemPrompt, userPrompt, maxTokens = 120
   }
 
   if (!fullText) throw new Error("Resposta vazia do Claude.");
+
+  // Post-stream syntax check (early warning — real fix happens in wcManager)
+  try {
+    const syntaxCheck = validateSyntax({ "streamed.tsx": fullText });
+    if (!syntaxCheck.valid) {
+      console.warn(`[SyntaxValidator] ${syntaxCheck.errors.length} erro(s) detectados no stream:`,
+        syntaxCheck.errors.map(e => `L${e.line}: ${e.message}`));
+    }
+  } catch {}
+
   return fullText;
 }
 

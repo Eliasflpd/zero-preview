@@ -10,6 +10,7 @@ import ChatArea from "../components/ChatArea";
 import DiffReview from "../components/DiffReview";
 import RewindPanel from "../components/RewindPanel";
 import { analyzeProject, saveKnowledge, loadKnowledge } from "../lib/knowledge";
+import WCManager from "../lib/wcManager";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
@@ -49,9 +50,21 @@ export default function Dashboard({ user, onLogout }) {
   const [pendingDiff, setPendingDiff] = useState(null); // { oldFiles, newFiles, prompt, score }
   const [showRewind, setShowRewind] = useState(false);
   const [knowledge, setKnowledge] = useState(null);
+  const [syntaxStatus, setSyntaxStatus] = useState(null); // { valid, errors }
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
+
+  // Update syntax status after each run
+  useEffect(() => {
+    if (!runId) return;
+    // Poll briefly for validation result (WCManager sets it during run)
+    const timer = setTimeout(() => {
+      const v = WCManager.lastValidation;
+      if (v) setSyntaxStatus(v);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [runId]);
 
   // Auto-close sidebar on mobile resize
   useEffect(() => {
@@ -420,6 +433,7 @@ export default function Dashboard({ user, onLogout }) {
             const p = promptRef.current || prompt;
             if (p.trim()) handleAgentMode(p);
           }}
+          syntaxStatus={syntaxStatus}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>

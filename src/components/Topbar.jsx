@@ -27,7 +27,7 @@ const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, dis
   </button>
 );
 
-export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub }) {
+export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus }) {
   return (
     <div style={{
       height: 48, background: C.surface,
@@ -123,6 +123,16 @@ export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen
           </ToolBtn>
         )}
 
+        {hasPreview && syntaxStatus && (
+          syntaxStatus.valid
+            ? <Badge color={C.success} bg={C.successDim} border="rgba(52,211,153,0.15)">Sintaxe OK</Badge>
+            : <Badge
+                color="#F87171" bg="rgba(248,113,113,0.08)" border="rgba(248,113,113,0.2)"
+                title={syntaxStatus.errors.map(e => `${e.file}:${e.line} ${e.message}`).join("\n")}
+              >
+                {syntaxStatus.errors.length} erro{syntaxStatus.errors.length > 1 ? "s" : ""}
+              </Badge>
+        )}
         {hasPreview && <Badge color={C.success} bg={C.successDim} border="rgba(52,211,153,0.15)">TS + Tailwind</Badge>}
         <Badge color={C.info} bg={C.infoDim} border="rgba(96,165,250,0.15)">Multi-AI</Badge>
       </div>
