@@ -188,6 +188,18 @@ const SELF_CLOSING_TAGS = new Set([
   "base", "col", "embed", "source", "track", "wbr",
 ]);
 
+// Tags Shadcn/Radix complexas que frequentemente ficam sem fechar
+// O auto-fix local trata essas antes de cair no auto-fix via API
+const COMPLEX_SHADCN_TAGS = new Set([
+  "Tooltip", "TooltipProvider", "TooltipContent", "TooltipTrigger",
+  "PopoverContent", "Popover", "PopoverTrigger",
+  "DialogContent", "Dialog", "DialogTrigger",
+  "SheetContent", "Sheet", "SheetTrigger",
+  "DropdownMenuContent", "DropdownMenu", "DropdownMenuTrigger",
+  "SelectContent", "Select", "SelectTrigger",
+  "AccordionContent", "Accordion", "AccordionItem",
+]);
+
 // Arquivos que podem conter JSX (nao .ts puro)
 const JSX_EXTENSIONS = /\.(tsx|jsx|js)$/;
 
@@ -339,6 +351,78 @@ export function validateSyntax(files) {
   };
 }
 
+// ─── LOCAL FIX — Tags Shadcn/Radix complexas (sem API) ──────────────────────
+
+/**
+ * Fix deterministico local para tags complexas nao fechadas.
+ * Roda ANTES do auto-fix via API — zero tokens, <1ms.
+ * Retorna o codigo corrigido ou o original se nao encontrou nada.
+ */
+function fixUnclosedComplexTags(code) {
+  let result = code;
+
+  for (const tag of COMPLEX_SHADCN_TAGS) {
+    // Contar abertas vs fechadas
+    const openPattern = new RegExp(`<${tag}\\b[^>]*(?<!\\/)>`, "g");
+    const closePattern = new RegExp(`<\\/${tag}\\s*>`, "g");
+    const selfClosePattern = new RegExp(`<${tag}\\b[^>]*\\/>`, "g");
+
+    const opens = (result.match(openPattern) || []).length;
+    const closes = (result.match(closePattern) || []).length;
+    const diff = opens - closes;
+
+    if (diff <= 0) continue;
+
+    // Para cada tag aberta sem fechar, decidir: self-close ou adicionar closing tag
+    // Regex para encontrar tags abertas com posicao
+    const findOpen = new RegExp(`(<${tag}\\b[^>]*(?<!\\/)>)`, "g");
+    let m;
+    let openPositions = [];
+
+    while ((m = findOpen.exec(result)) !== null) {
+      openPositions.push({ index: m.index, length: m[0].length, match: m[0] });
+    }
+
+    // Tratar as ultimas `diff` tags abertas (as que ficaram sem fechar)
+    const toFix = openPositions.slice(-diff);
+
+    // Processar de tras pra frente para nao invalidar indices
+    for (let i = toFix.length - 1; i >= 0; i--) {
+      const pos = toFix[i];
+      const afterTag = result.slice(pos.index + pos.length);
+
+      // Verificar se tem conteudo real entre abertura e proxima tag/fechamento
+      const nextTagMatch = afterTag.match(/^\s*(<[A-Za-z]|<\/|{|$)/);
+      const hasChildren = nextTagMatch && !nextTagMatch[0].trim().startsWith("</") && nextTagMatch[0].trim() !== "";
+
+      if (!hasChildren || /^\s*<\//.test(afterTag) || /^\s*$/.test(afterTag.split("\n")[0])) {
+        // Sem children visivel — converter para self-closing
+        const selfClose = pos.match.replace(/>$/, " />");
+        result = result.slice(0, pos.index) + selfClose + result.slice(pos.index + pos.length);
+      } else {
+        // Tem children — adicionar closing tag no final da linha ou antes da proxima tag de mesmo nivel
+        const insertPos = pos.index + pos.length;
+        // Encontrar o proximo fechamento de tag pai ou final do bloco
+        const restCode = result.slice(insertPos);
+        const nextClose = restCode.search(/<\/[A-Z]/);
+
+        if (nextClose >= 0) {
+          const insertAt = insertPos + nextClose;
+          result = result.slice(0, insertAt) + `</${tag}>` + result.slice(insertAt);
+        } else {
+          // Fallback: adicionar closing tag no final do arquivo antes do ultimo }
+          const lastBrace = result.lastIndexOf("}");
+          if (lastBrace >= 0) {
+            result = result.slice(0, lastBrace) + `</${tag}>\n` + result.slice(lastBrace);
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 // ─── AUTO-FIX VIA API ───────────────────────────────────────────────────────
 
 const AUTOFIX_SYSTEM = `Voce e um corretor de sintaxe JSX/TypeScript. Receba codigo com erros e retorne APENAS o codigo corrigido. Sem explicacao, sem markdown, sem \`\`\`. Comece direto com imports.`;
@@ -360,8 +444,35 @@ export async function autoFix(files, errors) {
   const fixedFiles = { ...files };
   let fixedCount = 0;
 
+  // Fase 1: Fix local deterministico para tags Shadcn/Radix complexas (zero tokens)
   for (const [fileName, fileErrors] of Object.entries(errorsByFile)) {
-    const code = files[fileName];
+    const hasUnclosedJSX = fileErrors.some(e => e.type === "unclosed_jsx");
+    if (!hasUnclosedJSX) continue;
+
+    const code = fixedFiles[fileName];
+    if (!code) continue;
+
+    const localFixed = fixUnclosedComplexTags(code);
+    if (localFixed !== code) {
+      fixedFiles[fileName] = localFixed;
+      // Re-validate after local fix
+      const recheck = validateSyntax({ [fileName]: localFixed });
+      const remaining = recheck.errors.filter(e => e.file === fileName);
+      if (remaining.length < fileErrors.length) {
+        fixedCount++;
+        // Remove fixed errors from errorsByFile so API fix skips them
+        errorsByFile[fileName] = remaining;
+        console.log(`[Zero] Local fix: ${fileName} — tags Shadcn corrigidas (${fileErrors.length - remaining.length} erros resolvidos)`);
+      }
+      if (remaining.length === 0) {
+        delete errorsByFile[fileName];
+      }
+    }
+  }
+
+  // Fase 2: Fix via API para erros restantes
+  for (const [fileName, fileErrors] of Object.entries(errorsByFile)) {
+    const code = fixedFiles[fileName];
     if (!code) continue;
 
     const errorList = fileErrors

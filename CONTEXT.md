@@ -108,6 +108,7 @@ Mapeamentos especiais:
 - ✅ Validador de sintaxe TypeScript (syntaxValidator.js) — badge verde funcionando
 - ✅ SYSTEM_PROMPT enxuto — 257 linhas → 80 linhas
 - ✅ Orquestrador Fase 1 (src/lib/orchestrator.js + OrchestratorPanel.jsx) — loop autonomo de agentes
+- ✅ Auto-fix de Tooltip e tags Shadcn complexas no syntaxValidator.js — fix local deterministico (zero tokens)
 
 ### Impacto
 Tokens por geração:
