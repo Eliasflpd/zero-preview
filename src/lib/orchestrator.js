@@ -23,28 +23,28 @@ const AGENTES = {
 };
 
 // Prompt para planejar tarefas
-const PLANNER_PROMPT = `Voce e um orquestrador de agentes de desenvolvimento.
-Receba um objetivo e divida em tarefas concretas e executaveis.
+const PLANNER_PROMPT = `Voce e um orquestrador de agentes.
+Sua UNICA funcao e retornar um JSON valido — nada mais.
 
-Agentes disponiveis:
-- executor: gera codigo React+TypeScript
-- critico: valida codigo e retorna score 0-100
-- reviewer: corrige problemas no codigo
+REGRAS ABSOLUTAS:
+- Retorne APENAS JSON puro
+- Sem texto antes ou depois
+- Sem markdown, sem backticks, sem explicacoes
+- O JSON deve ser parseavel por JSON.parse()
 
-Retorne APENAS JSON valido neste formato:
-{
-  "objetivo": "string",
-  "tarefas": [
-    {
-      "id": 1,
-      "agente": "executor|critico|reviewer",
-      "instrucao": "instrucao clara e especifica",
-      "dependeDe": null ou [ids das tarefas anteriores]
-    }
-  ]
-}
+Agentes disponiveis: executor, critico, reviewer
 
-Maximo 5 tarefas. Seja especifico e direto.`;
+Formato EXATO que deve retornar:
+{"objetivo":"descricao","tarefas":[{"id":1,"agente":"executor","instrucao":"o que fazer","dependeDe":null}]}
+
+Regras das tarefas:
+- Maximo 5 tarefas
+- agente deve ser: "executor", "critico" ou "reviewer"
+- dependeDe: null ou array de ids (ex: [1])
+- instrucao: frase clara e especifica
+
+EXEMPLO de resposta correta:
+{"objetivo":"app de agenda","tarefas":[{"id":1,"agente":"executor","instrucao":"Gerar Dashboard.tsx com sidebar, tabela de pacientes e grafico de consultas","dependeDe":null},{"id":2,"agente":"critico","instrucao":"Validar codigo gerado","dependeDe":[1]},{"id":3,"agente":"reviewer","instrucao":"Corrigir problemas encontrados pelo critico","dependeDe":[2]}]}`;
 
 class Orchestrator {
   constructor(onProgress) {
@@ -65,9 +65,19 @@ class Orchestrator {
         1000
       );
 
-      const clean = resposta.replace(/```json|```/g, '').trim();
+      // Extrair JSON da resposta — robusto contra markdown/texto extra
+      let clean = resposta.replace(/```json|```/g, '').trim();
+      // Se tem texto antes do {, cortar
+      const jsonStart = clean.indexOf('{');
+      const jsonEnd = clean.lastIndexOf('}');
+      if (jsonStart >= 0 && jsonEnd > jsonStart) {
+        clean = clean.slice(jsonStart, jsonEnd + 1);
+      }
       const plano = JSON.parse(clean);
-      this.tarefas = plano.tarefas;
+      if (!plano.tarefas || !Array.isArray(plano.tarefas) || plano.tarefas.length === 0) {
+        throw new Error('JSON sem tarefas validas');
+      }
+      this.tarefas = plano.tarefas.slice(0, 5); // Max 5
 
       this.onProgress({
         stage: 'planejado',
