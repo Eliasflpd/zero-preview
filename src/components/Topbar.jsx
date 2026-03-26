@@ -4,13 +4,16 @@ import KnowledgeBadge from "./KnowledgeBadge";
 
 const PROVIDERS = [
   { id: "auto", label: "Auto (fallback)", desc: "Tenta todos em ordem", color: C.info },
-  { id: "claude", label: "Claude", desc: "Sonnet 3.5 — melhor qualidade", color: "#D97706" },
+  { id: "claude", label: "Claude", desc: "Sonnet 4 — melhor qualidade", color: "#D97706" },
   { id: "deepseek", label: "DeepSeek", desc: "DeepSeek Chat — rapido", color: "#10B981" },
   { id: "gemini", label: "Gemini", desc: "Flash 2.0 — gratis", color: "#3B82F6" },
   { id: "groq", label: "Groq", desc: "Llama 3.3 70B — ultra rapido", color: "#8B5CF6" },
   { id: "cerebras", label: "Cerebras", desc: "Llama 3.3 70B", color: "#EC4899" },
   { id: "sambanova", label: "SambaNova", desc: "Llama 3.3 70B", color: "#F59E0B" },
   { id: "mistral", label: "Mistral", desc: "Mistral Small", color: "#EF4444" },
+  { id: "huggingface", label: "HuggingFace", desc: "Qwen 2.5 Coder 32B", color: "#FFD21E" },
+  { id: "scaleway", label: "Scaleway", desc: "Llama 3.3 70B", color: "#4F0599" },
+  { id: "cloudflare", label: "Cloudflare", desc: "Llama 3.3 70B Workers AI", color: "#F6821F" },
 ];
 
 const Badge = ({ children, color, bg, border, onClick, style: extraStyle }) => (
