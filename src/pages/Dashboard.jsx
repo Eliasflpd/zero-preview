@@ -547,24 +547,21 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* Escritorio side panel */}
+      {/* Escritorio side panel — WhatsApp style */}
       {escritorioOpen && (
         <div style={{
-          position: "fixed", right: 0, top: 0, height: "100vh", width: 360,
-          background: C.surface, borderLeft: `1px solid ${C.border}`,
+          position: "fixed", right: 0, top: 0, height: "100vh", width: 380,
           zIndex: 200, display: "flex", flexDirection: "column",
-          boxShadow: "-4px 0 24px rgba(0,0,0,0.3)",
+          boxShadow: "-4px 0 24px rgba(0,0,0,0.4)",
+          overflow: "hidden", borderRadius: "0",
         }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "10px 14px", borderBottom: `1px solid ${C.border}`,
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: DM }}>{"\uD83C\uDFE2"} Escritorio</span>
-            <button onClick={() => setEscritorioOpen(false)} style={{
-              background: "none", border: "none", color: C.textDim, cursor: "pointer",
-              fontSize: 16, padding: 4, lineHeight: 1,
-            }}>{"\u2715"}</button>
-          </div>
+          {/* Close button floating */}
+          <button onClick={() => setEscritorioOpen(false)} style={{
+            position: "absolute", top: 10, right: 10, zIndex: 10,
+            width: 28, height: 28, borderRadius: "50%", border: "none",
+            background: "rgba(0,0,0,0.3)", color: "#fff", fontSize: 14,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{"\u2715"}</button>
           <div style={{ flex: 1, overflow: "hidden" }}>
             <Suspense fallback={null}>
               <Escritorio />

@@ -24,6 +24,27 @@ Contexto do projeto:
 Voce esta no Escritorio — canal de comunicacao entre Elias (dono), Claude.ai (voce), Code (Claude Code CLI) e Claudin (QA tester).
 Responda de forma direta e tecnica sobre o projeto. Maximo 3 paragrafos. Em portugues.`;
 
+// WhatsApp colors
+const WA = {
+  header: "#075E54",
+  headerLight: "#128C7E",
+  bg: "#0B141A",
+  bgPattern: "#0A1014",
+  balloonLeft: "#202C33",
+  balloonRight: "#005C4B",
+  balloonSystem: "#182229",
+  inputBg: "#2A3942",
+  inputBorder: "#3B4A54",
+  text: "#E9EDEF",
+  textDim: "#8696A0",
+  textTime: "#8696A0",
+  green: "#25D366",
+  check: "#53BDEB",
+  tabActive: "#00A884",
+  tabBg: "#111B21",
+  unread: "#25D366",
+};
+
 const AVATARS = {
   "Elias":     { cor: "#3B82F6", letra: "E" },
   "Claude.ai": { cor: "#F59E0B", letra: "C" },
@@ -32,9 +53,7 @@ const AVATARS = {
   "Sistema":   { cor: "#6B7280", letra: "S" },
 };
 
-// Detectar mencoes no texto
 function detectarMencoes(texto) {
-  const lower = texto.toLowerCase();
   return {
     claude: /@claude\b/i.test(texto),
     code: /@code\b/i.test(texto),
@@ -43,7 +62,6 @@ function detectarMencoes(texto) {
   };
 }
 
-// Limpar mencao do texto para enviar ao Claude
 function limparMencao(texto) {
   return texto.replace(/@(claude|code|claudin|todos)\b/gi, "").trim();
 }
@@ -60,82 +78,137 @@ function saveLocal(msgs) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(msgs)); } catch {}
 }
 
-function Avatar({ remetente, size = 28 }) {
-  const a = AVATARS[remetente] || { cor: C.textDim, letra: "?" };
+function Avatar({ remetente, size = 32 }) {
+  const a = AVATARS[remetente] || { cor: WA.textDim, letra: "?" };
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", background: a.cor,
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.36, fontWeight: 700, color: "#fff", fontFamily: DM,
-      flexShrink: 0,
+      fontSize: size * 0.35, fontWeight: 700, color: "#fff",
+      flexShrink: 0, fontFamily: "system-ui, sans-serif",
     }}>
       {a.letra}
     </div>
   );
 }
 
-// Renderizar texto com mencoes destacadas
 function TextoComMencoes({ texto }) {
   const parts = texto.split(/(@(?:claude|code|claudin|todos))/gi);
   return (
     <span>
       {parts.map((part, i) => {
-        if (/^@claude$/i.test(part)) return <span key={i} style={{ color: "#F59E0B", fontWeight: 700 }}>{part}</span>;
-        if (/^@code$/i.test(part)) return <span key={i} style={{ color: "#22C55E", fontWeight: 700 }}>{part}</span>;
-        if (/^@claudin$/i.test(part)) return <span key={i} style={{ color: "#8B5CF6", fontWeight: 700 }}>{part}</span>;
-        if (/^@todos$/i.test(part)) return <span key={i} style={{ color: "#EF4444", fontWeight: 700 }}>{part}</span>;
+        if (/^@claude$/i.test(part)) return <span key={i} style={{ color: "#F59E0B", fontWeight: 600 }}>{part}</span>;
+        if (/^@code$/i.test(part)) return <span key={i} style={{ color: "#25D366", fontWeight: 600 }}>{part}</span>;
+        if (/^@claudin$/i.test(part)) return <span key={i} style={{ color: "#A78BFA", fontWeight: 600 }}>{part}</span>;
+        if (/^@todos$/i.test(part)) return <span key={i} style={{ color: "#F87171", fontWeight: 600 }}>{part}</span>;
         return <span key={i}>{part}</span>;
       })}
     </span>
   );
 }
 
-function Mensagem({ msg, onEnviarParaClaude }) {
+function Balao({ msg, onEnviarParaClaude }) {
+  const isElias = msg.de === "Elias";
+  const isSistema = msg.de === "Sistema";
   const time = new Date(msg.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const deCor = AVATARS[msg.de]?.cor || C.text;
-  const paraCor = msg.para ? (AVATARS[msg.para]?.cor || C.textDim) : null;
+  const cor = AVATARS[msg.de]?.cor || WA.textDim;
   const [hovered, setHovered] = useState(false);
+
+  if (isSistema) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
+        <div style={{
+          background: WA.balloonSystem, borderRadius: 8, padding: "4px 12px",
+          fontSize: 11, color: WA.textDim, maxWidth: "85%", textAlign: "center",
+        }}>
+          {msg.texto}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      style={{ display: "flex", gap: 8, padding: "6px 0", position: "relative" }}
+      style={{
+        display: "flex", justifyContent: isElias ? "flex-end" : "flex-start",
+        padding: "2px 0", gap: 6, alignItems: "flex-end",
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Avatar remetente={msg.de} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: deCor, fontFamily: DM }}>{msg.de}</span>
-          {msg.para && (
-            <>
-              <span style={{ fontSize: 9, color: C.textDim }}>{"\u2192"}</span>
-              <span style={{
-                fontSize: 10, fontWeight: 600, color: paraCor, fontFamily: DM,
-                background: `${paraCor}15`, padding: "1px 6px", borderRadius: R.full,
-              }}>{msg.para}</span>
-            </>
-          )}
-          <span style={{ fontSize: 9, color: C.textDim }}>{time}</span>
-        </div>
-        <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>
+      {!isElias && <Avatar remetente={msg.de} size={28} />}
+      <div style={{
+        position: "relative",
+        background: isElias ? WA.balloonRight : WA.balloonLeft,
+        borderRadius: isElias ? "8px 0 8px 8px" : "0 8px 8px 8px",
+        padding: "6px 10px 18px 10px", maxWidth: "78%", minWidth: 80,
+      }}>
+        {!isElias && (
+          <div style={{ fontSize: 11, fontWeight: 600, color: cor, marginBottom: 2 }}>
+            {msg.de}
+            {msg.para && <span style={{ color: WA.textDim, fontWeight: 400 }}> {"\u2192"} {msg.para}</span>}
+          </div>
+        )}
+        <div style={{ fontSize: 13, color: WA.text, lineHeight: 1.45, wordBreak: "break-word" }}>
           <TextoComMencoes texto={msg.texto} />
         </div>
+        <div style={{
+          position: "absolute", bottom: 4, right: 8,
+          display: "flex", alignItems: "center", gap: 3,
+        }}>
+          <span style={{ fontSize: 10, color: WA.textTime }}>{time}</span>
+          {isElias && <span style={{ fontSize: 11, color: WA.check }}>{"\u2713\u2713"}</span>}
+        </div>
+
+        {hovered && !isSistema && (
+          <button
+            onClick={() => onEnviarParaClaude?.(msg.texto)}
+            style={{
+              position: "absolute", top: -8, right: isElias ? "auto" : -8, left: isElias ? -8 : "auto",
+              width: 24, height: 24, borderRadius: "50%", border: "none",
+              background: "#F59E0B", color: "#fff", fontSize: 11,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+            }}
+            title="Perguntar ao Claude.ai"
+          >{"\uD83E\uDD16"}</button>
+        )}
       </div>
-      {hovered && msg.de !== "Sistema" && (
-        <button
-          onClick={() => onEnviarParaClaude?.(msg.texto)}
-          title="Perguntar ao Claude.ai sobre esta mensagem"
-          style={{
-            position: "absolute", right: 0, top: 4,
-            padding: "3px 8px", borderRadius: R.sm, border: "none",
-            background: "#F59E0B", color: "#fff",
-            fontSize: 9, fontWeight: 700, fontFamily: DM,
-            cursor: "pointer",
-          }}
-        >
-          {"\uD83E\uDD16"} Claude.ai
-        </button>
-      )}
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "flex-end", padding: "2px 0" }}>
+      <Avatar remetente="Claude.ai" size={28} />
+      <div style={{
+        background: WA.balloonLeft, borderRadius: "0 8px 8px 8px",
+        padding: "10px 14px", display: "flex", gap: 4, alignItems: "center",
+      }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{
+            width: 7, height: 7, borderRadius: "50%", background: WA.textDim,
+            animation: `typingBounce 1.4s infinite ${i * 0.2}s`,
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DateSeparator({ date }) {
+  const d = new Date(date);
+  const hoje = new Date();
+  const label = d.toDateString() === hoje.toDateString() ? "Hoje"
+    : d.toDateString() === new Date(hoje.getTime() - 86400000).toDateString() ? "Ontem"
+    : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return (
+    <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+      <span style={{
+        background: WA.balloonSystem, borderRadius: 8, padding: "3px 12px",
+        fontSize: 11, color: WA.textDim,
+      }}>{label}</span>
     </div>
   );
 }
@@ -146,11 +219,10 @@ export default function Escritorio() {
   const [input, setInput] = useState("");
   const [unread, setUnread] = useState({});
   const scrollRef = useRef(null);
-
-  // Claude streaming state
   const [claudeDigitando, setClaudeDigitando] = useState(false);
   const [claudeResposta, setClaudeResposta] = useState("");
   const chatInputRef = useRef(null);
+  const [showAttach, setShowAttach] = useState(false);
 
   const msgs = mensagens[canal] || [];
 
@@ -158,9 +230,7 @@ export default function Escritorio() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [msgs.length, canal, claudeDigitando]);
 
-  useEffect(() => {
-    setUnread(prev => ({ ...prev, [canal]: 0 }));
-  }, [canal, msgs.length]);
+  useEffect(() => { setUnread(prev => ({ ...prev, [canal]: 0 })); }, [canal, msgs.length]);
 
   const adicionarMensagem = useCallback((de, texto, canalDest = "geral", para = null) => {
     const nova = { de, texto, at: Date.now(), para };
@@ -182,22 +252,16 @@ export default function Escritorio() {
     }
   }, [canal]);
 
-  // Chamar Claude via API e postar resposta no canal
-  // Montar contexto do historico de todos os canais para o #claude
   const montarContexto = useCallback(() => {
     const todas = [];
     for (const c of ["geral", "code", "qa"]) {
-      const msgs = mensagens[c] || [];
-      for (const m of msgs.slice(-MAX_CONTEXTO_MSGS)) {
-        todas.push({ ...m, canal: c });
-      }
+      const ms = mensagens[c] || [];
+      for (const m of ms.slice(-MAX_CONTEXTO_MSGS)) todas.push({ ...m, canal: c });
     }
-    // Ordenar por timestamp
     todas.sort((a, b) => a.at - b.at);
-    // Pegar ultimas MAX_CONTEXTO_MSGS
     const recentes = todas.slice(-MAX_CONTEXTO_MSGS);
     if (recentes.length === 0) return "";
-    return recentes.map(m => `[#${m.canal}] ${m.de}${m.para ? ` → ${m.para}` : ""}: ${m.texto}`).join("\n");
+    return recentes.map(m => `[#${m.canal}] ${m.de}${m.para ? ` > ${m.para}` : ""}: ${m.texto}`).join("\n");
   }, [mensagens]);
 
   const chamarClaude = useCallback(async (prompt, canalDest) => {
@@ -206,34 +270,16 @@ export default function Escritorio() {
     setEscritorioMode(true);
     let fullText = "";
     try {
-      await callClaudeStream(
-        ESCRITORIO_SYSTEM,
-        prompt,
-        2000,
-        (chunk) => {
-          fullText += chunk;
-          setClaudeResposta(fullText);
-        }
-      );
-      // Postar resposta completa no canal
-      if (fullText && fullText.length > 5) {
-        adicionarMensagem("Claude.ai", fullText, canalDest);
-      }
-    } catch (err) {
-      // Fallback non-streaming
+      await callClaudeStream(ESCRITORIO_SYSTEM, prompt, 2000, (chunk) => {
+        fullText += chunk;
+        setClaudeResposta(fullText);
+      });
+      if (fullText && fullText.length > 5) adicionarMensagem("Claude.ai", fullText, canalDest);
+    } catch {
       try {
-        const resposta = await callClaude(
-          ESCRITORIO_SYSTEM,
-          prompt,
-          2000
-        );
-        if (resposta && resposta.length > 5) {
-          setClaudeResposta(resposta);
-          adicionarMensagem("Claude.ai", resposta, canalDest);
-        }
-      } catch (err2) {
-        adicionarMensagem("Sistema", `Erro ao chamar Claude: ${err2.message}`, canalDest);
-      }
+        const resp = await callClaude(ESCRITORIO_SYSTEM, prompt, 2000);
+        if (resp && resp.length > 5) { setClaudeResposta(resp); adicionarMensagem("Claude.ai", resp, canalDest); }
+      } catch (e2) { adicionarMensagem("Sistema", `Erro: ${e2.message}`, canalDest); }
     } finally {
       setEscritorioMode(false);
       setClaudeDigitando(false);
@@ -241,171 +287,144 @@ export default function Escritorio() {
     }
   }, [adicionarMensagem]);
 
-  // Acionar Code: tenta claude-agent, fallback clipboard
   const acionarCode = useCallback(async (prompt) => {
     adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias");
     navigator.clipboard?.writeText(prompt).catch(() => {});
     try {
-      const result = await callClaudeAgent(prompt, {}, (status) => {
-        adicionarMensagem("Code", `Agent: ${status}`, canal);
-      });
+      const result = await callClaudeAgent(prompt, {}, (s) => adicionarMensagem("Code", `Agent: ${s}`, canal));
       if (result?.files) {
-        const fileCount = Object.keys(result.files).length;
-        adicionarMensagem("Code", `Tarefa concluida! ${fileCount} arquivo(s) gerado(s) em ${result.iterations} iteracoes (${result.tokens} tokens).`, canal, "Elias");
+        const n = Object.keys(result.files).length;
+        adicionarMensagem("Code", `Concluido! ${n} arquivo(s), ${result.iterations} iteracoes, ${result.tokens} tokens.`, canal, "Elias");
       }
-    } catch (err) {
-      adicionarMensagem("Code", `Agent indisponivel. Cole no terminal: "${prompt.slice(0, 100)}..."`, canal, "Elias");
-    }
+    } catch { adicionarMensagem("Code", `Agent indisponivel. Cole no terminal.`, canal, "Elias"); }
   }, [canal, adicionarMensagem]);
 
-  // Acionar Claudin: chama /escritorio/testar no backend
   const acionarClaudin = useCallback(async (prompt) => {
     adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias");
     const key = getLicenseKey();
-    if (!key) {
-      adicionarMensagem("Claudin", "Sem licenca — teste manual necessario.", canal, "Elias");
-      return;
-    }
+    if (!key) { adicionarMensagem("Claudin", "Sem licenca.", canal, "Elias"); return; }
     try {
       const res = await fetch(`${API_BASE}/escritorio/testar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-license-key": key },
+        method: "POST", headers: { "Content-Type": "application/json", "x-license-key": key },
         body: JSON.stringify({ tarefa: prompt, canal }),
       });
-      if (!res.ok) throw new Error(`Erro ${res.status}`);
-      const data = await res.json();
-      const erros = (data.erros || []).length > 0 ? `\nErros: ${data.erros.join(", ")}` : "";
-      adicionarMensagem("Claudin", `Teste concluido! Score: ${data.score}/100 | ${data.lineCount} linhas | Provider: ${data.provider}${erros}`, canal, "Elias");
-    } catch (err) {
-      adicionarMensagem("Claudin", `Teste falhou: ${err.message}. Testar manualmente.`, canal, "Elias");
-    }
+      if (!res.ok) throw new Error(`${res.status}`);
+      const d = await res.json();
+      const erros = (d.erros || []).length > 0 ? ` | Erros: ${d.erros.join(", ")}` : "";
+      adicionarMensagem("Claudin", `Score: ${d.score}/100 | ${d.lineCount} linhas | ${d.provider}${erros}`, canal, "Elias");
+    } catch (e) { adicionarMensagem("Claudin", `Falhou: ${e.message}`, canal, "Elias"); }
   }, [canal, adicionarMensagem]);
 
-  // Enviar mensagem com deteccao de mencoes
-  // SEGURANCA: esta funcao so e chamada pelo input do Elias.
-  // @Code e @Claudin so acionam aqui — nunca pela API publica.
   const enviar = useCallback(() => {
     const texto = input.trim();
     if (!texto) return;
-
-    // Postar como Elias (unico remetente autorizado a acionar agentes)
     adicionarMensagem("Elias", texto, canal);
     setInput("");
-
-    // Canal #claude: SEMPRE chama Claude com historico completo
     if (canal === "claude") {
-      const contexto = montarContexto();
-      const promptCompleto = contexto
-        ? `Historico recente do Escritorio:\n${contexto}\n\nElias diz: ${texto}`
-        : texto;
-      chamarClaude(promptCompleto, "claude");
+      const ctx = montarContexto();
+      chamarClaude(ctx ? `Historico:\n${ctx}\n\nElias: ${texto}` : texto, "claude");
       return;
     }
+    const m = detectarMencoes(texto);
+    const p = limparMencao(texto);
+    if (m.todos) { chamarClaude(p, canal); acionarCode(p); acionarClaudin(p); return; }
+    if (m.claude) chamarClaude(p, canal);
+    if (m.code) acionarCode(p);
+    if (m.claudin) acionarClaudin(p);
+  }, [input, canal, adicionarMensagem, chamarClaude, montarContexto, acionarCode, acionarClaudin]);
 
-    const mencoes = detectarMencoes(texto);
-    const prompt = limparMencao(texto);
+  const preencherChat = (texto) => { setInput(`@Claude ${texto}`); chatInputRef.current?.focus(); };
 
-    if (mencoes.todos) {
-      chamarClaude(prompt, canal);
-      acionarCode(prompt);
-      acionarClaudin(prompt);
-      return;
-    }
-
-    if (mencoes.claude) {
-      chamarClaude(prompt, canal);
-    }
-
-    if (mencoes.code) {
-      acionarCode(prompt);
-    }
-
-    if (mencoes.claudin) {
-      acionarClaudin(prompt);
-    }
-  }, [input, canal, adicionarMensagem, chamarClaude, montarContexto]);
-
-  // Preencher input com mensagem + @Claude
-  const preencherChat = (texto) => {
-    setInput(`@Claude ${texto}`);
-    chatInputRef.current?.focus();
-  };
-
-  // Polling backend
+  // Polling
   useEffect(() => {
     const key = getLicenseKey();
     if (!key) return;
     const poll = async () => {
       try {
-        const res = await fetch(`${API_BASE}/escritorio/mensagens?canal=${canal}&limit=50`, {
-          headers: { "x-license-key": key },
-        });
+        const res = await fetch(`${API_BASE}/escritorio/mensagens?canal=${canal}&limit=50`, { headers: { "x-license-key": key } });
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const remoteMsgs = data.reverse().map(m => ({
-            de: m.sender, texto: m.message, at: new Date(m.created_at).getTime(),
-            para: m.recipient || null,
-          }));
-          const localCount = (mensagens[canal] || []).length;
-          if (remoteMsgs.length > localCount) {
-            setMensagens(prev => {
-              const updated = { ...prev, [canal]: remoteMsgs };
-              saveLocal(updated);
-              return updated;
-            });
+          const remote = data.reverse().map(m => ({ de: m.sender, texto: m.message, at: new Date(m.created_at).getTime(), para: m.recipient || null }));
+          if (remote.length > (mensagens[canal] || []).length) {
+            setMensagens(prev => { const u = { ...prev, [canal]: remote }; saveLocal(u); return u; });
           }
         }
       } catch {}
     };
-    const interval = setInterval(poll, POLL_INTERVAL);
+    const iv = setInterval(poll, POLL_INTERVAL);
     poll();
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, [canal]);
 
-  // API publica
   useEffect(() => {
-    window.__escritorio = {
-      // API publica: outros agentes postam mensagens, mas NAO acionam @Code/@Claudin
-      // Somente enviar() (input do Elias) processa mencoes e aciona agentes
-      enviar: (de, texto, canalDest = "geral", para = null) => {
-        adicionarMensagem(de, texto, canalDest, para);
-      },
-    };
+    window.__escritorio = { enviar: (de, texto, cd = "geral", para = null) => adicionarMensagem(de, texto, cd, para) };
     return () => { delete window.__escritorio; };
   }, [adicionarMensagem]);
 
-  // Boas vindas
   useEffect(() => {
     if (!sessionStorage.getItem(WELCOMED_KEY)) {
       sessionStorage.setItem(WELCOMED_KEY, "1");
-      setTimeout(() => {
-        adicionarMensagem("Sistema", "Escritorio aberto \u2014 use @Claude, @Code, @Claudin ou @todos para mencionar agentes.", "geral");
-      }, 500);
+      setTimeout(() => adicionarMensagem("Sistema", "Escritorio aberto \u2014 use @Claude, @Code, @Claudin ou @todos", "geral"), 500);
     }
   }, [adicionarMensagem]);
 
+  // Agrupar mensagens por data
+  const msgsComData = [];
+  let lastDate = "";
+  for (const msg of msgs) {
+    const d = new Date(msg.at).toDateString();
+    if (d !== lastDate) { msgsComData.push({ type: "date", date: msg.at }); lastDate = d; }
+    msgsComData.push({ type: "msg", msg });
+  }
+
+  const handleAttach = (tipo) => {
+    setShowAttach(false);
+    if (tipo === "codigo") {
+      navigator.clipboard?.readText().then(text => {
+        if (text) { setInput(`\`\`\`\n${text.slice(0, 2000)}\n\`\`\``); chatInputRef.current?.focus(); }
+      }).catch(() => {});
+    }
+    // imagem e documento sao placeholder por enquanto
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: DM }}>
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 2, padding: "8px 12px", borderBottom: `1px solid ${C.border}` }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: WA.bg, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      {/* Header WhatsApp */}
+      <div style={{
+        background: WA.header, padding: "10px 14px",
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <Avatar remetente="Sistema" size={36} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>Zero Preview</div>
+          <div style={{ fontSize: 11, color: "#ffffff90" }}>Elias, Claude.ai, Code, Claudin</div>
+        </div>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: WA.green }} />
+      </div>
+
+      {/* Tabs de canal */}
+      <div style={{
+        display: "flex", background: WA.tabBg, borderBottom: `1px solid ${WA.inputBorder}`,
+      }}>
         {CANAIS.map(c => {
           const count = unread[c] || 0;
+          const active = canal === c;
           return (
             <button key={c} onClick={() => setCanal(c)} style={{
-              padding: "4px 12px", borderRadius: R.sm, fontSize: 11,
-              fontWeight: canal === c ? 700 : 500, fontFamily: DM,
-              background: canal === c ? C.surface2 : "transparent",
-              color: canal === c ? C.text : C.textDim,
-              border: "none", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 4,
+              flex: 1, padding: "8px 4px", border: "none", cursor: "pointer",
+              background: "transparent",
+              borderBottom: active ? `2px solid ${WA.tabActive}` : "2px solid transparent",
+              color: active ? WA.tabActive : WA.textDim,
+              fontSize: 11, fontWeight: active ? 700 : 500,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+              fontFamily: "inherit",
             }}>
-              {c === "claude" ? "\uD83E\uDD16 claude" : `# ${c}`}
-              {count > 0 && canal !== c && (
+              {c === "claude" ? "\uD83E\uDD16" : "#"} {c}
+              {count > 0 && !active && (
                 <span style={{
-                  background: "#EF4444", color: "#fff", fontSize: 9,
-                  fontWeight: 700, borderRadius: R.full, padding: "1px 5px",
-                  minWidth: 16, textAlign: "center",
+                  background: WA.unread, color: "#000", fontSize: 9,
+                  fontWeight: 800, borderRadius: 10, padding: "1px 5px", minWidth: 16, textAlign: "center",
                 }}>{count}</span>
               )}
             </button>
@@ -415,72 +434,98 @@ export default function Escritorio() {
 
       {/* Mensagens */}
       <div ref={scrollRef} style={{
-        flex: 1, overflowY: "auto", padding: "8px 12px",
-        display: "flex", flexDirection: "column", gap: 2, minHeight: 0,
+        flex: 1, overflowY: "auto", padding: "8px 10px",
+        display: "flex", flexDirection: "column", gap: 1, minHeight: 0,
+        backgroundImage: `radial-gradient(circle at 20% 80%, ${WA.bgPattern} 0%, transparent 50%)`,
       }}>
-        {msgs.length === 0 && (
-          <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: 20 }}>
+        {msgsComData.length === 0 && (
+          <div style={{ fontSize: 12, color: WA.textDim, textAlign: "center", padding: 30 }}>
             Nenhuma mensagem em #{canal}
           </div>
         )}
-        {msgs.map((msg, i) => <Mensagem key={i} msg={msg} onEnviarParaClaude={preencherChat} />)}
+        {msgsComData.map((item, i) =>
+          item.type === "date"
+            ? <DateSeparator key={`d${i}`} date={item.date} />
+            : <Balao key={i} msg={item.msg} onEnviarParaClaude={preencherChat} />
+        )}
+        {claudeDigitando && <TypingIndicator />}
       </div>
 
-      {/* Claude digitando (streaming visivel) */}
-      {claudeDigitando && (
-        <div style={{
-          padding: "6px 12px", borderTop: `1px solid ${C.border}`,
-          background: `${"#F59E0B"}08`,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <Avatar remetente="Claude.ai" size={18} />
-            <span style={{ fontSize: 10, color: "#F59E0B", fontWeight: 700, fontFamily: DM }}>
-              Claude esta digitando...
-            </span>
-          </div>
-          {claudeResposta && (
+      {/* Input WhatsApp */}
+      <div style={{
+        display: "flex", gap: 6, padding: "6px 8px", alignItems: "flex-end",
+        background: WA.tabBg,
+      }}>
+        {/* Clip button */}
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setShowAttach(s => !s)} style={{
+            width: 36, height: 36, borderRadius: "50%", border: "none",
+            background: "transparent", color: WA.textDim, fontSize: 18,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{"\uD83D\uDCCE"}</button>
+          {showAttach && (
             <div style={{
-              fontSize: 11, color: C.text, lineHeight: 1.4,
-              maxHeight: 60, overflowY: "auto", wordBreak: "break-word",
-              padding: "4px 8px", borderRadius: R.sm,
-              background: `${"#F59E0B"}10`, borderLeft: `3px solid #F59E0B`,
+              position: "absolute", bottom: 42, left: 0,
+              background: WA.balloonLeft, borderRadius: 8, padding: 4,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)", minWidth: 150,
             }}>
-              {claudeResposta}
+              {[
+                { icon: "\uD83D\uDCF7", label: "Imagem", tipo: "imagem" },
+                { icon: "\uD83D\uDCC4", label: "Documento", tipo: "documento" },
+                { icon: "\uD83D\uDCCB", label: "Colar codigo", tipo: "codigo" },
+              ].map(a => (
+                <button key={a.tipo} onClick={() => handleAttach(a.tipo)} style={{
+                  display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
+                  width: "100%", border: "none", background: "transparent",
+                  color: WA.text, fontSize: 12, cursor: "pointer", borderRadius: 4,
+                  fontFamily: "inherit",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = WA.inputBg; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ fontSize: 16 }}>{a.icon}</span> {a.label}
+                </button>
+              ))}
             </div>
           )}
         </div>
-      )}
 
-      {/* Input unificado */}
-      <div style={{
-        display: "flex", gap: 6, padding: "8px 12px",
-        borderTop: `1px solid ${C.border}`,
-      }}>
+        {/* Input */}
         <input
           ref={chatInputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } }}
-          placeholder={canal === "claude" ? "Fale com Claude.ai (historico completo incluso)..." : `#${canal} — use @Claude @Code @Claudin @todos`}
+          placeholder={canal === "claude" ? "Fale com Claude.ai..." : `Mensagem em #${canal}`}
           disabled={claudeDigitando}
           style={{
-            flex: 1, padding: "6px 10px", borderRadius: R.sm,
-            background: C.surface2, color: C.text,
-            border: `1px solid ${C.border}`, fontSize: 12,
-            fontFamily: DM, outline: "none",
+            flex: 1, padding: "9px 14px", borderRadius: 20,
+            background: WA.inputBg, color: WA.text,
+            border: "none", fontSize: 13, outline: "none",
+            fontFamily: "inherit",
             opacity: claudeDigitando ? 0.5 : 1,
           }}
         />
+
+        {/* Send button */}
         <button onClick={enviar} disabled={!input.trim() || claudeDigitando} style={{
-          padding: "6px 14px", borderRadius: R.sm, border: "none",
-          background: input.trim() && !claudeDigitando ? (C.accent || C.info) : C.surface2,
-          color: input.trim() && !claudeDigitando ? "#fff" : C.textDim,
-          fontSize: 11, fontWeight: 600, fontFamily: DM,
-          cursor: input.trim() && !claudeDigitando ? "pointer" : "default",
+          width: 36, height: 36, borderRadius: "50%", border: "none",
+          background: input.trim() && !claudeDigitando ? WA.tabActive : WA.inputBg,
+          color: "#fff", fontSize: 16, cursor: input.trim() && !claudeDigitando ? "pointer" : "default",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background 0.15s",
         }}>
-          Enviar
+          {input.trim() ? "\u27A4" : "\uD83C\uDFA4"}
         </button>
       </div>
+
+      {/* Animacao typing */}
+      <style>{`
+        @keyframes typingBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30% { transform: translateY(-4px); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
