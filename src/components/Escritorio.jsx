@@ -1,21 +1,29 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { C, DM, R, EASE } from "../config/theme";
 
+const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 const LS_KEY = "zp_escritorio";
 const CANAIS = ["geral", "code", "qa"];
+const POLL_INTERVAL = 3000;
+const WELCOMED_KEY = "zp_escritorio_welcomed";
 
 const AVATARS = {
   "Elias":     { cor: "#3B82F6", letra: "E" },
   "Claude.ai": { cor: "#F59E0B", letra: "C" },
   "Code":      { cor: "#22C55E", letra: "<>" },
   "Claudin":   { cor: "#8B5CF6", letra: "Q" },
+  "Sistema":   { cor: "#6B7280", letra: "S" },
 };
 
-function loadMensagens() {
+function getLicenseKey() {
+  try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
+}
+
+function loadLocal() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
 }
 
-function saveMensagens(msgs) {
+function saveLocal(msgs) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(msgs)); } catch {}
 }
 
@@ -35,12 +43,24 @@ function Avatar({ remetente }) {
 
 function Mensagem({ msg }) {
   const time = new Date(msg.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const deCor = AVATARS[msg.de]?.cor || C.text;
+  const paraCor = msg.para ? (AVATARS[msg.para]?.cor || C.textDim) : null;
+
   return (
     <div style={{ display: "flex", gap: 8, padding: "6px 0" }}>
       <Avatar remetente={msg.de} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: AVATARS[msg.de]?.cor || C.text, fontFamily: DM }}>{msg.de}</span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: deCor, fontFamily: DM }}>{msg.de}</span>
+          {msg.para && (
+            <>
+              <span style={{ fontSize: 9, color: C.textDim }}>{"\u2192"}</span>
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: paraCor, fontFamily: DM,
+                background: `${paraCor}15`, padding: "1px 6px", borderRadius: R.full,
+              }}>{msg.para}</span>
+            </>
+          )}
           <span style={{ fontSize: 9, color: C.textDim }}>{time}</span>
         </div>
         <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>{msg.texto}</div>
@@ -51,65 +71,148 @@ function Mensagem({ msg }) {
 
 export default function Escritorio() {
   const [canal, setCanal] = useState("geral");
-  const [mensagens, setMensagens] = useState(loadMensagens);
+  const [mensagens, setMensagens] = useState(loadLocal);
   const [input, setInput] = useState("");
+  const [unread, setUnread] = useState({});
   const scrollRef = useRef(null);
+  const prevCountRef = useRef({});
 
   const msgs = mensagens[canal] || [];
 
+  // Scroll automatico quando mensagens mudam
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [msgs.length, canal]);
 
+  // Limpar unread do canal ativo
+  useEffect(() => {
+    setUnread(prev => ({ ...prev, [canal]: 0 }));
+  }, [canal, msgs.length]);
+
+  // Adicionar mensagem (local + backend)
+  const adicionarMensagem = useCallback((de, texto, canalDest = "geral", para = null) => {
+    const nova = { de, texto, at: Date.now(), para };
+    setMensagens(prev => {
+      const updated = { ...prev, [canalDest]: [...(prev[canalDest] || []), nova] };
+      saveLocal(updated);
+      return updated;
+    });
+
+    // Enviar ao backend (fire and forget)
+    const key = getLicenseKey();
+    if (key) {
+      fetch(`${API_BASE}/escritorio/mensagem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-license-key": key },
+        body: JSON.stringify({ de, texto, canal: canalDest, para }),
+      }).catch(() => {});
+    }
+
+    // Atualizar unread se nao e o canal ativo
+    if (canalDest !== canal) {
+      setUnread(prev => ({ ...prev, [canalDest]: (prev[canalDest] || 0) + 1 }));
+    }
+  }, [canal]);
+
+  // Enviar como Elias
   const enviar = () => {
     const texto = input.trim();
     if (!texto) return;
-
-    const nova = { de: "Elias", texto, at: Date.now() };
-    const updated = { ...mensagens, [canal]: [...(mensagens[canal] || []), nova] };
-    setMensagens(updated);
-    saveMensagens(updated);
+    adicionarMensagem("Elias", texto, canal);
     setInput("");
   };
 
-  // API publica para outros agentes adicionarem mensagens
+  // Polling do backend a cada 3s
+  useEffect(() => {
+    const key = getLicenseKey();
+    if (!key) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/escritorio/mensagens?canal=${canal}&limit=50`, {
+          headers: { "x-license-key": key },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          // Converter formato Supabase para formato local
+          const remoteMsgs = data.reverse().map(m => ({
+            de: m.sender, texto: m.message, at: new Date(m.created_at).getTime(),
+            para: m.recipient || null,
+          }));
+          // Merge: se remote tem mais mensagens, atualizar
+          const localCount = (mensagens[canal] || []).length;
+          if (remoteMsgs.length > localCount) {
+            setMensagens(prev => {
+              const updated = { ...prev, [canal]: remoteMsgs };
+              saveLocal(updated);
+              return updated;
+            });
+          }
+        }
+      } catch {}
+    };
+
+    const interval = setInterval(poll, POLL_INTERVAL);
+    poll(); // Executar imediatamente ao trocar canal
+    return () => clearInterval(interval);
+  }, [canal]);
+
+  // API publica para agentes
   useEffect(() => {
     window.__escritorio = {
-      enviar: (de, texto, canalDest = "geral") => {
-        setMensagens(prev => {
-          const updated = { ...prev, [canalDest]: [...(prev[canalDest] || []), { de, texto, at: Date.now() }] };
-          saveMensagens(updated);
-          return updated;
-        });
+      enviar: (de, texto, canalDest = "geral", para = null) => {
+        adicionarMensagem(de, texto, canalDest, para);
       },
     };
     return () => { delete window.__escritorio; };
-  }, []);
+  }, [adicionarMensagem]);
+
+  // Mensagem de boas vindas (1x por sessao)
+  useEffect(() => {
+    if (!sessionStorage.getItem(WELCOMED_KEY)) {
+      sessionStorage.setItem(WELCOMED_KEY, "1");
+      setTimeout(() => {
+        adicionarMensagem("Sistema", "Escritorio aberto \u2014 Claude.ai, Code e Claudin conectados.", "geral");
+      }, 500);
+    }
+  }, [adicionarMensagem]);
 
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
       fontFamily: DM,
     }}>
-      {/* Tabs de canal */}
+      {/* Tabs de canal com badges de unread */}
       <div style={{
         display: "flex", gap: 2, padding: "8px 12px",
         borderBottom: `1px solid ${C.border}`,
       }}>
-        {CANAIS.map(c => (
-          <button key={c} onClick={() => setCanal(c)} style={{
-            padding: "4px 12px", borderRadius: R.sm, fontSize: 11,
-            fontWeight: canal === c ? 700 : 500, fontFamily: DM,
-            background: canal === c ? C.surface2 : "transparent",
-            color: canal === c ? C.text : C.textDim,
-            border: "none", cursor: "pointer",
-            transition: `all 0.1s ${EASE.out}`,
-          }}>
-            {c === "geral" ? "# geral" : c === "code" ? "# code" : "# qa"}
-          </button>
-        ))}
+        {CANAIS.map(c => {
+          const count = unread[c] || 0;
+          return (
+            <button key={c} onClick={() => setCanal(c)} style={{
+              padding: "4px 12px", borderRadius: R.sm, fontSize: 11,
+              fontWeight: canal === c ? 700 : 500, fontFamily: DM,
+              background: canal === c ? C.surface2 : "transparent",
+              color: canal === c ? C.text : C.textDim,
+              border: "none", cursor: "pointer",
+              transition: `all 0.1s ${EASE.out}`,
+              display: "flex", alignItems: "center", gap: 4,
+            }}>
+              # {c}
+              {count > 0 && canal !== c && (
+                <span style={{
+                  background: "#EF4444", color: "#fff", fontSize: 9,
+                  fontWeight: 700, borderRadius: R.full, padding: "1px 5px",
+                  minWidth: 16, textAlign: "center", lineHeight: 1.3,
+                }}>{count}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Lista de mensagens */}
