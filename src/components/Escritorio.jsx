@@ -45,9 +45,19 @@ function Mensagem({ msg }) {
   const time = new Date(msg.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const deCor = AVATARS[msg.de]?.cor || C.text;
   const paraCor = msg.para ? (AVATARS[msg.para]?.cor || C.textDim) : null;
+  const [hovered, setHovered] = useState(false);
+
+  const abrirNoClaude = () => {
+    const q = encodeURIComponent(msg.texto);
+    window.open(`https://claude.ai/new?q=${q}`, "_blank");
+  };
 
   return (
-    <div style={{ display: "flex", gap: 8, padding: "6px 0" }}>
+    <div
+      style={{ display: "flex", gap: 8, padding: "6px 0", position: "relative" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <Avatar remetente={msg.de} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
@@ -65,6 +75,24 @@ function Mensagem({ msg }) {
         </div>
         <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>{msg.texto}</div>
       </div>
+      {hovered && msg.de !== "Sistema" && (
+        <button
+          onClick={abrirNoClaude}
+          title="Abrir no Claude.ai com este contexto"
+          style={{
+            position: "absolute", right: 0, top: 4,
+            padding: "3px 8px", borderRadius: R.sm, border: "none",
+            background: "#F59E0B", color: "#fff",
+            fontSize: 9, fontWeight: 700, fontFamily: DM,
+            cursor: "pointer", opacity: 0.9,
+            transition: `opacity 0.1s ${EASE.out}`,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "1"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "0.9"; }}
+        >
+          {"\u2197"} Claude.ai
+        </button>
+      )}
     </div>
   );
 }
