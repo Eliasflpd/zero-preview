@@ -158,6 +158,10 @@ Antes de qualquer teste:
 2. Priorizar testes dos "Problemas Conhecidos Atuais"
 3. Reportar score, provider usado e qualquer hex detectado
 4. Atualizar seção "Problemas Conhecidos" com novos achados
+5. Quando receber mensagem com @Claudin no canal #qa do Escritorio do Zero Preview:
+   - Abrir zero-preview-six.vercel.app
+   - Executar o teste solicitado
+   - Reportar resultado no MESSAGES.md do repo Eliasflpd/zero-preview
 
 ---
 
