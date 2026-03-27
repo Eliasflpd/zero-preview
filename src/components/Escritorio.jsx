@@ -149,9 +149,34 @@ function Balao({ msg, onEnviarParaClaude }) {
             {msg.para && <span style={{ color: WA.textDim, fontWeight: 400 }}> {"\u2192"} {msg.para}</span>}
           </div>
         )}
-        <div style={{ fontSize: 13, color: WA.text, lineHeight: 1.45, wordBreak: "break-word" }}>
-          <TextoComMencoes texto={msg.texto} />
-        </div>
+        {/* Conteudo: imagem, documento, codigo ou texto */}
+        {msg.tipo === "imagem" && msg.dados?.src ? (
+          <div>
+            <img src={msg.dados.src} alt={msg.dados.nome || "imagem"} style={{
+              maxWidth: 200, maxHeight: 200, borderRadius: 6, display: "block", marginBottom: 2,
+            }} />
+            <span style={{ fontSize: 10, color: WA.textDim }}>{msg.dados.nome}</span>
+          </div>
+        ) : msg.tipo === "documento" && msg.dados ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+            <span style={{ fontSize: 28 }}>{"\uD83D\uDCC4"}</span>
+            <div>
+              <div style={{ fontSize: 12, color: WA.text, fontWeight: 500 }}>{msg.dados.nome}</div>
+              <div style={{ fontSize: 10, color: WA.textDim }}>{msg.dados.tamanho}</div>
+            </div>
+          </div>
+        ) : msg.tipo === "codigo" && msg.dados?.code ? (
+          <pre style={{
+            background: "#1E1E1E", borderRadius: 6, padding: "8px 10px",
+            fontSize: 11, color: "#D4D4D4", fontFamily: "'Fira Code', 'Consolas', monospace",
+            lineHeight: 1.4, overflowX: "auto", maxHeight: 200, whiteSpace: "pre-wrap",
+            margin: 0,
+          }}>{msg.dados.code}</pre>
+        ) : (
+          <div style={{ fontSize: 13, color: WA.text, lineHeight: 1.45, wordBreak: "break-word" }}>
+            <TextoComMencoes texto={msg.texto} />
+          </div>
+        )}
         <div style={{
           position: "absolute", bottom: 4, right: 8,
           display: "flex", alignItems: "center", gap: 3,
@@ -223,6 +248,10 @@ export default function Escritorio() {
   const [claudeResposta, setClaudeResposta] = useState("");
   const chatInputRef = useRef(null);
   const [showAttach, setShowAttach] = useState(false);
+  const imgInputRef = useRef(null);
+  const docInputRef = useRef(null);
+  const [codeModal, setCodeModal] = useState(false);
+  const [codeText, setCodeText] = useState("");
 
   const msgs = mensagens[canal] || [];
 
@@ -432,12 +461,66 @@ export default function Escritorio() {
 
   const handleAttach = (tipo) => {
     setShowAttach(false);
-    if (tipo === "codigo") {
-      navigator.clipboard?.readText().then(text => {
-        if (text) { setInput(`\`\`\`\n${text.slice(0, 2000)}\n\`\`\``); chatInputRef.current?.focus(); }
-      }).catch(() => {});
-    }
-    // imagem e documento sao placeholder por enquanto
+    if (tipo === "imagem") imgInputRef.current?.click();
+    else if (tipo === "documento") docInputRef.current?.click();
+    else if (tipo === "codigo") setCodeModal(true);
+  };
+
+  const handleImagem = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      adicionarMensagem("Elias", `[imagem] ${file.name}`, canal, null);
+      // Adicionar mensagem com dados de imagem
+      setMensagens(prev => {
+        const arr = prev[canal] || [];
+        const last = arr[arr.length - 1];
+        if (last && last.de === "Elias" && last.texto.startsWith("[imagem]")) {
+          arr[arr.length - 1] = { ...last, tipo: "imagem", dados: { src: reader.result, nome: file.name } };
+        }
+        const updated = { ...prev, [canal]: [...arr] };
+        saveLocal(updated);
+        return updated;
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleDocumento = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const kb = (file.size / 1024).toFixed(1);
+    adicionarMensagem("Elias", `[documento] ${file.name}`, canal, null);
+    setMensagens(prev => {
+      const arr = prev[canal] || [];
+      const last = arr[arr.length - 1];
+      if (last && last.de === "Elias" && last.texto.startsWith("[documento]")) {
+        arr[arr.length - 1] = { ...last, tipo: "documento", dados: { nome: file.name, tamanho: `${kb} KB` } };
+      }
+      const updated = { ...prev, [canal]: [...arr] };
+      saveLocal(updated);
+      return updated;
+    });
+    e.target.value = "";
+  };
+
+  const handleCodigoConfirm = () => {
+    if (!codeText.trim()) return;
+    adicionarMensagem("Elias", `[codigo]`, canal, null);
+    setMensagens(prev => {
+      const arr = prev[canal] || [];
+      const last = arr[arr.length - 1];
+      if (last && last.de === "Elias" && last.texto === "[codigo]") {
+        arr[arr.length - 1] = { ...last, tipo: "codigo", dados: { code: codeText.slice(0, 5000) } };
+      }
+      const updated = { ...prev, [canal]: [...arr] };
+      saveLocal(updated);
+      return updated;
+    });
+    setCodeText("");
+    setCodeModal(false);
   };
 
   return (
@@ -570,6 +653,49 @@ export default function Escritorio() {
           {input.trim() ? "\u27A4" : "\uD83C\uDFA4"}
         </button>
       </div>
+
+      {/* Hidden file inputs */}
+      <input ref={imgInputRef} type="file" accept="image/*" hidden onChange={handleImagem} />
+      <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.txt,.csv,.json" hidden onChange={handleDocumento} />
+
+      {/* Modal de codigo */}
+      {codeModal && (
+        <div style={{
+          position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50,
+        }}>
+          <div style={{
+            background: WA.balloonLeft, borderRadius: 12, padding: 16,
+            width: "90%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: WA.text }}>Colar codigo</span>
+              <button onClick={() => { setCodeModal(false); setCodeText(""); }} style={{
+                background: "none", border: "none", color: WA.textDim, fontSize: 16, cursor: "pointer",
+              }}>{"\u2715"}</button>
+            </div>
+            <textarea
+              value={codeText}
+              onChange={e => setCodeText(e.target.value)}
+              placeholder="Cole seu codigo aqui..."
+              autoFocus
+              style={{
+                width: "100%", height: 160, padding: 10, borderRadius: 8,
+                background: "#1E1E1E", color: "#D4D4D4", border: `1px solid ${WA.inputBorder}`,
+                fontSize: 12, fontFamily: "'Fira Code', 'Consolas', monospace",
+                resize: "none", outline: "none",
+              }}
+            />
+            <button onClick={handleCodigoConfirm} disabled={!codeText.trim()} style={{
+              padding: "8px 0", borderRadius: 8, border: "none",
+              background: codeText.trim() ? WA.tabActive : WA.inputBg,
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: codeText.trim() ? "pointer" : "default",
+            }}>
+              Enviar codigo
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Animacao typing */}
       <style>{`
