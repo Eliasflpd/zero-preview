@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { C, DM, R, EASE } from "../config/theme";
-import { callClaude, callClaudeStream, setEscritorioMode } from "../lib/api";
+import { callClaude, callClaudeStream, callClaudeAgent, setEscritorioMode } from "../lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 const LS_KEY = "zp_escritorio";
@@ -241,12 +241,54 @@ export default function Escritorio() {
     }
   }, [adicionarMensagem]);
 
+  // Acionar Code: tenta claude-agent, fallback clipboard
+  const acionarCode = useCallback(async (prompt) => {
+    adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias");
+    navigator.clipboard?.writeText(prompt).catch(() => {});
+    try {
+      const result = await callClaudeAgent(prompt, {}, (status) => {
+        adicionarMensagem("Code", `Agent: ${status}`, canal);
+      });
+      if (result?.files) {
+        const fileCount = Object.keys(result.files).length;
+        adicionarMensagem("Code", `Tarefa concluida! ${fileCount} arquivo(s) gerado(s) em ${result.iterations} iteracoes (${result.tokens} tokens).`, canal, "Elias");
+      }
+    } catch (err) {
+      adicionarMensagem("Code", `Agent indisponivel. Cole no terminal: "${prompt.slice(0, 100)}..."`, canal, "Elias");
+    }
+  }, [canal, adicionarMensagem]);
+
+  // Acionar Claudin: chama /escritorio/testar no backend
+  const acionarClaudin = useCallback(async (prompt) => {
+    adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias");
+    const key = getLicenseKey();
+    if (!key) {
+      adicionarMensagem("Claudin", "Sem licenca — teste manual necessario.", canal, "Elias");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/escritorio/testar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-license-key": key },
+        body: JSON.stringify({ tarefa: prompt, canal }),
+      });
+      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      const data = await res.json();
+      const erros = (data.erros || []).length > 0 ? `\nErros: ${data.erros.join(", ")}` : "";
+      adicionarMensagem("Claudin", `Teste concluido! Score: ${data.score}/100 | ${data.lineCount} linhas | Provider: ${data.provider}${erros}`, canal, "Elias");
+    } catch (err) {
+      adicionarMensagem("Claudin", `Teste falhou: ${err.message}. Testar manualmente.`, canal, "Elias");
+    }
+  }, [canal, adicionarMensagem]);
+
   // Enviar mensagem com deteccao de mencoes
+  // SEGURANCA: esta funcao so e chamada pelo input do Elias.
+  // @Code e @Claudin so acionam aqui — nunca pela API publica.
   const enviar = useCallback(() => {
     const texto = input.trim();
     if (!texto) return;
 
-    // Postar mensagem do Elias
+    // Postar como Elias (unico remetente autorizado a acionar agentes)
     adicionarMensagem("Elias", texto, canal);
     setInput("");
 
@@ -265,8 +307,8 @@ export default function Escritorio() {
 
     if (mencoes.todos) {
       chamarClaude(prompt, canal);
-      setTimeout(() => adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias"), 1000);
-      setTimeout(() => adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias"), 1500);
+      acionarCode(prompt);
+      acionarClaudin(prompt);
       return;
     }
 
@@ -275,16 +317,11 @@ export default function Escritorio() {
     }
 
     if (mencoes.code) {
-      setTimeout(() => {
-        adicionarMensagem("Code", `Recebi! Tarefa: "${prompt.slice(0, 80)}..." \u2014 execute no Claude Code terminal.`, canal, "Elias");
-        navigator.clipboard?.writeText(prompt).catch(() => {});
-      }, 500);
+      acionarCode(prompt);
     }
 
     if (mencoes.claudin) {
-      setTimeout(() => {
-        adicionarMensagem("Claudin", `Iniciando testes: "${prompt.slice(0, 80)}..." \u2014 verificando no browser.`, canal, "Elias");
-      }, 500);
+      acionarClaudin(prompt);
     }
   }, [input, canal, adicionarMensagem, chamarClaude, montarContexto]);
 
@@ -329,6 +366,8 @@ export default function Escritorio() {
   // API publica
   useEffect(() => {
     window.__escritorio = {
+      // API publica: outros agentes postam mensagens, mas NAO acionam @Code/@Claudin
+      // Somente enviar() (input do Elias) processa mencoes e aciona agentes
       enviar: (de, texto, canalDest = "geral", para = null) => {
         adicionarMensagem(de, texto, canalDest, para);
       },
