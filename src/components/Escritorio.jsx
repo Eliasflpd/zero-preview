@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { C, DM, R, EASE } from "../config/theme";
-import { callClaude, callClaudeStream } from "../lib/api";
+import { callClaude, callClaudeStream, setEscritorioMode } from "../lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 const LS_KEY = "zp_escritorio";
@@ -185,6 +185,7 @@ export default function Escritorio() {
   const chamarClaude = useCallback(async (prompt, canalDest) => {
     setClaudeDigitando(true);
     setClaudeResposta("");
+    setEscritorioMode(true);
     let fullText = "";
     try {
       await callClaudeStream(
@@ -216,6 +217,7 @@ export default function Escritorio() {
         adicionarMensagem("Sistema", `Erro ao chamar Claude: ${err2.message}`, canalDest);
       }
     } finally {
+      setEscritorioMode(false);
       setClaudeDigitando(false);
       setTimeout(() => setClaudeResposta(""), 3000);
     }

@@ -12,6 +12,10 @@ function getPreferredProvider() {
   try { return localStorage.getItem("zp_provider") || "auto"; } catch { return "auto"; }
 }
 
+// Flag para chamadas do Escritorio — pula compactSystem no backend
+let _escritorioMode = false;
+export function setEscritorioMode(v) { _escritorioMode = !!v; }
+
 // Garantir que resposta de provider e sempre string
 function safeText(value) {
   if (typeof value === "string") return value;
@@ -34,6 +38,7 @@ async function _doStream(systemPrompt, userPrompt, maxTokens, onDelta) {
       "Content-Type": "application/json",
       "x-license-key": licenseKey,
       "x-preferred-provider": getPreferredProvider(),
+      ...(_escritorioMode ? { "x-escritorio": "true" } : {}),
     },
     signal: controller.signal,
     body: JSON.stringify({
@@ -170,6 +175,7 @@ export async function callClaude(systemPrompt, userPrompt, maxTokens = 12000) {
           "Content-Type": "application/json",
           "x-license-key": licenseKey,
           "x-preferred-provider": getPreferredProvider(),
+          ...(_escritorioMode ? { "x-escritorio": "true" } : {}),
         },
         signal: controller.signal,
         body: JSON.stringify({
