@@ -44,7 +44,7 @@ const ToolBtn = ({ children, onClick, active, color, activeBg, activeBorder, dis
   </button>
 );
 
-export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange, orchestratorOpen, onToggleOrchestrator, escritorioOpen, onToggleEscritorio }) {
+export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen, onToggleSidebar, syncing, canUndo, canRedo, onUndo, onRedo, versionInfo, agenticMode, onToggleAgentic, onAgentMode, onImportGitHub, syntaxStatus, activeProvider, onProviderChange, orchestratorOpen, onToggleOrchestrator, escritorioOpen, onToggleEscritorio, navegadorOpen, onToggleNavegador }) {
   const [providerOpen, setProviderOpen] = useState(false);
   const dropdownRef = useRef(null);
   const currentProvider = activeProvider || "auto";
@@ -176,6 +176,18 @@ export default function Topbar({ projectName, knowledge, hasPreview, sidebarOpen
         >
           <span style={{ fontSize: 10 }}>{"\uD83C\uDFE2"}</span>
           Escritorio
+        </ToolBtn>
+
+        <ToolBtn
+          onClick={onToggleNavegador}
+          active={navegadorOpen}
+          color="#0A84FF"
+          activeBg="rgba(10,132,255,0.1)"
+          activeBorder="rgba(10,132,255,0.3)"
+          title="Navegador embutido"
+        >
+          <span style={{ fontSize: 10 }}>{"\uD83C\uDF10"}</span>
+          Navegador
         </ToolBtn>
 
         {hasPreview && syntaxStatus && (

@@ -31,6 +31,7 @@ const AgenticMode = safeLazy(() => import("../components/AgenticMode"));
 const GitHubImport = safeLazy(() => import("../components/GitHubImport"));
 const OrchestratorPanel = safeLazy(() => import("../components/OrchestratorPanel"));
 const Escritorio = safeLazy(() => import("../components/Escritorio"));
+const Navegador = safeLazy(() => import("../components/Navegador"));
 
 export default function Dashboard({ user, onLogout }) {
   const { projects, addProject, updateProject, removeProject, syncing } = useProjects();
@@ -58,6 +59,7 @@ export default function Dashboard({ user, onLogout }) {
   });
   const [orchestratorOpen, setOrchestratorOpen] = useState(false);
   const [escritorioOpen, setEscritorioOpen] = useState(false);
+  const [navegadorOpen, setNavegadorOpen] = useState(false);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -444,9 +446,11 @@ export default function Dashboard({ user, onLogout }) {
           activeProvider={activeProvider}
           onProviderChange={(id) => { setActiveProvider(id); try { localStorage.setItem("zp_provider", id); } catch {} }}
           orchestratorOpen={orchestratorOpen}
-          onToggleOrchestrator={() => { setOrchestratorOpen(o => !o); setEscritorioOpen(false); }}
+          onToggleOrchestrator={() => { setOrchestratorOpen(o => !o); setEscritorioOpen(false); setNavegadorOpen(false); }}
           escritorioOpen={escritorioOpen}
-          onToggleEscritorio={() => { setEscritorioOpen(o => !o); setOrchestratorOpen(false); }}
+          onToggleEscritorio={() => { setEscritorioOpen(o => !o); setOrchestratorOpen(false); setNavegadorOpen(false); }}
+          navegadorOpen={navegadorOpen}
+          onToggleNavegador={() => { setNavegadorOpen(o => !o); setOrchestratorOpen(false); setEscritorioOpen(false); }}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -565,6 +569,27 @@ export default function Dashboard({ user, onLogout }) {
           <div style={{ flex: 1, overflow: "hidden" }}>
             <Suspense fallback={null}>
               <Escritorio />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* Navegador side panel */}
+      {navegadorOpen && (
+        <div style={{
+          position: "fixed", right: 0, top: 0, height: "100vh", width: 420,
+          zIndex: 200, display: "flex", flexDirection: "column",
+          boxShadow: "-4px 0 24px rgba(0,0,0,0.4)", overflow: "hidden",
+        }}>
+          <button onClick={() => setNavegadorOpen(false)} style={{
+            position: "absolute", top: 8, right: 8, zIndex: 10,
+            width: 28, height: 28, borderRadius: "50%", border: "none",
+            background: "rgba(0,0,0,0.4)", color: "#fff", fontSize: 14,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{"\u2715"}</button>
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            <Suspense fallback={null}>
+              <Navegador />
             </Suspense>
           </div>
         </div>
