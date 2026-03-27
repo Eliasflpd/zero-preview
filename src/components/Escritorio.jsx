@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { C, DM, R, EASE } from "../config/theme";
-import { callClaude } from "../lib/api";
+import { callClaude, callClaudeStream } from "../lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 const LS_KEY = "zp_escritorio";
@@ -15,6 +15,22 @@ const AVATARS = {
   "Claudin":   { cor: "#8B5CF6", letra: "Q" },
   "Sistema":   { cor: "#6B7280", letra: "S" },
 };
+
+// Detectar mencoes no texto
+function detectarMencoes(texto) {
+  const lower = texto.toLowerCase();
+  return {
+    claude: /@claude\b/i.test(texto),
+    code: /@code\b/i.test(texto),
+    claudin: /@claudin\b/i.test(texto),
+    todos: /@todos\b/i.test(texto),
+  };
+}
+
+// Limpar mencao do texto para enviar ao Claude
+function limparMencao(texto) {
+  return texto.replace(/@(claude|code|claudin|todos)\b/gi, "").trim();
+}
 
 function getLicenseKey() {
   try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
@@ -39,6 +55,22 @@ function Avatar({ remetente, size = 28 }) {
     }}>
       {a.letra}
     </div>
+  );
+}
+
+// Renderizar texto com mencoes destacadas
+function TextoComMencoes({ texto }) {
+  const parts = texto.split(/(@(?:claude|code|claudin|todos))/gi);
+  return (
+    <span>
+      {parts.map((part, i) => {
+        if (/^@claude$/i.test(part)) return <span key={i} style={{ color: "#F59E0B", fontWeight: 700 }}>{part}</span>;
+        if (/^@code$/i.test(part)) return <span key={i} style={{ color: "#22C55E", fontWeight: 700 }}>{part}</span>;
+        if (/^@claudin$/i.test(part)) return <span key={i} style={{ color: "#8B5CF6", fontWeight: 700 }}>{part}</span>;
+        if (/^@todos$/i.test(part)) return <span key={i} style={{ color: "#EF4444", fontWeight: 700 }}>{part}</span>;
+        return <span key={i}>{part}</span>;
+      })}
+    </span>
   );
 }
 
@@ -69,7 +101,9 @@ function Mensagem({ msg, onEnviarParaClaude }) {
           )}
           <span style={{ fontSize: 9, color: C.textDim }}>{time}</span>
         </div>
-        <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>{msg.texto}</div>
+        <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>
+          <TextoComMencoes texto={msg.texto} />
+        </div>
       </div>
       {hovered && msg.de !== "Sistema" && (
         <button
@@ -80,7 +114,7 @@ function Mensagem({ msg, onEnviarParaClaude }) {
             padding: "3px 8px", borderRadius: R.sm, border: "none",
             background: "#F59E0B", color: "#fff",
             fontSize: 9, fontWeight: 700, fontFamily: DM,
-            cursor: "pointer", opacity: 0.9,
+            cursor: "pointer",
           }}
         >
           {"\uD83E\uDD16"} Claude.ai
@@ -97,17 +131,16 @@ export default function Escritorio() {
   const [unread, setUnread] = useState({});
   const scrollRef = useRef(null);
 
-  // Chat com Claude
-  const [chatInput, setChatInput] = useState("");
-  const [chatResposta, setChatResposta] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
+  // Claude streaming state
+  const [claudeDigitando, setClaudeDigitando] = useState(false);
+  const [claudeResposta, setClaudeResposta] = useState("");
   const chatInputRef = useRef(null);
 
   const msgs = mensagens[canal] || [];
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [msgs.length, canal]);
+  }, [msgs.length, canal, claudeDigitando]);
 
   useEffect(() => {
     setUnread(prev => ({ ...prev, [canal]: 0 }));
@@ -133,11 +166,89 @@ export default function Escritorio() {
     }
   }, [canal]);
 
-  const enviar = () => {
+  // Chamar Claude via API e postar resposta no canal
+  const chamarClaude = useCallback(async (prompt, canalDest) => {
+    setClaudeDigitando(true);
+    setClaudeResposta("");
+    let fullText = "";
+    try {
+      await callClaudeStream(
+        "Voce e um assistente do projeto Zero Preview. Responda de forma concisa e direta em portugues. Maximo 3 paragrafos.",
+        prompt,
+        2000,
+        (chunk) => {
+          fullText += chunk;
+          setClaudeResposta(fullText);
+        }
+      );
+      // Postar resposta completa no canal
+      if (fullText && fullText.length > 5) {
+        adicionarMensagem("Claude.ai", fullText, canalDest);
+      }
+    } catch (err) {
+      // Fallback non-streaming
+      try {
+        const resposta = await callClaude(
+          "Voce e um assistente do projeto Zero Preview. Responda de forma concisa e direta em portugues. Maximo 3 paragrafos.",
+          prompt,
+          2000
+        );
+        if (resposta && resposta.length > 5) {
+          setClaudeResposta(resposta);
+          adicionarMensagem("Claude.ai", resposta, canalDest);
+        }
+      } catch (err2) {
+        adicionarMensagem("Sistema", `Erro ao chamar Claude: ${err2.message}`, canalDest);
+      }
+    } finally {
+      setClaudeDigitando(false);
+      setTimeout(() => setClaudeResposta(""), 3000);
+    }
+  }, [adicionarMensagem]);
+
+  // Enviar mensagem com deteccao de mencoes
+  const enviar = useCallback(() => {
     const texto = input.trim();
     if (!texto) return;
+
+    // Postar mensagem do Elias
     adicionarMensagem("Elias", texto, canal);
     setInput("");
+
+    const mencoes = detectarMencoes(texto);
+    const prompt = limparMencao(texto);
+
+    if (mencoes.todos) {
+      // @todos: Claude primeiro, depois notifica Code e Claudin
+      chamarClaude(prompt, canal);
+      setTimeout(() => adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias"), 1000);
+      setTimeout(() => adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias"), 1500);
+      return;
+    }
+
+    if (mencoes.claude) {
+      chamarClaude(prompt, canal);
+    }
+
+    if (mencoes.code) {
+      setTimeout(() => {
+        adicionarMensagem("Code", `Recebi! Tarefa: "${prompt.slice(0, 80)}..." \u2014 execute no Claude Code terminal.`, canal, "Elias");
+        // Copiar para clipboard para colar no Claude Code
+        navigator.clipboard?.writeText(prompt).catch(() => {});
+      }, 500);
+    }
+
+    if (mencoes.claudin) {
+      setTimeout(() => {
+        adicionarMensagem("Claudin", `Iniciando testes: "${prompt.slice(0, 80)}..." \u2014 verificando no browser.`, canal, "Elias");
+      }, 500);
+    }
+  }, [input, canal, adicionarMensagem, chamarClaude]);
+
+  // Preencher input com mensagem + @Claude
+  const preencherChat = (texto) => {
+    setInput(`@Claude ${texto}`);
+    chatInputRef.current?.focus();
   };
 
   // Polling backend
@@ -187,55 +298,15 @@ export default function Escritorio() {
     if (!sessionStorage.getItem(WELCOMED_KEY)) {
       sessionStorage.setItem(WELCOMED_KEY, "1");
       setTimeout(() => {
-        adicionarMensagem("Sistema", "Escritorio aberto \u2014 Claude.ai, Code e Claudin conectados.", "geral");
+        adicionarMensagem("Sistema", "Escritorio aberto \u2014 use @Claude, @Code, @Claudin ou @todos para mencionar agentes.", "geral");
       }, 500);
     }
   }, [adicionarMensagem]);
 
-  // Chat: enviar ao Claude
-  const enviarParaClaude = async () => {
-    const texto = chatInput.trim();
-    if (!texto || chatLoading) return;
-    setChatLoading(true);
-    setChatResposta("");
-    try {
-      const resposta = await callClaude(
-        "Voce e um assistente do projeto Zero Preview. Responda de forma concisa e direta em portugues.",
-        texto,
-        2000
-      );
-      setChatResposta(resposta);
-    } catch (err) {
-      setChatResposta(`Erro: ${err.message}`);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
-  // Preencher chat a partir de mensagem do canal
-  const preencherChat = (texto) => {
-    setChatInput(texto);
-    chatInputRef.current?.focus();
-  };
-
-  // Postar resposta do Claude no canal
-  const postarNoCanal = () => {
-    if (!chatResposta || chatResposta.startsWith("Erro:")) return;
-    adicionarMensagem("Claude.ai", chatResposta, canal);
-    setChatResposta("");
-    setChatInput("");
-  };
-
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", height: "100%",
-      fontFamily: DM,
-    }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: DM }}>
       {/* Tabs */}
-      <div style={{
-        display: "flex", gap: 2, padding: "8px 12px",
-        borderBottom: `1px solid ${C.border}`,
-      }}>
+      <div style={{ display: "flex", gap: 2, padding: "8px 12px", borderBottom: `1px solid ${C.border}` }}>
         {CANAIS.map(c => {
           const count = unread[c] || 0;
           return (
@@ -245,7 +316,6 @@ export default function Escritorio() {
               background: canal === c ? C.surface2 : "transparent",
               color: canal === c ? C.text : C.textDim,
               border: "none", cursor: "pointer",
-              transition: `all 0.1s ${EASE.out}`,
               display: "flex", alignItems: "center", gap: 4,
             }}>
               # {c}
@@ -253,7 +323,7 @@ export default function Escritorio() {
                 <span style={{
                   background: "#EF4444", color: "#fff", fontSize: 9,
                   fontWeight: 700, borderRadius: R.full, padding: "1px 5px",
-                  minWidth: 16, textAlign: "center", lineHeight: 1.3,
+                  minWidth: 16, textAlign: "center",
                 }}>{count}</span>
               )}
             </button>
@@ -264,8 +334,7 @@ export default function Escritorio() {
       {/* Mensagens */}
       <div ref={scrollRef} style={{
         flex: 1, overflowY: "auto", padding: "8px 12px",
-        display: "flex", flexDirection: "column", gap: 2,
-        minHeight: 0,
+        display: "flex", flexDirection: "column", gap: 2, minHeight: 0,
       }}>
         {msgs.length === 0 && (
           <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: 20 }}>
@@ -275,102 +344,60 @@ export default function Escritorio() {
         {msgs.map((msg, i) => <Mensagem key={i} msg={msg} onEnviarParaClaude={preencherChat} />)}
       </div>
 
-      {/* Input do canal */}
+      {/* Claude digitando (streaming visivel) */}
+      {claudeDigitando && (
+        <div style={{
+          padding: "6px 12px", borderTop: `1px solid ${C.border}`,
+          background: `${"#F59E0B"}08`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Avatar remetente="Claude.ai" size={18} />
+            <span style={{ fontSize: 10, color: "#F59E0B", fontWeight: 700, fontFamily: DM }}>
+              Claude esta digitando...
+            </span>
+          </div>
+          {claudeResposta && (
+            <div style={{
+              fontSize: 11, color: C.text, lineHeight: 1.4,
+              maxHeight: 60, overflowY: "auto", wordBreak: "break-word",
+              padding: "4px 8px", borderRadius: R.sm,
+              background: `${"#F59E0B"}10`, borderLeft: `3px solid #F59E0B`,
+            }}>
+              {claudeResposta}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Input unificado */}
       <div style={{
         display: "flex", gap: 6, padding: "8px 12px",
         borderTop: `1px solid ${C.border}`,
       }}>
         <input
+          ref={chatInputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } }}
-          placeholder={`Mensagem em #${canal}...`}
+          placeholder={`#${canal} — use @Claude @Code @Claudin @todos`}
+          disabled={claudeDigitando}
           style={{
             flex: 1, padding: "6px 10px", borderRadius: R.sm,
             background: C.surface2, color: C.text,
             border: `1px solid ${C.border}`, fontSize: 12,
             fontFamily: DM, outline: "none",
+            opacity: claudeDigitando ? 0.5 : 1,
           }}
         />
-        <button onClick={enviar} disabled={!input.trim()} style={{
+        <button onClick={enviar} disabled={!input.trim() || claudeDigitando} style={{
           padding: "6px 14px", borderRadius: R.sm, border: "none",
-          background: input.trim() ? (C.accent || C.info) : C.surface2,
-          color: input.trim() ? "#fff" : C.textDim,
+          background: input.trim() && !claudeDigitando ? (C.accent || C.info) : C.surface2,
+          color: input.trim() && !claudeDigitando ? "#fff" : C.textDim,
           fontSize: 11, fontWeight: 600, fontFamily: DM,
-          cursor: input.trim() ? "pointer" : "default",
+          cursor: input.trim() && !claudeDigitando ? "pointer" : "default",
         }}>
           Enviar
         </button>
-      </div>
-
-      {/* Chat com Claude.ai */}
-      <div style={{
-        borderTop: `2px solid ${C.border}`,
-        padding: "8px 12px",
-        display: "flex", flexDirection: "column", gap: 6,
-        maxHeight: 200, flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Avatar remetente="Claude.ai" size={20} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#F59E0B", fontFamily: DM }}>Chat com Claude.ai</span>
-        </div>
-
-        {/* Resposta do Claude */}
-        {(chatResposta || chatLoading) && (
-          <div style={{
-            padding: "6px 10px", borderRadius: R.sm,
-            background: C.surface2, fontSize: 11, color: C.text,
-            lineHeight: 1.5, maxHeight: 80, overflowY: "auto",
-            wordBreak: "break-word",
-          }}>
-            {chatLoading ? (
-              <span style={{ color: C.textDim, fontStyle: "italic" }}>Claude pensando...</span>
-            ) : (
-              <>
-                {chatResposta}
-                {!chatResposta.startsWith("Erro:") && (
-                  <button onClick={postarNoCanal} style={{
-                    display: "block", marginTop: 4,
-                    padding: "2px 8px", borderRadius: R.sm, border: "none",
-                    background: "#22C55E", color: "#fff",
-                    fontSize: 9, fontWeight: 700, fontFamily: DM,
-                    cursor: "pointer",
-                  }}>
-                    {"\u2192"} Enviar para #{canal}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Input do chat */}
-        <div style={{ display: "flex", gap: 6 }}>
-          <input
-            ref={chatInputRef}
-            value={chatInput}
-            onChange={e => setChatInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviarParaClaude(); } }}
-            placeholder="Pergunte ao Claude.ai..."
-            disabled={chatLoading}
-            style={{
-              flex: 1, padding: "6px 10px", borderRadius: R.sm,
-              background: C.surface2, color: C.text,
-              border: `1px solid #F59E0B40`, fontSize: 11,
-              fontFamily: DM, outline: "none",
-              opacity: chatLoading ? 0.5 : 1,
-            }}
-          />
-          <button onClick={enviarParaClaude} disabled={!chatInput.trim() || chatLoading} style={{
-            padding: "6px 12px", borderRadius: R.sm, border: "none",
-            background: chatInput.trim() && !chatLoading ? "#F59E0B" : C.surface2,
-            color: chatInput.trim() && !chatLoading ? "#fff" : C.textDim,
-            fontSize: 10, fontWeight: 700, fontFamily: DM,
-            cursor: chatInput.trim() && !chatLoading ? "pointer" : "default",
-          }}>
-            {"\u2192"}
-          </button>
-        </div>
       </div>
     </div>
   );
