@@ -4,7 +4,8 @@ import { callClaude, callClaudeStream, setEscritorioMode } from "../lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 const LS_KEY = "zp_escritorio";
-const CANAIS = ["geral", "code", "qa"];
+const CANAIS = ["geral", "code", "qa", "claude"];
+const MAX_CONTEXTO_MSGS = 20;
 const POLL_INTERVAL = 3000;
 const WELCOMED_KEY = "zp_escritorio_welcomed";
 
@@ -182,6 +183,23 @@ export default function Escritorio() {
   }, [canal]);
 
   // Chamar Claude via API e postar resposta no canal
+  // Montar contexto do historico de todos os canais para o #claude
+  const montarContexto = useCallback(() => {
+    const todas = [];
+    for (const c of ["geral", "code", "qa"]) {
+      const msgs = mensagens[c] || [];
+      for (const m of msgs.slice(-MAX_CONTEXTO_MSGS)) {
+        todas.push({ ...m, canal: c });
+      }
+    }
+    // Ordenar por timestamp
+    todas.sort((a, b) => a.at - b.at);
+    // Pegar ultimas MAX_CONTEXTO_MSGS
+    const recentes = todas.slice(-MAX_CONTEXTO_MSGS);
+    if (recentes.length === 0) return "";
+    return recentes.map(m => `[#${m.canal}] ${m.de}${m.para ? ` → ${m.para}` : ""}: ${m.texto}`).join("\n");
+  }, [mensagens]);
+
   const chamarClaude = useCallback(async (prompt, canalDest) => {
     setClaudeDigitando(true);
     setClaudeResposta("");
@@ -232,11 +250,20 @@ export default function Escritorio() {
     adicionarMensagem("Elias", texto, canal);
     setInput("");
 
+    // Canal #claude: SEMPRE chama Claude com historico completo
+    if (canal === "claude") {
+      const contexto = montarContexto();
+      const promptCompleto = contexto
+        ? `Historico recente do Escritorio:\n${contexto}\n\nElias diz: ${texto}`
+        : texto;
+      chamarClaude(promptCompleto, "claude");
+      return;
+    }
+
     const mencoes = detectarMencoes(texto);
     const prompt = limparMencao(texto);
 
     if (mencoes.todos) {
-      // @todos: Claude primeiro, depois notifica Code e Claudin
       chamarClaude(prompt, canal);
       setTimeout(() => adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias"), 1000);
       setTimeout(() => adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias"), 1500);
@@ -250,7 +277,6 @@ export default function Escritorio() {
     if (mencoes.code) {
       setTimeout(() => {
         adicionarMensagem("Code", `Recebi! Tarefa: "${prompt.slice(0, 80)}..." \u2014 execute no Claude Code terminal.`, canal, "Elias");
-        // Copiar para clipboard para colar no Claude Code
         navigator.clipboard?.writeText(prompt).catch(() => {});
       }, 500);
     }
@@ -260,7 +286,7 @@ export default function Escritorio() {
         adicionarMensagem("Claudin", `Iniciando testes: "${prompt.slice(0, 80)}..." \u2014 verificando no browser.`, canal, "Elias");
       }, 500);
     }
-  }, [input, canal, adicionarMensagem, chamarClaude]);
+  }, [input, canal, adicionarMensagem, chamarClaude, montarContexto]);
 
   // Preencher input com mensagem + @Claude
   const preencherChat = (texto) => {
@@ -335,7 +361,7 @@ export default function Escritorio() {
               border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", gap: 4,
             }}>
-              # {c}
+              {c === "claude" ? "\uD83E\uDD16 claude" : `# ${c}`}
               {count > 0 && canal !== c && (
                 <span style={{
                   background: "#EF4444", color: "#fff", fontSize: 9,
@@ -396,7 +422,7 @@ export default function Escritorio() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } }}
-          placeholder={`#${canal} — use @Claude @Code @Claudin @todos`}
+          placeholder={canal === "claude" ? "Fale com Claude.ai (historico completo incluso)..." : `#${canal} — use @Claude @Code @Claudin @todos`}
           disabled={claudeDigitando}
           style={{
             flex: 1, padding: "6px 10px", borderRadius: R.sm,
