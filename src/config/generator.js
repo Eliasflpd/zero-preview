@@ -11,7 +11,7 @@ import { validateCode, getValidationSummary } from "./validator";
 import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from "../lib/cache";
 import { splitComponents } from "./splitter";
 import { knowledgeToContext, loadKnowledge } from "../lib/knowledge";
-import { enforceCSS, countHex } from "../lib/cssEnforcer";
+import { enforceCSS, countHex, fixRechartsJSX } from "../lib/cssEnforcer";
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -250,6 +250,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   const hexEdit = countHex(code);
   if (hexEdit > 0) {
     code = enforceCSS(code);
+    code = fixRechartsJSX(code);
     console.log(`[Zero] CSS Enforcer (edit): ${hexEdit} hex → CSS vars`);
   }
 
@@ -285,6 +286,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
       appCode = enforceCSS(appCode);
       console.log(`[Zero] CSS Enforcer: ${hexBefore} hex → CSS vars`);
     }
+    appCode = fixRechartsJSX(appCode);
 
     validation = validateCode(appCode);
     summary = getValidationSummary(validation);
@@ -307,6 +309,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
             const hexReview = countHex(reviewed);
             if (hexReview > 0) {
               reviewed = enforceCSS(reviewed);
+              reviewed = fixRechartsJSX(reviewed);
               console.log(`[Zero] CSS Enforcer pos-REVIEWER: ${hexReview} hex → CSS vars`);
             }
             const reviewValidation = validateCode(reviewed);

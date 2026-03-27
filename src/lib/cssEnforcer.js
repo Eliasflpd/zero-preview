@@ -158,3 +158,22 @@ export function countHex(code) {
   const matches = code.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g);
   return matches ? matches.length : 0;
 }
+
+/**
+ * Corrige Recharts JSX inline que quebra o Babel parser.
+ * Problema: <BarChart data={d}><XAxis .../><YAxis/>... numa so linha
+ * Babel interpreta /><YAxis/> como TypeScript generic.
+ * Fix: quebra tags Recharts children em linhas separadas.
+ */
+export function fixRechartsJSX(code) {
+  if (!code) return code;
+  // Quebrar qualquer sequencia de "><Tag" dentro de componentes Recharts em novas linhas
+  return code.replace(
+    /(<(?:BarChart|LineChart|AreaChart|PieChart|ComposedChart|RadarChart|ScatterChart|RadialBarChart)\b[^>]*>)(.*?)(<\/(?:BarChart|LineChart|AreaChart|PieChart|ComposedChart|RadarChart|ScatterChart|RadialBarChart)>)/gs,
+    (match, open, children, close) => {
+      // Quebrar children: /><Tag → />\n          <Tag
+      const fixed = children.replace(/\/>\s*</g, '/>\n          <');
+      return open + '\n          ' + fixed.trim() + '\n        ' + close;
+    }
+  );
+}
