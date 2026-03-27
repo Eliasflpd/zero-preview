@@ -329,7 +329,7 @@ export default function Escritorio() {
       }
 
       const n = Object.keys(result.files).length;
-      adicionarMensagem("Code", `Concluido! ${n} arquivo(s), ${result.iterations} iteracoes, ${result.tokens} tokens.`, canal, "Elias");
+      adicionarMensagem("Code", `Tarefa concluida via ${result.provider || "claude"} \u2014 ${n} arquivo(s) gerado(s), ${result.iterations} iteracoes, ${result.tokens} tokens.`, canal, "Elias");
     } catch (err) {
       // Fallback: tentar via callClaude direto (usa fallback providers no backend)
       const isQuota = /429|quota|EMPTY_AGENT|AGENT_UNAVAILABLE/i.test(err.message);
