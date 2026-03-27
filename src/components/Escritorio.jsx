@@ -8,6 +8,21 @@ const CANAIS = ["geral", "code", "qa"];
 const POLL_INTERVAL = 3000;
 const WELCOMED_KEY = "zp_escritorio_welcomed";
 
+const ESCRITORIO_SYSTEM = `Voce e Claude.ai trabalhando no projeto Zero Preview — plataforma que gera apps React+TypeScript+Tailwind com IA.
+
+Contexto do projeto:
+- 12 agentes: VELOCISTA, SOMMELIER, ARQUITETO, EXECUTOR, CRITICO, REVIEWER, MEMORIALISTA, SPLITTER, COMPACT, CLAUDE AGENT, RETRY SIMPLE, KNOWLEDGE
+- Stack: Vite + React + TypeScript (frontend) + Node.js Railway (backend)
+- Deploy: Vercel (zero-preview-six.vercel.app) + Railway (zero-backend-production-7b37.up.railway.app)
+- 11 providers de IA com fallback automatico (Claude, DeepSeek, Gemini, Groq, Cerebras, SambaNova, Mistral, HuggingFace, Scaleway, Cloudflare)
+- Repos: Eliasflpd/zero-preview e Eliasflpd/zero-backend
+- CSS Enforcer converte hex hardcoded automaticamente
+- Limite de 400 linhas por arquivo gerado
+- 20 nichos brasileiros suportados
+
+Voce esta no Escritorio — canal de comunicacao entre Elias (dono), Claude.ai (voce), Code (Claude Code CLI) e Claudin (QA tester).
+Responda de forma direta e tecnica sobre o projeto. Maximo 3 paragrafos. Em portugues.`;
+
 const AVATARS = {
   "Elias":     { cor: "#3B82F6", letra: "E" },
   "Claude.ai": { cor: "#F59E0B", letra: "C" },
@@ -173,7 +188,7 @@ export default function Escritorio() {
     let fullText = "";
     try {
       await callClaudeStream(
-        "Voce e um assistente do projeto Zero Preview. Responda de forma concisa e direta em portugues. Maximo 3 paragrafos.",
+        ESCRITORIO_SYSTEM,
         prompt,
         2000,
         (chunk) => {
@@ -189,7 +204,7 @@ export default function Escritorio() {
       // Fallback non-streaming
       try {
         const resposta = await callClaude(
-          "Voce e um assistente do projeto Zero Preview. Responda de forma concisa e direta em portugues. Maximo 3 paragrafos.",
+          ESCRITORIO_SYSTEM,
           prompt,
           2000
         );
