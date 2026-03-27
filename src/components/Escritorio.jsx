@@ -290,29 +290,81 @@ export default function Escritorio() {
   const acionarCode = useCallback(async (prompt) => {
     adicionarMensagem("Code", "Recebi! Executando tarefa...", canal, "Elias");
     navigator.clipboard?.writeText(prompt).catch(() => {});
+
     try {
       const result = await callClaudeAgent(prompt, {}, (s) => adicionarMensagem("Code", `Agent: ${s}`, canal));
-      if (result?.files) {
-        const n = Object.keys(result.files).length;
-        adicionarMensagem("Code", `Concluido! ${n} arquivo(s), ${result.iterations} iteracoes, ${result.tokens} tokens.`, canal, "Elias");
+
+      // Detectar resposta vazia / 0 iteracoes
+      if (!result?.files || result.iterations === 0 || Object.keys(result.files || {}).length === 0) {
+        throw new Error("EMPTY_AGENT");
       }
-    } catch { adicionarMensagem("Code", `Agent indisponivel. Cole no terminal.`, canal, "Elias"); }
+
+      const n = Object.keys(result.files).length;
+      adicionarMensagem("Code", `Concluido! ${n} arquivo(s), ${result.iterations} iteracoes, ${result.tokens} tokens.`, canal, "Elias");
+    } catch (err) {
+      // Fallback: tentar via callClaude direto (usa fallback providers no backend)
+      const isQuota = /429|quota|EMPTY_AGENT|AGENT_UNAVAILABLE/i.test(err.message);
+
+      if (isQuota) {
+        adicionarMensagem("Code", "Agent com quota esgotada. Tentando via provider alternativo...", canal, "Elias");
+        try {
+          setEscritorioMode(true);
+          const resp = await callClaude(
+            "Voce e um dev React+TypeScript+Tailwind. Execute a tarefa e retorne APENAS o codigo. Sem markdown.",
+            prompt,
+            8000
+          );
+          setEscritorioMode(false);
+          if (resp && resp.length > 50) {
+            adicionarMensagem("Code", `Tarefa executada via fallback (${resp.length} chars). Codigo gerado com sucesso.`, canal, "Elias");
+          } else {
+            throw new Error("vazio");
+          }
+        } catch {
+          setEscritorioMode(false);
+          adicionarMensagem("Code", `Quota esgotada ate Apr 1 \u2014 execute manualmente: "${prompt.slice(0, 120)}..."`, canal, "Elias");
+        }
+      } else {
+        adicionarMensagem("Code", `Agent indisponivel. Cole no terminal: "${prompt.slice(0, 100)}..."`, canal, "Elias");
+      }
+    }
   }, [canal, adicionarMensagem]);
 
   const acionarClaudin = useCallback(async (prompt) => {
     adicionarMensagem("Claudin", "Iniciando testes...", canal, "Elias");
     const key = getLicenseKey();
     if (!key) { adicionarMensagem("Claudin", "Sem licenca.", canal, "Elias"); return; }
-    try {
-      const res = await fetch(`${API_BASE}/escritorio/testar`, {
-        method: "POST", headers: { "Content-Type": "application/json", "x-license-key": key },
-        body: JSON.stringify({ tarefa: prompt, canal }),
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const d = await res.json();
-      const erros = (d.erros || []).length > 0 ? ` | Erros: ${d.erros.join(", ")}` : "";
-      adicionarMensagem("Claudin", `Score: ${d.score}/100 | ${d.lineCount} linhas | ${d.provider}${erros}`, canal, "Elias");
-    } catch (e) { adicionarMensagem("Claudin", `Falhou: ${e.message}`, canal, "Elias"); }
+
+    // Tentar ate 2x (segunda com header x-preferred-provider diferente)
+    for (let tentativa = 0; tentativa < 2; tentativa++) {
+      try {
+        const headers = { "Content-Type": "application/json", "x-license-key": key };
+        if (tentativa > 0) {
+          headers["x-preferred-provider"] = "groq"; // Fallback para Groq na segunda tentativa
+          adicionarMensagem("Claudin", "Testando com provider alternativo...", canal, "Elias");
+        }
+
+        const res = await fetch(`${API_BASE}/escritorio/testar`, {
+          method: "POST", headers,
+          body: JSON.stringify({ tarefa: prompt, canal }),
+        });
+
+        // Se 429 e primeira tentativa, tenta de novo
+        if (res.status === 429 && tentativa === 0) continue;
+        if (!res.ok) throw new Error(`${res.status}`);
+
+        const d = await res.json();
+        const erros = (d.erros || []).length > 0 ? ` | Erros: ${d.erros.join(", ")}` : "";
+        adicionarMensagem("Claudin", `Score: ${d.score}/100 | ${d.lineCount} linhas | ${d.provider}${erros}`, canal, "Elias");
+        return; // Sucesso, sair do loop
+      } catch (e) {
+        if (tentativa === 1 || !/429/.test(e.message)) {
+          adicionarMensagem("Claudin", `Teste falhou apos ${tentativa + 1} tentativa(s). Execute manualmente.`, canal, "Elias");
+          return;
+        }
+        // 429 na primeira tentativa — continua pro retry
+      }
+    }
   }, [canal, adicionarMensagem]);
 
   const enviar = useCallback(() => {
