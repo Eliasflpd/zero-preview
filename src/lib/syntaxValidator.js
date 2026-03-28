@@ -312,6 +312,34 @@ function detectUnclosedJSX(code, fileName) {
   return errors;
 }
 
+// ─── DETECTOR: TYPE ANNOTATIONS EM ARROW FUNCTIONS DENTRO DE JSX PROPS ──────
+// Padroes como formatter={(v:any)=> quebram Babel/Vite dentro de JSX
+// O correto e (v)=> ou definir tipo fora do JSX
+
+function detectBrokenTypedArrowsInJSX(code, fileName) {
+  if (!JSX_EXTENSIONS.test(fileName)) return [];
+  const errors = [];
+  const lines = code.split("\n");
+  // Detecta (param:type)=> ou (param:type)= /> dentro de JSX props (apos ={)
+  const pattern = /=\{[^}]*\((\w+)\s*:\s*\w+\)\s*=\s*>?/g;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(line)) !== null) {
+      errors.push({
+        file: fileName,
+        line: i + 1,
+        col: match.index,
+        message: `Arrow function com type annotation dentro de JSX prop quebra o parser. Use (${match[1]}) => em vez de (${match[1]}:type) =>`,
+        type: "typed_arrow_in_jsx",
+      });
+    }
+  }
+  return errors;
+}
+
 // ─── VALIDADOR PRINCIPAL ────────────────────────────────────────────────────
 
 /**
@@ -342,6 +370,11 @@ export function validateSyntax(files) {
     // JSX detector — detectUnclosedJSX filtra internamente tambem
     allErrors.push(
       ...detectUnclosedJSX(content, fileName),
+    );
+
+    // Typed arrow functions em JSX props — quebra Babel/Vite
+    allErrors.push(
+      ...detectBrokenTypedArrowsInJSX(content, fileName),
     );
   }
 
@@ -463,6 +496,39 @@ export async function autoFix(files, errors) {
         // Remove fixed errors from errorsByFile so API fix skips them
         errorsByFile[fileName] = remaining;
         console.log(`[Zero] Local fix: ${fileName} — tags Shadcn corrigidas (${fileErrors.length - remaining.length} erros resolvidos)`);
+      }
+      if (remaining.length === 0) {
+        delete errorsByFile[fileName];
+      }
+    }
+  }
+
+  // Fase 1.5: Fix local para typed arrows em JSX props (zero tokens)
+  for (const [fileName, fileErrors] of Object.entries(errorsByFile)) {
+    const hasTypedArrow = fileErrors.some(e => e.type === "typed_arrow_in_jsx");
+    if (!hasTypedArrow) continue;
+
+    let code = fixedFiles[fileName];
+    if (!code) continue;
+
+    // Remove type annotations de arrow functions dentro de JSX props: (v:any)=> → (v)=>
+    // Tambem corrige o caso quebrado (v:any)= /> → (v) =>
+    code = code.replace(/=\{([^}]*)\((\w+)\s*:\s*\w+\)\s*=\s*\/?>/g, (match, before, param) => {
+      return `={${before}(${param}) =>`;
+    });
+    // Fix simples inline tambem: (param:Type) => dentro de ={...}
+    code = code.replace(/(\=\{[^}]*)\((\w+)\s*:\s*\w+\)\s*=>/g, (match, before, param) => {
+      return `${before}(${param}) =>`;
+    });
+
+    if (code !== fixedFiles[fileName]) {
+      fixedFiles[fileName] = code;
+      const recheck = validateSyntax({ [fileName]: code });
+      const remaining = recheck.errors.filter(e => e.file === fileName);
+      if (remaining.length < fileErrors.length) {
+        fixedCount++;
+        errorsByFile[fileName] = remaining;
+        console.log(`[Zero] Local fix: ${fileName} — typed arrow em JSX corrigido`);
       }
       if (remaining.length === 0) {
         delete errorsByFile[fileName];
