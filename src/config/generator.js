@@ -12,6 +12,10 @@ import { getCacheEntry, setCacheEntry, recordGeneration, getTopPrompts } from ".
 import { splitComponents } from "./splitter";
 import { knowledgeToContext, loadKnowledge } from "../lib/knowledge";
 import { enforceCSS, countHex, fixRechartsJSX } from "../lib/cssEnforcer";
+import { ENGINEERING_SYSTEM_PROMPT, buildErrorRecoveryPrompt } from "../lib/engineeringPrompt";
+import { errorCapture } from "../lib/errorCapture";
+import { projectContext } from "../lib/projectContext";
+import { parseAIOutput, sortFilesByDependency, validateFileContent } from "../lib/patchEngine";
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -177,11 +181,22 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
     }
   }
 
+  // ══ STEP 4.5: CONTEXTO — Injeta memoria do projeto ══════════════════════
+  // Carrega contexto persistente do projeto (Mecanismo 4)
+  const activeProjectId = localStorage.getItem("zp_active_project") || "";
+  if (activeProjectId) {
+    projectContext.load(activeProjectId);
+    projectContext.update({ projectName: prompt.slice(0, 50), description: prompt });
+  }
+  const projectCtxBlock = activeProjectId ? projectContext.buildContextBlock() : "";
+
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
   emit(onProgress, STEPS.EXECUTOR, "Gerando aplicacao React...");
 
   // Build compact prompt — avoid wasting tokens on repetitive context
+  // Injeta ENGINEERING_SYSTEM_PROMPT (Mecanismo 1) + contexto do projeto (Mecanismo 4)
   let appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING:\n${brief.instruction}`;
+  if (projectCtxBlock) appPrompt += `\n\n${projectCtxBlock}`;
   if (extras) appPrompt += extras;
   appPrompt += `\n\nRetorne APENAS codigo TSX. Sem markdown. Maximo 400 linhas. Comece com imports.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
@@ -218,6 +233,13 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   const duration = Date.now() - startTime;
   recordGeneration({ prompt: prompt.slice(0, 200), nicho, score: appCode.score, duration, success: true });
   setCacheEntry(prompt, nicho, files, appCode.score);
+
+  // Mecanismo 4: registra arquivos gerados no contexto persistente
+  if (activeProjectId) {
+    Object.keys(files).forEach(f => projectContext.addGeneratedFile(f));
+    projectContext.clearErrors();
+    projectContext.save(activeProjectId);
+  }
 
   emit(onProgress, STEPS.DONE, `Pronto! ${appCode.summary.emoji} ${appCode.score}/100 (${(duration / 1000).toFixed(1)}s)`, "success");
   return { files, validation: appCode.validation };
@@ -256,6 +278,13 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
 
   const validation = validateCode(code);
   const summary = getValidationSummary(validation);
+
+  // Mecanismo 3: valida conteudo antes de aplicar
+  const patchCheck = validateFileContent("src/pages/Dashboard.tsx", code);
+  if (!patchCheck.valid) {
+    emit(onProgress, STEPS.CRITICO, `Alerta: ${patchCheck.issues.join(', ')}`, "warning");
+  }
+
   files["src/pages/Dashboard.tsx"] = code;
 
   const duration = Date.now() - startTime;
@@ -271,12 +300,24 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
   let validation;
   let summary;
 
+  // System prompt enriquecido com regras de engenharia (Mecanismo 1)
+  const enrichedSystem = `${SYSTEM_PROMPT}\n\n${ENGINEERING_SYSTEM_PROMPT}`;
+
   for (let attempt = 0; attempt < 2; attempt++) {
     if (attempt > 0) {
       emit(onProgress, STEPS.RETRY, "Score baixo. Regenerando...");
+
+      // Mecanismo 5: usa recovery prompt com escalada de estrategia
+      const capturedErrors = errorCapture.getRecentErrors(3);
+      if (capturedErrors.length > 0) {
+        const errorMsg = capturedErrors.map(e => e.message).join('\n');
+        const errorStack = capturedErrors.map(e => e.stack || '').filter(Boolean).join('\n');
+        const recoveryBlock = buildErrorRecoveryPrompt(errorMsg, errorStack, attempt + 1);
+        appPrompt = `${recoveryBlock}\n\nPEDIDO ORIGINAL:\n${appPrompt}`;
+      }
     }
 
-    const appRaw = await callClaudeStream(SYSTEM_PROMPT, appPrompt, 16000, onCodeStream);
+    const appRaw = await callClaudeStream(enrichedSystem, appPrompt, 16000, onCodeStream);
     appCode = cleanCodeFences(appRaw);
     if (!appCode || appCode.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
 

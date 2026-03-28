@@ -11,6 +11,9 @@ import DiffReview from "../components/DiffReview";
 import RewindPanel from "../components/RewindPanel";
 import { analyzeProject, saveKnowledge, loadKnowledge } from "../lib/knowledge";
 import WCManager from "../lib/wcManager";
+import { projectContext } from "../lib/projectContext";
+import { retryEngine } from "../lib/retryEngine";
+import { GenerationStatus } from "../components/GenerationStatus";
 
 // All lazy imports have stale-chunk protection — auto-reload on deploy
 function safeLazy(importFn) {
@@ -60,6 +63,7 @@ export default function Dashboard({ user, onLogout }) {
   const [orchestratorOpen, setOrchestratorOpen] = useState(false);
   const [escritorioOpen, setEscritorioOpen] = useState(false);
   const [navegadorOpen, setNavegadorOpen] = useState(false);
+  const [statusMessages, setStatusMessages] = useState([]);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -148,6 +152,9 @@ export default function Dashboard({ user, onLogout }) {
     setHistory(p.history || []); setError(""); setThinkSteps([]);
     initProject(id, hasFiles ? p.files : null);
     setKnowledge(loadKnowledge(id));
+    // Mecanismo 4: carrega contexto persistente do projeto
+    projectContext.load(id);
+    if (p.name) projectContext.update({ projectName: p.name });
     try { localStorage.setItem("zp_active_project", id); } catch {}
   };
 
@@ -345,13 +352,21 @@ export default function Dashboard({ user, onLogout }) {
     lastGenRef.current = now;
     promptRef.current = currentPrompt;
 
-    setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode("");
+    setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode(""); setStatusMessages([]);
 
     try {
       const onProgressFn = (event) => {
         const msg = typeof event === "string" ? event : event?.message || "";
         const step = typeof event === "object" ? event?.step : null;
+        const type = typeof event === "object" ? event?.type : "info";
         setThinkSteps(prev => [...prev, { step, message: msg }]);
+        // Mecanismo 7: alimenta o GenerationStatus
+        setStatusMessages(prev => [...prev, {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          message: msg,
+          type: type === "success" ? "success" : type === "warning" ? "warning" : step === "RETRY" ? "warning" : "info",
+          timestamp: Date.now(),
+        }]);
       };
 
       const result = await generateFiles(
@@ -594,6 +609,15 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Mecanismo 7: Indicador visual de status da geracao */}
+      <GenerationStatus
+        isGenerating={generating}
+        attempt={retryEngine.getAttemptInfo().attempt}
+        maxAttempts={retryEngine.getMaxAttempts()}
+        messages={statusMessages}
+        onDismiss={() => setStatusMessages([])}
+      />
 
       {/* Disparador floating bridge — only if admin key exists */}
       {(() => { const ak = localStorage.getItem("zp_admin_key"); return ak ? <Suspense fallback={null}><DisparadorBridge adminKey={ak} /></Suspense> : null; })()}

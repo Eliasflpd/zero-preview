@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import WCManager from "../lib/wcManager";
 import { C, DM } from "../config/theme";
 import { exportToZip } from "../lib/exporter";
+import { errorCapture } from "../lib/errorCapture";
 
 const DeployModal = lazy(() => import("./DeployModal"));
 const GitHubSync = lazy(() => import("./GitHubSync"));
@@ -49,7 +50,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   const autoFixTimer = useRef(null);
 
   // Reset auto-fix counter when runId changes (new generation)
-  useEffect(() => { autoFixCount.current = 0; }, [runId]);
+  useEffect(() => { autoFixCount.current = 0; errorCapture.clearErrors(); }, [runId]);
+
+  // Mecanismo 2: inicia captura global de erros do iframe
+  useEffect(() => {
+    errorCapture.startListening();
+    return () => errorCapture.stopListening();
+  }, []);
 
   const triggerAutoFix = useCallback((errorMsg) => {
     if (!onAutoFix || autoFixCount.current >= 5 || autoFixing) return;
@@ -92,6 +99,8 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
     // Detect Vite/React compile errors in terminal output
     if (type === "default" && (clean.includes("Error:") || clean.includes("error TS") || clean.includes("SyntaxError"))) {
       type = "error";
+      // Mecanismo 2: captura erro de build no errorCapture
+      errorCapture.interceptTerminalOutput(clean);
       // AUTO-DEBUG: trigger automatic fix for compile errors
       if (clean.includes("SyntaxError") || clean.includes("error TS") || clean.includes("Unexpected token") || clean.includes("Cannot find")) {
         triggerAutoFix(clean);
@@ -101,12 +110,20 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
   }, [triggerAutoFix]);
 
   // Listen for runtime errors from iframe via postMessage
+  // Mecanismo 2: conecta errorCapture ao listener de runtime errors
   useEffect(() => {
     const handler = (e) => {
       if (e.data?.type === "PREVIEW_UNCAUGHT_EXCEPTION" || e.data?.type === "error") {
         const msg = e.data.message || e.data.error || "Erro desconhecido no preview";
         setRuntimeError(msg);
         addLog(`Runtime error: ${msg}`, "error");
+        // Captura no errorCapture para alimentar retry engine
+        errorCapture._capture({
+          type: 'runtime-error',
+          message: msg,
+          stack: e.data.stack || '',
+          timestamp: Date.now(),
+        });
         // AUTO-DEBUG: also trigger for runtime errors
         triggerAutoFix(msg);
       }
