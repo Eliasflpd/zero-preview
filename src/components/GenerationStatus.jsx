@@ -7,7 +7,7 @@
  * Usa o design system da plataforma (theme.js) com CSS inline.
  */
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { C, DM, MONO, EASE, SHADOW } from '../config/theme';
 
 /**
@@ -27,32 +27,35 @@ import { C, DM, MONO, EASE, SHADOW } from '../config/theme';
  * @param {() => void} [props.onDismiss]
  */
 function GenerationStatusInner({ isGenerating, attempt, maxAttempts, messages, onDismiss }) {
+  // ═══ TODOS OS HOOKS NO TOPO — ANTES DE QUALQUER RETURN ═══
   const [visible, setVisible] = useState(false);
 
+  const lastMessage = messages[messages.length - 1];
+  const hasError = lastMessage?.type === 'error';
+  const isRetrying = attempt > 1;
+
+  const handleDismiss = useCallback(() => {
+    setVisible(false);
+    if (onDismiss) onDismiss();
+  }, [onDismiss]);
+
+  // Mostra quando comeca a gerar ou tem mensagens
   useEffect(() => {
     if (isGenerating || messages.length > 0) {
       setVisible(true);
     }
   }, [isGenerating, messages.length]);
 
-  if (!visible) return null;
-
-  const lastMessage = messages[messages.length - 1];
-  const hasError = lastMessage?.type === 'error';
-  const isRetrying = attempt > 1;
-
-  const handleDismiss = () => {
-    setVisible(false);
-    if (onDismiss) onDismiss();
-  };
-
   // Auto-dismiss apos 5s se concluiu com sucesso
   useEffect(() => {
-    if (!isGenerating && !hasError && messages.length > 0) {
+    if (!isGenerating && !hasError && messages.length > 0 && visible) {
       const timer = setTimeout(handleDismiss, 5000);
       return () => clearTimeout(timer);
     }
-  }, [isGenerating, hasError, messages.length]);
+  }, [isGenerating, hasError, messages.length, visible, handleDismiss]);
+
+  // ═══ EARLY RETURN DEPOIS DE TODOS OS HOOKS ═══
+  if (!visible) return null;
 
   const typeColors = {
     success: C.success,
@@ -84,8 +87,6 @@ function GenerationStatusInner({ isGenerating, attempt, maxAttempts, messages, o
       overflow: 'hidden',
       fontFamily: DM,
       transition: `opacity 0.3s ${EASE.out}, transform 0.3s ${EASE.out}`,
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(12px)',
     }}>
       {/* Header */}
       <div style={{
@@ -140,7 +141,7 @@ function GenerationStatusInner({ isGenerating, attempt, maxAttempts, messages, o
             onMouseEnter={(e) => { e.currentTarget.style.color = C.text; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = C.textDim; }}
           >
-            \u2715
+            {'\u2715'}
           </button>
         )}
       </div>
