@@ -16,6 +16,33 @@ import { ENGINEERING_SYSTEM_PROMPT, buildErrorRecoveryPrompt } from "../lib/engi
 import { errorCapture } from "../lib/errorCapture";
 import { projectContext } from "../lib/projectContext";
 import { parseAIOutput, sortFilesByDependency, validateFileContent } from "../lib/patchEngine";
+import { reconstructLocally, reconstructWithAI, hasKeepMarkers } from "../lib/model2Reconstructor";
+
+const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
+
+/**
+ * Modelo 2 — chama backend /reconstruct para reconstruir arquivo.
+ * @param {string} prompt
+ * @returns {Promise<string>}
+ */
+async function callModel2(prompt) {
+  const licenseKey = (() => {
+    try { return JSON.parse(localStorage.getItem("zp_license")) || ""; } catch { return ""; }
+  })();
+
+  const res = await fetch(`${API_BASE}/reconstruct`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-license-key": licenseKey,
+    },
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!res.ok) throw new Error(`Reconstruct failed: ${res.status}`);
+  const data = await res.json();
+  return data.content || "";
+}
 
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
@@ -245,28 +272,66 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   return { files, validation: appCode.validation };
 }
 
-// ─── EDIT MODE (lightweight — 1 AI call) ─────────────────────────────────────
+// ─── EDIT MODE (dual-model — Modelo 1 gera diff, Modelo 2 reconstroi) ───────
 async function editMode(prompt, previousCode, files, onProgress, onCodeStream, startTime) {
-  emit(onProgress, STEPS.EDIT, "Modo edicao rapida...");
+  emit(onProgress, STEPS.EDIT, "Modo edicao (dual-model)...");
 
   // Inject project knowledge context if available
   const knowledgeCtx = knowledgeToContext(loadKnowledge(localStorage.getItem("zp_active_project") || ""));
 
-  // Edit prompt is compact — fits in Groq's context easily
-  const editPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`${knowledgeCtx}\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Mantenha tudo que funciona. Aplique apenas a mudanca pedida. Use Tailwind. Sem markdown.`;
+  // Modelo 1 (Arquiteto): gera diff parcial com "keep existing code"
+  // Instrui explicitamente a usar o formato diff em vez de reescrever tudo
+  const editSystem = `${SYSTEM_PROMPT}\n\n${ENGINEERING_SYSTEM_PROMPT}`;
+  const editPrompt = `CODIGO ATUAL DO ARQUIVO:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`${knowledgeCtx}\n\nALTERACAO PEDIDA: ${prompt}\n\nUse "// ... keep existing code (descricao)" para secoes que NAO mudam. Escreva completo apenas o codigo novo ou modificado. Sem markdown, sem explicacao. Se a mudanca for pequena, a maioria do arquivo deve ser "keep existing code".`;
 
-  // Use non-streaming callClaude — goes through callWithFallback on backend
-  // This avoids the Claude streaming empty response issue
   let raw;
   try {
-    raw = await callClaude("Voce edita codigo React+TypeScript+Tailwind. Retorne APENAS o codigo modificado completo. Sem explicacao.", editPrompt, 8192);
+    raw = await callClaude(editSystem, editPrompt, 8192);
   } catch (e) {
     if (isAuthError(e)) throw e;
-    // If non-streaming also fails, try streaming as last resort
-    raw = await callClaudeStream(SYSTEM_PROMPT, editPrompt, 8192, onCodeStream);
+    raw = await callClaudeStream(editSystem, editPrompt, 8192, onCodeStream);
   }
   let code = cleanCodeFences(raw);
-  if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+  if (!code || code.length < 50) throw new Error("Codigo muito pequeno. Tente novamente.");
+
+  // Dual-model: se o AI usou "keep existing code", reconstroi com Modelo 2
+  if (hasKeepMarkers(code)) {
+    emit(onProgress, STEPS.EDIT, "Modelo 2 reconstruindo arquivo...");
+
+    // Passo 1: tenta reconstrucao local (instantanea)
+    const localResult = reconstructLocally("src/pages/Dashboard.tsx", previousCode, code);
+
+    if (localResult.hasUnresolved) {
+      // Passo 2: sobrou "keep" sem resolver — chama Modelo 2 via backend
+      try {
+        const aiResult = await reconstructWithAI(
+          "src/pages/Dashboard.tsx", previousCode, code, callModel2
+        );
+        code = aiResult.fullContent;
+      } catch (reconstructErr) {
+        // Fallback: usa resultado parcial da reconstrucao local
+        code = localResult.fullContent;
+      }
+    } else {
+      code = localResult.fullContent;
+    }
+
+    // Verifica se a reconstrucao nao ficou vazia ou muito pequena
+    if (!code || code.length < 100) {
+      // Fallback final: pede pro AI reescrever completo
+      emit(onProgress, STEPS.EDIT, "Reconstrucao falhou — modo fallback...");
+      const fallbackPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Sem "keep existing code". Mantenha tudo que funciona. Sem markdown.`;
+      try {
+        raw = await callClaude("Voce edita codigo React+TypeScript+Tailwind. Retorne APENAS o codigo modificado completo.", fallbackPrompt, 8192);
+        code = cleanCodeFences(raw);
+      } catch (e) {
+        if (isAuthError(e)) throw e;
+        raw = await callClaudeStream(SYSTEM_PROMPT, fallbackPrompt, 8192, onCodeStream);
+        code = cleanCodeFences(raw);
+      }
+      if (!code || code.length < 100) throw new Error("Codigo muito pequeno. Tente novamente.");
+    }
+  }
 
   // CSS Enforcer no edit mode
   const hexEdit = countHex(code);
