@@ -11,6 +11,8 @@ const AGENT_MAP = {
   [STEPS.SOMMELIER]:    { name: "Sommelier",       pct: 15 },
   [STEPS.ARCHITECT]:    { name: "Arquiteto",       pct: 25 },
   [STEPS.CSS]:          { name: "Executor",        pct: 30 },
+  [STEPS.INTENT]:       { name: "Template Engine", pct: 40 },
+  [STEPS.TEMPLATE]:     { name: "Template Engine", pct: 80 },
   [STEPS.MEMORIALISTA]: { name: "Memorialista",    pct: 35 },
   [STEPS.EXECUTOR]:     { name: "Executor",        pct: 50 },
   [STEPS.CRITICO]:      { name: "Critico",         pct: 75 },

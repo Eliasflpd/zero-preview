@@ -17,6 +17,7 @@ import { errorCapture } from "../lib/errorCapture";
 import { projectContext } from "../lib/projectContext";
 import { parseAIOutput, sortFilesByDependency, validateFileContent } from "../lib/patchEngine";
 import { reconstructLocally, reconstructWithAI, hasKeepMarkers } from "../lib/model2Reconstructor";
+import { shouldUseTemplate, generateFromTemplate } from "../lib/templateEngine";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://zero-backend-production-7b37.up.railway.app";
 
@@ -73,6 +74,8 @@ export const STEPS = {
   SOMMELIER:    "SOMMELIER",
   ARCHITECT:    "ARCHITECT",
   CSS:          "CSS",
+  INTENT:       "INTENT",
+  TEMPLATE:     "TEMPLATE",
   MEMORIALISTA: "MEMORIALISTA",
   EXECUTOR:     "EXECUTOR",
   CRITICO:      "CRITICO",
@@ -181,6 +184,42 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
   emit(onProgress, STEPS.CSS, "Estilos aplicados", "success");
 
+  // Carrega contexto persistente do projeto (usado no template e no pipeline)
+  const activeProjectId = localStorage.getItem("zp_active_project") || "";
+  if (activeProjectId) {
+    projectContext.load(activeProjectId);
+    projectContext.update({ projectName: prompt.slice(0, 50), description: prompt });
+  }
+
+  // ══ STEP 3.5: TEMPLATE ENGINE — Se provider fraco, usa template ═══════════
+  if (shouldUseTemplate()) {
+    emit(onProgress, STEPS.INTENT, "Extraindo intencao (Template Engine)...");
+    try {
+      const templateResult = await generateFromTemplate(prompt, nicho, nicheConfig.palette, onProgress);
+      files["src/pages/Dashboard.tsx"] = templateResult.code;
+
+      emit(onProgress, STEPS.TEMPLATE, `Template ${templateResult.intent.appType} · ${templateResult.summary.emoji} ${templateResult.score}/100`);
+
+      // Cache e registro
+      const duration = Date.now() - startTime;
+      recordGeneration({ prompt: prompt.slice(0, 200), nicho, score: templateResult.score, duration, success: true, template: true });
+      setCacheEntry(prompt, nicho, files, templateResult.score);
+
+      if (activeProjectId) {
+        Object.keys(files).forEach(f => projectContext.addGeneratedFile(f));
+        projectContext.clearErrors();
+        projectContext.save(activeProjectId);
+      }
+
+      emit(onProgress, STEPS.DONE, `Pronto! ${templateResult.summary.emoji} ${templateResult.score}/100 (${(duration / 1000).toFixed(1)}s) [Template]`, "success");
+      return { files, validation: templateResult.validation };
+    } catch (templateErr) {
+      // Fallback: se template engine falhar, continua com pipeline normal
+      console.log("[Zero] Template engine falhou, usando pipeline normal:", templateErr.message);
+      emit(onProgress, STEPS.TEMPLATE, "Template falhou — usando geracao AI", "warning");
+    }
+  }
+
   // ══ STEP 4: MEMORIALISTA — Build enhanced prompt ═══════════════════════════
   const topPrompts = getTopPrompts(3);
   let extras = "";
@@ -209,12 +248,6 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   }
 
   // ══ STEP 4.5: CONTEXTO — Injeta memoria do projeto ══════════════════════
-  // Carrega contexto persistente do projeto (Mecanismo 4)
-  const activeProjectId = localStorage.getItem("zp_active_project") || "";
-  if (activeProjectId) {
-    projectContext.load(activeProjectId);
-    projectContext.update({ projectName: prompt.slice(0, 50), description: prompt });
-  }
   const projectCtxBlock = activeProjectId ? projectContext.buildContextBlock() : "";
 
   // ══ STEP 5: EXECUTOR — Generate App.jsx (streaming) ════════════════════════
