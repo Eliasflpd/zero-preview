@@ -242,20 +242,26 @@ const WCManager = {
     this.devProcess.output.pipeTo(new WritableStream({
       write(chunk) {
         onLog(chunk);
-        // Limpa escape codes ANSI antes de processar
-        const clean = String(chunk).replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d]+[GK]/g, '');
+        // Strip COMPLETO de escape codes e control chars
+        const clean = String(chunk)
+          .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '')
+          .replace(/\[[\d]+[GKHFm]/g, '')
+          .replace(/[\x00-\x1F\x7F]/g, ' ')
+          .trim();
 
-        // Captura URL direto do output do Vite
-        if (clean.includes('Local') && clean.includes('http') && !urlFromOutput) {
-          const match = clean.match(/http:\/\/localhost:(\d+)/);
+        console.log('[Zero AUDIT] vite-chunk-clean:', JSON.stringify(clean.slice(0, 200)));
+
+        // Detectar URL
+        if (clean.includes('localhost') && !urlFromOutput) {
+          const match = clean.match(/https?:\/\/localhost:(\d+)/);
           if (match) {
-            urlFromOutput = `http://localhost:${match[1]}`;
-            console.log('[Zero AUDIT] vite-url-from-output', urlFromOutput);
+            urlFromOutput = match[0];
+            console.log('[Zero AUDIT] URL detectada:', urlFromOutput);
           }
         }
-        // Log quando Vite reporta porta em uso
+        // Log porta em uso
         if (clean.includes('Port') && clean.includes('in use')) {
-          console.log('[Zero AUDIT] vite-port-in-use', clean.trim());
+          console.log('[Zero AUDIT] vite-port-in-use', clean);
         }
       }
     }));
