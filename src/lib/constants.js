@@ -118,7 +118,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><A
       react: "^18.2.0", "react-dom": "^18.2.0",
       "lucide-react": "^0.383.0",
     },
-    devDependencies: { "@vitejs/plugin-react-swc": "^3.5.0", vite: "^5.0.8" }
+    devDependencies: { "@vitejs/plugin-react": "^4.3.4", vite: "^5.0.8" }
   }, null, 2),
 };
 
