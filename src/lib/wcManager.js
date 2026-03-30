@@ -242,15 +242,20 @@ const WCManager = {
     this.devProcess.output.pipeTo(new WritableStream({
       write(chunk) {
         onLog(chunk);
-        // Captura URL direto do output do Vite (fallback se server-ready nao dispara)
-        const urlMatch = String(chunk).match(/Local:\s+(https?:\/\/[^\s]+)/);
-        if (urlMatch && !urlFromOutput) {
-          urlFromOutput = urlMatch[1];
-          console.log('[Zero AUDIT] vite-url-from-output', urlFromOutput);
+        // Limpa escape codes ANSI antes de processar
+        const clean = String(chunk).replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\[[\d]+[GK]/g, '');
+
+        // Captura URL direto do output do Vite
+        if (clean.includes('Local') && clean.includes('http') && !urlFromOutput) {
+          const match = clean.match(/http:\/\/localhost:(\d+)/);
+          if (match) {
+            urlFromOutput = `http://localhost:${match[1]}`;
+            console.log('[Zero AUDIT] vite-url-from-output', urlFromOutput);
+          }
         }
         // Log quando Vite reporta porta em uso
-        if (String(chunk).includes('Port') && String(chunk).includes('in use')) {
-          console.log('[Zero AUDIT] vite-port-in-use', String(chunk).trim());
+        if (clean.includes('Port') && clean.includes('in use')) {
+          console.log('[Zero AUDIT] vite-port-in-use', clean.trim());
         }
       }
     }));
