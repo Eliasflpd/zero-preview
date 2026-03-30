@@ -11,14 +11,15 @@ export const FIXED_FILES = {
       "react": "^18.3.1",
       "react-dom": "^18.3.1",
       "react-router-dom": "^6.26.0",
-      "recharts": "^2.12.7",
+      "chart.js": "^4.4.0",
+      "react-chartjs-2": "^5.2.0",
       "lucide-react": "^0.441.0",
       "@supabase/supabase-js": "^2.45.0",
       "clsx": "^2.1.1",
       "tailwind-merge": "^2.5.2",
     },
     devDependencies: {
-      "@vitejs/plugin-react": "^4.3.4",
+      "@vitejs/plugin-react-swc": "^3.5.0",
       "@types/react": "^18.3.5",
       "@types/react-dom": "^18.3.0",
       "autoprefixer": "^10.4.20",
@@ -134,22 +135,30 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   // ─── Utility: cn() + formatCurrency + formatDate ─────────────────────────────
   "src/lib/utils.ts": `import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+export { formatCurrency, formatDate, formatPercent, formatPhone } from "../utils/formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
-
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("pt-BR");
-}
-
-export function formatPhone(phone: string): string {
-  return phone.replace(/(\\d{2})(\\d{5})(\\d{4})/, "($1) $2-$3");
 }`,
+
+  // ─── Formatters centralizados (NUNCA redeclarar em arquivos gerados) ────────
+  "src/utils/formatters.ts": [
+    'export const formatCurrency = (v: number): string =>',
+    '  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);',
+    '',
+    'export const formatDate = (d: Date | string): string =>',
+    '  new Date(d).toLocaleDateString("pt-BR");',
+    '',
+    'export const formatPercent = (v: number): string =>',
+    '  `${v.toFixed(1)}%`;',
+    '',
+    'export const formatPhone = (phone: string): string => {',
+    '  const digits = phone.replace(/\\D/g, "");',
+    '  if (digits.length === 11) return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;',
+    '  if (digits.length === 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;',
+    '  return phone;',
+    '};',
+  ].join('\n'),
 
   // ─── Shadcn/UI: Button ───────────────────────────────────────────────────────
   "src/components/ui/button.tsx": `import * as React from "react";

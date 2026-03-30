@@ -21,7 +21,7 @@ export default function ChatArea({
   history, generating, streamingCode, error, thinkSteps,
   prompt, onPromptChange, onGenerate, onRetry,
   licenseInfo, hasPreview, disabled,
-  onSuggestionClick, onSlashCommand,
+  onSuggestionClick, onSlashCommand, buildError,
 }) {
   const historyEndRef = useRef();
   const textareaRef = useRef();
@@ -125,34 +125,57 @@ export default function ChatArea({
               </div>
             </div>
             {/* AI response */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <div style={{
-                width: 22, height: 22, flexShrink: 0,
-                background: `linear-gradient(135deg, ${C.yellow}, #FFE088)`,
-                borderRadius: R.xs, display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 0 12px rgba(255,208,80,0.15)",
-              }}>
-                <span style={{ fontSize: 10, fontWeight: 900, color: C.bg, fontFamily: SYNE }}>Z</span>
-              </div>
-              <div style={{
-                background: C.yellowGlow2, border: `1px solid rgba(255,208,80,0.1)`,
-                borderRadius: "4px 14px 14px 14px", padding: "8px 12px",
-                fontSize: 11, color: C.yellow, fontFamily: DM,
-                display: "flex", alignItems: "center", gap: 8,
-              }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                App gerado com sucesso
-                {h.score != null && (
-                  <span style={{
-                    fontSize: 9, padding: "1px 7px", borderRadius: R.xs, fontWeight: 700,
-                    background: h.score >= 70 ? C.successDim : h.score >= 40 ? C.warningDim : C.errorDim,
-                    color: h.score >= 70 ? C.success : h.score >= 40 ? C.warning : C.error,
+            {(() => {
+              const isLast = i === history.length - 1;
+              const hasBuildErr = isLast && buildError;
+              const statusColor = hasBuildErr ? C.error : C.yellow;
+              const statusBg = hasBuildErr ? C.errorDim : C.yellowGlow2;
+              const statusBorder = hasBuildErr ? "rgba(248,113,113,0.2)" : "rgba(255,208,80,0.1)";
+              const statusText = hasBuildErr ? "App gerado com erros" : "App gerado com sucesso";
+              const statusIcon = hasBuildErr
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>;
+              return (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <div style={{
+                    width: 22, height: 22, flexShrink: 0,
+                    background: hasBuildErr ? "rgba(248,113,113,0.1)" : `linear-gradient(135deg, ${C.yellow}, #FFE088)`,
+                    borderRadius: R.xs, display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: hasBuildErr ? "0 0 12px rgba(248,113,113,0.15)" : "0 0 12px rgba(255,208,80,0.15)",
                   }}>
-                    {h.score}/100
-                  </span>
-                )}
-              </div>
-            </div>
+                    <span style={{ fontSize: 10, fontWeight: 900, color: hasBuildErr ? C.error : C.bg, fontFamily: SYNE }}>{hasBuildErr ? "!" : "Z"}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{
+                      background: statusBg, border: `1px solid ${statusBorder}`,
+                      borderRadius: "4px 14px 14px 14px", padding: "8px 12px",
+                      fontSize: 11, color: statusColor, fontFamily: DM,
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      {statusIcon}
+                      {statusText}
+                      {h.score != null && (
+                        <span style={{
+                          fontSize: 9, padding: "1px 7px", borderRadius: R.xs, fontWeight: 700,
+                          background: h.score >= 70 ? C.successDim : h.score >= 40 ? C.warningDim : C.errorDim,
+                          color: h.score >= 70 ? C.success : h.score >= 40 ? C.warning : C.error,
+                        }}>
+                          {h.score}/100
+                        </span>
+                      )}
+                    </div>
+                    {hasBuildErr && (
+                      <div style={{
+                        fontSize: 10, color: C.error, fontFamily: "'Courier New', monospace",
+                        padding: "4px 12px", lineHeight: 1.5, wordBreak: "break-all",
+                      }}>
+                        {buildError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         ))}
 
@@ -165,7 +188,7 @@ export default function ChatArea({
         )}
 
         {(generating || (thinkSteps && thinkSteps.length > 0 && !hasPreview)) && (
-          <GenerationProgress steps={thinkSteps || []} generating={generating} />
+          <GenerationProgress steps={thinkSteps || []} generating={generating} buildError={buildError} />
         )}
 
         {generating && streamingCode && <StreamingCode code={streamingCode} />}

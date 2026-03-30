@@ -15,7 +15,7 @@ import { enforceCSS, countHex, fixRechartsJSX } from "../lib/cssEnforcer";
 import { ENGINEERING_SYSTEM_PROMPT, buildErrorRecoveryPrompt } from "../lib/engineeringPrompt";
 import { errorCapture } from "../lib/errorCapture";
 import { projectContext } from "../lib/projectContext";
-import { parseAIOutput, sortFilesByDependency, validateFileContent } from "../lib/patchEngine";
+import { parseAIOutput, sortFilesByDependency, validateFileContent, removeDuplicateConsts, replaceInlineFormatters } from "../lib/patchEngine";
 import { reconstructLocally, reconstructWithAI, hasKeepMarkers } from "../lib/model2Reconstructor";
 import { shouldUseTemplate, generateFromTemplate } from "../lib/templateEngine";
 
@@ -48,7 +48,7 @@ async function callModel2(prompt) {
 // ─── CONTEXTO BR (injetado em TODA chamada — geração E edit) ─────────────────
 const CONTEXTO_BR = `
 CONTEXTO BRASIL OBRIGATORIO:
-- Valores monetarios SEMPRE em R$ usando: const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+- Valores monetarios SEMPRE em R$ usando formatCurrency() importado de @/lib/utils. NUNCA redeclare formatCurrency.
 - Metodo de pagamento preferencial: PIX. Inclua PIX em qualquer tela de pagamento ou financeiro.
 - Documentos: CPF (mascarado: ***.***-XX) ou CNPJ em formularios.
 - Nomes brasileiros: Maria Silva, Joao Santos, Ana Oliveira, Carlos Souza, Fernanda Lima, Pedro Costa.
@@ -374,6 +374,9 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
     console.log(`[Zero] CSS Enforcer (edit): ${hexEdit} hex → CSS vars`);
   }
 
+  // Substitui formatters inline por import + remove duplicatas
+  code = removeDuplicateConsts(replaceInlineFormatters(code));
+
   const validation = validateCode(code);
   const summary = getValidationSummary(validation);
 
@@ -427,6 +430,9 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
     }
     appCode = fixRechartsJSX(appCode);
 
+    // Substitui formatters inline por import + remove duplicatas
+    appCode = removeDuplicateConsts(replaceInlineFormatters(appCode));
+
     validation = validateCode(appCode);
     summary = getValidationSummary(validation);
     emit(onProgress, STEPS.CRITICO, `${summary.emoji} ${validation.score}/100`);
@@ -451,6 +457,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
               reviewed = fixRechartsJSX(reviewed);
               console.log(`[Zero] CSS Enforcer pos-REVIEWER: ${hexReview} hex → CSS vars`);
             }
+            reviewed = removeDuplicateConsts(replaceInlineFormatters(reviewed));
             const reviewValidation = validateCode(reviewed);
             if (reviewValidation.score >= validation.score) {
               appCode = reviewed;

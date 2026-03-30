@@ -20,7 +20,7 @@ function detectStack(files) {
       if (deps.vue) stack.push("Vue");
       if (deps.vite) stack.push("Vite");
       if (deps.tailwindcss) stack.push("Tailwind CSS");
-      if (deps.recharts) stack.push("Recharts");
+      if (deps["react-chartjs-2"] || deps["chart.js"]) stack.push("Chart.js");
       if (deps["lucide-react"]) stack.push("Lucide Icons");
       if (deps["@supabase/supabase-js"]) stack.push("Supabase");
       if (deps["react-router-dom"]) stack.push("React Router");

@@ -205,6 +205,176 @@ export function sortFilesByDependency(files) {
 }
 
 /**
+ * Nomes de formatters que existem em @/utils/formatters e @/lib/utils.
+ * Se o AI declarar esses nomes inline, substituimos por import.
+ */
+const KNOWN_FORMATTERS = ['formatCurrency', 'formatDate', 'formatPercent', 'formatPhone'];
+
+/**
+ * Remove declaracoes inline de formatters conhecidos e garante que o import existe.
+ * Resolve: AI redeclarando formatCurrency/formatDate dentro do arquivo gerado.
+ *
+ * @param {string} content - Conteudo do arquivo .tsx/.ts
+ * @returns {string} - Conteudo limpo com import correto
+ */
+export function replaceInlineFormatters(content) {
+  if (!content) return content;
+
+  const lines = content.split('\n');
+  const linesToRemove = new Set();
+  const foundFormatters = new Set();
+
+  // Regex: const formatCurrency = ... ou function formatDate(...)
+  // Captura variantes: const, let, var, function, export const, export function
+  const declPatterns = KNOWN_FORMATTERS.map(name => ({
+    name,
+    regex: new RegExp(`^\\s*(?:export\\s+)?(?:const|let|var|function)\\s+${name}\\s*[=(]`),
+  }));
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const { name, regex } of declPatterns) {
+      if (!regex.test(line)) continue;
+
+      foundFormatters.add(name);
+      // Remove a declaracao inteira (pode ser multiline)
+      let braceDepth = 0;
+      let parenDepth = 0;
+      let started = false;
+      let j = i;
+
+      for (; j < lines.length; j++) {
+        const l = lines[j];
+        for (const ch of l) {
+          if (ch === '{') { braceDepth++; started = true; }
+          else if (ch === '}') { braceDepth--; }
+          else if (ch === '(') { parenDepth++; started = true; }
+          else if (ch === ')') { parenDepth--; }
+        }
+        linesToRemove.add(j);
+        if (started && braceDepth <= 0 && parenDepth <= 0) {
+          if (j + 1 < lines.length && lines[j + 1].trim() === ';') {
+            linesToRemove.add(j + 1);
+          }
+          break;
+        }
+        if (!started && (l.trimEnd().endsWith(';') || l.trimEnd().endsWith(','))) break;
+      }
+      break; // one match per line
+    }
+  }
+
+  if (foundFormatters.size === 0) return content;
+
+  // Filtra linhas removidas
+  let result = lines.filter((_, i) => !linesToRemove.has(i)).join('\n');
+
+  // Verifica se ja existe import de @/lib/utils ou @/utils/formatters
+  const hasUtilsImport = /import\s+\{[^}]*\}\s+from\s+["']@\/lib\/utils["']/.test(result);
+  const hasFormattersImport = /import\s+\{[^}]*\}\s+from\s+["']@\/utils\/formatters["']/.test(result);
+
+  if (hasUtilsImport) {
+    // Adiciona os formatters faltantes ao import existente de @/lib/utils
+    const utilsImportMatch = result.match(/import\s+\{([^}]*)\}\s+from\s+["']@\/lib\/utils["']/);
+    if (utilsImportMatch) {
+      const existingImports = utilsImportMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+      for (const name of foundFormatters) {
+        if (!existingImports.includes(name)) {
+          existingImports.push(name);
+        }
+      }
+      const newImport = `import { ${existingImports.join(', ')} } from "@/lib/utils"`;
+      result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']@\/lib\/utils["'][;]?/, newImport + ';');
+    }
+  } else if (!hasFormattersImport) {
+    // Nenhum import existe — adiciona import de @/lib/utils no topo (apos outros imports)
+    const lastImportIdx = result.lastIndexOf('\nimport ');
+    if (lastImportIdx !== -1) {
+      const lineEnd = result.indexOf('\n', lastImportIdx + 1);
+      const formattersArr = Array.from(foundFormatters);
+      const newImportLine = `\nimport { ${formattersArr.join(', ')} } from "@/lib/utils";`;
+      result = result.slice(0, lineEnd) + newImportLine + result.slice(lineEnd);
+    } else {
+      // Sem imports — coloca no topo
+      const formattersArr = Array.from(foundFormatters);
+      result = `import { ${formattersArr.join(', ')} } from "@/lib/utils";\n` + result;
+    }
+  }
+
+  return result.replace(/\n{3,}/g, '\n\n');
+}
+
+/**
+ * Remove declaracoes duplicadas de const/function no mesmo arquivo.
+ * Mantém apenas a primeira ocorrência de cada declaração.
+ * Resolve: [plugin:vite:react-babel] Duplicate declaration
+ *
+ * @param {string} content - Conteudo do arquivo
+ * @returns {string} - Conteudo sem duplicatas
+ */
+export function removeDuplicateConsts(content) {
+  if (!content) return content;
+
+  const seen = new Map(); // name -> first occurrence line index
+  const lines = content.split('\n');
+  const linesToRemove = new Set();
+
+  // Pattern: const name = ..., function name(...), let name =
+  const declRegex = /^(?:export\s+)?(?:const|let|function)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*[=(]/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    const match = trimmed.match(declRegex);
+    if (!match) continue;
+
+    const name = match[1];
+    if (!seen.has(name)) {
+      seen.set(name, i);
+      continue;
+    }
+
+    // Duplicate found — remove this entire declaration block
+    // Find the end of the declaration (track braces/parens)
+    let braceDepth = 0;
+    let parenDepth = 0;
+    let started = false;
+    let j = i;
+
+    for (; j < lines.length; j++) {
+      const line = lines[j];
+      for (const ch of line) {
+        if (ch === '{') { braceDepth++; started = true; }
+        else if (ch === '}') { braceDepth--; }
+        else if (ch === '(') { parenDepth++; started = true; }
+        else if (ch === ')') { parenDepth--; }
+      }
+
+      linesToRemove.add(j);
+
+      // Declaration ends when all braces/parens are closed
+      if (started && braceDepth <= 0 && parenDepth <= 0) {
+        // Also check if next line is just a semicolon
+        if (j + 1 < lines.length && lines[j + 1].trim() === ';') {
+          linesToRemove.add(j + 1);
+        }
+        break;
+      }
+
+      // Simple single-line declaration (no braces opened)
+      if (!started && (line.endsWith(';') || line.endsWith(','))) {
+        break;
+      }
+    }
+  }
+
+  if (linesToRemove.size === 0) return content;
+
+  const result = lines.filter((_, i) => !linesToRemove.has(i)).join('\n');
+  // Clean up multiple blank lines left behind
+  return result.replace(/\n{3,}/g, '\n\n');
+}
+
+/**
  * Validacao basica de conteudo antes de escrever no WebContainer.
  * Detecta problemas obvios que causariam erro de build.
  *

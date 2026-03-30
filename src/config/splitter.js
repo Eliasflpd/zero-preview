@@ -209,10 +209,14 @@ function buildExtractedFile(comp, originalCode) {
   if (comp.fullMatch.includes("formatCurrency")) usedImports.push(`import { formatCurrency } from "@/lib/utils";`);
   if (comp.fullMatch.includes("formatDate")) usedImports.push(`import { formatDate } from "@/lib/utils";`);
 
-  // Check for recharts
-  const rechartsUsed = ["BarChart", "Bar", "LineChart", "Line", "PieChart", "Pie", "Cell", "XAxis", "YAxis", "CartesianGrid", "Tooltip", "Legend", "ResponsiveContainer", "AreaChart", "Area"]
-    .filter(name => comp.fullMatch.includes(name));
-  if (rechartsUsed.length) usedImports.push(`import { ${rechartsUsed.join(", ")} } from "recharts";`);
+  // Check for react-chartjs-2
+  const chartjsUsed = ["Bar", "Line", "Pie", "Doughnut", "Radar", "PolarArea", "Scatter", "Bubble"]
+    .filter(name => {
+      // Only match if used as a JSX component (e.g. <Bar ) not a chart.js register (e.g. BarElement)
+      const pattern = new RegExp(`<${name}[\\s/>]`);
+      return pattern.test(comp.fullMatch);
+    });
+  if (chartjsUsed.length) usedImports.push(`import { ${chartjsUsed.join(", ")} } from "react-chartjs-2";`);
 
   // Deduplicate and merge utils imports
   const uniqueImports = [...new Set(usedImports)];

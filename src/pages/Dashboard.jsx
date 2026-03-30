@@ -64,6 +64,7 @@ export default function Dashboard({ user, onLogout }) {
   const [escritorioOpen, setEscritorioOpen] = useState(false);
   const [navegadorOpen, setNavegadorOpen] = useState(false);
   const [statusMessages, setStatusMessages] = useState([]);
+  const [buildError, setBuildError] = useState(null);
   const lastGenRef = useRef(0);
   const promptRef = useRef(prompt);
   promptRef.current = prompt;
@@ -352,7 +353,7 @@ export default function Dashboard({ user, onLogout }) {
     lastGenRef.current = now;
     promptRef.current = currentPrompt;
 
-    setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode(""); setStatusMessages([]);
+    setError(""); setGenerating(true); setThinkSteps([]); setStreamingCode(""); setStatusMessages([]); setBuildError(null);
 
     try {
       const onProgressFn = (event) => {
@@ -497,12 +498,20 @@ export default function Dashboard({ user, onLogout }) {
               licenseInfo={licenseInfo}
               hasPreview={hasPreview}
               disabled={generating}
+              buildError={buildError}
             />
           )}
 
           {hasPreview && (
             <Suspense fallback={null}>
-              <PreviewPanel files={generatedFiles} runId={runId} projectName={activeProject?.name} onClose={() => { setGeneratedFiles(null); setRunId(null); }} onAutoFix={(fixPrompt) => { promptRef.current = fixPrompt; setPrompt(fixPrompt); requestAnimationFrame(() => handleGenerate()); }} />
+              <PreviewPanel files={generatedFiles} runId={runId} projectName={activeProject?.name} onClose={() => { setGeneratedFiles(null); setRunId(null); }} onAutoFix={(fixPrompt) => { promptRef.current = fixPrompt; setPrompt(fixPrompt); requestAnimationFrame(() => handleGenerate()); }} onBuildStatus={(status) => {
+                if (status?.hasError) {
+                  setBuildError(status.message);
+                  setStatusMessages(prev => [...prev, { id: `build_err_${Date.now()}`, message: `Erro de build: ${status.message}`, type: "error", timestamp: Date.now() }]);
+                } else {
+                  setBuildError(null);
+                }
+              }} />
             </Suspense>
           )}
         </div>

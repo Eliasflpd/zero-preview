@@ -202,7 +202,7 @@ function v9_hasComponents(code) {
 // ─── V10: No Forbidden Patterns ─────────────────────────────────────────────
 // Allowed packages that exist in the generated app's package.json
 const ALLOWED_PACKAGES = new Set([
-  "react", "react-dom", "recharts", "lucide-react",
+  "react", "react-dom", "chart.js", "react-chartjs-2", "lucide-react",
   "react/jsx-runtime", "react-dom/client",
   "react-router-dom", "clsx", "tailwind-merge",
   "@supabase/supabase-js",

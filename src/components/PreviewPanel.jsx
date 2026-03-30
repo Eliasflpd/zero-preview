@@ -33,7 +33,7 @@ function Terminal({ logs }) {
   );
 }
 
-export default function PreviewPanel({ files, runId, onClose, onAutoFix, projectName }) {
+export default function PreviewPanel({ files, runId, onClose, onAutoFix, projectName, onBuildStatus }) {
   const [status, setStatus] = useState("booting");
   const [logs, setLogs] = useState([]);
   const [url, setUrl] = useState("");
@@ -101,13 +101,27 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
       type = "error";
       // Mecanismo 2: captura erro de build no errorCapture
       errorCapture.interceptTerminalOutput(clean);
+
+      // Notifica o parent sobre o erro de build
+      if (onBuildStatus) {
+        // Extrai nome do arquivo e tipo do erro
+        const fileMatch = clean.match(/(?:src\/[^\s:]+|[A-Z]\w+\.tsx?)/);
+        const errorType = clean.includes("Duplicate declaration") ? "Duplicate declaration"
+          : clean.includes("SyntaxError") ? "SyntaxError"
+          : clean.includes("Cannot find") ? "Module not found"
+          : clean.includes("error TS") ? "TypeScript error"
+          : "Build error";
+        const fileName = fileMatch ? fileMatch[0] : "arquivo desconhecido";
+        onBuildStatus({ hasError: true, message: `${fileName} — ${errorType}`, raw: clean });
+      }
+
       // AUTO-DEBUG: trigger automatic fix for compile errors
-      if (clean.includes("SyntaxError") || clean.includes("error TS") || clean.includes("Unexpected token") || clean.includes("Cannot find")) {
+      if (clean.includes("SyntaxError") || clean.includes("error TS") || clean.includes("Unexpected token") || clean.includes("Cannot find") || clean.includes("Duplicate declaration")) {
         triggerAutoFix(clean);
       }
     }
     setLogs(prev => [...prev.slice(-400), { text: clean, type }]);
-  }, [triggerAutoFix]);
+  }, [triggerAutoFix, onBuildStatus]);
 
   // Listen for runtime errors from iframe via postMessage
   // Mecanismo 2: conecta errorCapture ao listener de runtime errors
@@ -174,6 +188,10 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           setUrl(serverUrl);
           setStatus("ready");
           clearTimeout(loadTimer.current);
+          // Notifica sucesso se nao houve erros de build
+          if (serverUrl && onBuildStatus && !errorCapture.hasErrors()) {
+            onBuildStatus({ hasError: false, message: null });
+          }
         }
       }
     ).catch(e => {

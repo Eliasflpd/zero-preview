@@ -33,12 +33,13 @@ function resolveAgent(stepObj) {
   return { name: "Zero", pct: 50, desc: msg };
 }
 
-export default function GenerationProgress({ steps, generating }) {
+export default function GenerationProgress({ steps, generating, buildError }) {
   if (!generating && (!steps || steps.length === 0)) return null;
 
   const lastStep = steps[steps.length - 1];
   const agent = resolveAgent(lastStep);
   const isDone = !generating;
+  const hasBuildError = isDone && buildError;
 
   return (
     <div style={{
@@ -49,26 +50,28 @@ export default function GenerationProgress({ steps, generating }) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
-          background: isDone ? "rgba(52,211,153,0.1)" : "rgba(255,208,80,0.1)",
-          border: `1px solid ${isDone ? "rgba(52,211,153,0.3)" : "rgba(255,208,80,0.3)"}`,
+          background: hasBuildError ? "rgba(248,113,113,0.1)" : isDone ? "rgba(52,211,153,0.1)" : "rgba(255,208,80,0.1)",
+          border: `1px solid ${hasBuildError ? "rgba(248,113,113,0.3)" : isDone ? "rgba(52,211,153,0.3)" : "rgba(255,208,80,0.3)"}`,
           display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
         }}>
-          <span style={{ fontSize: 12, fontWeight: 800, color: isDone ? C.success : C.yellow, fontFamily: SYNE }}>
-            {isDone ? "v" : agent.name.charAt(0)}
+          <span style={{ fontSize: 12, fontWeight: 800, color: hasBuildError ? C.error : isDone ? C.success : C.yellow, fontFamily: SYNE }}>
+            {hasBuildError ? "x" : isDone ? "v" : agent.name.charAt(0)}
           </span>
         </div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: isDone ? C.success : C.yellow, fontFamily: SYNE }}>
-            {isDone ? "Concluido" : agent.name}
+          <div style={{ fontSize: 12, fontWeight: 700, color: hasBuildError ? C.error : isDone ? C.success : C.yellow, fontFamily: SYNE }}>
+            {hasBuildError ? "Erro no build" : isDone ? "Concluido" : agent.name}
           </div>
-          <div style={{ fontSize: 11, color: C.textMuted, fontFamily: DM }}>{agent.desc}</div>
+          <div style={{ fontSize: 11, color: hasBuildError ? C.error : C.textMuted, fontFamily: hasBuildError ? "'Courier New', monospace" : DM }}>
+            {hasBuildError ? buildError : agent.desc}
+          </div>
         </div>
       </div>
 
       <div style={{ height: 4, background: C.bg, borderRadius: 2, overflow: "hidden" }}>
         <div style={{
           height: "100%", width: `${isDone ? 100 : agent.pct}%`,
-          background: isDone ? C.success : `linear-gradient(90deg, ${C.yellow}, ${C.info})`,
+          background: hasBuildError ? C.error : isDone ? C.success : `linear-gradient(90deg, ${C.yellow}, ${C.info})`,
           borderRadius: 2, transition: "width 0.5s ease",
         }} />
       </div>

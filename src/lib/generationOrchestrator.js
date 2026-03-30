@@ -14,7 +14,7 @@
 
 import { ENGINEERING_SYSTEM_PROMPT } from './engineeringPrompt';
 import { errorCapture } from './errorCapture';
-import { parseAIOutput, sortFilesByDependency, validateFileContent } from './patchEngine';
+import { parseAIOutput, sortFilesByDependency, validateFileContent, removeDuplicateConsts, replaceInlineFormatters } from './patchEngine';
 import { projectContext } from './projectContext';
 import { retryEngine } from './retryEngine';
 
@@ -103,6 +103,13 @@ export async function orchestrateGeneration(params, callAI) {
 
       // Ordena por dependencia
       const sortedFiles = sortFilesByDependency(parsed.files);
+
+      // Sanitiza: substitui formatters inline + remove duplicatas em .ts/.tsx
+      for (const file of sortedFiles) {
+        if (/\.(tsx?|jsx?)$/.test(file.filename)) {
+          file.content = removeDuplicateConsts(replaceInlineFormatters(file.content));
+        }
+      }
 
       // Valida e escreve cada arquivo
       let allValid = true;

@@ -49,11 +49,19 @@ export function buildDashboard(intent, palette) {
 
   return `import { useState } from "react";
 import { ${iconImport} } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const chartData = [
-${chartData.map(d => `  { name: "${d.label}", value: ${parseInt(d.value) || 0} },`).join("\n")}
-];
+const chartData = {
+  labels: [${chartData.map(d => `"${d.label}"`).join(", ")}],
+  datasets: [{
+    label: "Valor",
+    data: [${chartData.map(d => parseInt(d.value) || 0).join(", ")}],
+    backgroundColor: "var(--accent)",
+    borderRadius: 6,
+  }],
+};
 
 const tableData = [
 ${tableRows.map((r, i) => `  { id: ${i + 1}, name: "${r.label}", value: "${r.value}", status: "${r.icon === "CheckCircle" ? "Ativo" : r.icon === "Clock" ? "Pendente" : "Inativo"}" },`).join("\n")}
@@ -159,18 +167,7 @@ ${statsCards.map((s, i) => `              { label: "${s.label}", value: "${s.val
           <div className="bg-white rounded-xl border border-[var(--border)] p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">${chart?.title || "Visao Geral"}</h2>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#6B7280" }} />
-                  <YAxis tick={{ fontSize: 12, fill: "#6B7280" }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 13 }}
-                    formatter={(v) => ["R$ " + Number(v).toLocaleString("pt-BR"), "Valor"]}
-                  />
-                  <Bar dataKey="value" fill="var(--accent)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <Bar data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
             </div>
           </div>
 

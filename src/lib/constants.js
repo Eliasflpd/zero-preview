@@ -67,10 +67,11 @@ const useCounter = (end, duration=1500) => {
   return val;
 };
 
-GRAFICOS - RECHARTS OBRIGATORIO:
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-SEMPRE use ResponsiveContainer com width="100%" e height numerico.
-NUNCA use SVG manual para graficos.
+GRAFICOS - CHART.JS + REACT-CHARTJS-2 OBRIGATORIO:
+import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
+NUNCA use SVG manual para graficos. NUNCA importe recharts.
 Pizza SEMPRE com cores: const CORES = ['#1565C0', '#059669', '#3B82F6', '#F59E0B', '#EF4444'];
 
 Card padrao: background #FFFFFF, borderRadius 12, border 1px solid #E5E7EB, padding 20px 24px, boxShadow 0 1px 3px rgba(0,0,0,0.06).
@@ -82,7 +83,7 @@ const REVIEWER_PROMPT = `Voce e um revisor especialista em React + Vite. Corrija
 
 CORRIJA OBRIGATORIAMENTE:
 1. Tailwind CSS - substitua por inline styles
-2. Imports nao instalados (exceto: react, react-dom, recharts, lucide-react) - remova
+2. Imports nao instalados (exceto: react, react-dom, chart.js, react-chartjs-2, lucide-react) - remova
 3. Icones sem size - adicione size={18}
 4. Componentes nao definidos - adicione ou remova
 5. useState/useEffect sem import - adicione
@@ -117,9 +118,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><A
     scripts: { dev: "vite --host", build: "vite build" },
     dependencies: {
       react: "^18.2.0", "react-dom": "^18.2.0",
-      recharts: "^2.12.7", "lucide-react": "^0.383.0",
+      "chart.js": "^4.4.0", "react-chartjs-2": "^5.2.0", "lucide-react": "^0.383.0",
     },
-    devDependencies: { "@vitejs/plugin-react": "^4.2.1", vite: "^5.0.8" }
+    devDependencies: { "@vitejs/plugin-react-swc": "^3.5.0", vite: "^5.0.8" }
   }, null, 2),
 };
 
