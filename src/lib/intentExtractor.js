@@ -52,6 +52,7 @@ REGRAS:
 export async function extractIntent(prompt, niche) {
   const userMsg = `Nicho: ${niche}\nPedido: ${prompt}`;
 
+  const t0 = Date.now();
   try {
     const raw = await callClaude(INTENT_SYSTEM, userMsg, 2000);
     const cleaned = raw.replace(/```json?\s*/gi, "").replace(/```\s*/g, "").trim();
@@ -69,10 +70,11 @@ export async function extractIntent(prompt, niche) {
     if (!intent.title) intent.title = intent.appName;
     if (!intent.subtitle) intent.subtitle = "";
 
+    console.log('[Zero AUDIT] intent-extraction', { status: 'ok', strategy: 'ai', reason: null, durationMs: Date.now() - t0 });
     return intent;
   } catch (e) {
     // Fallback: intent basica gerada localmente (zero AI)
-    console.log("[Zero] Intent extraction failed, using local fallback:", e.message);
+    console.log('[Zero AUDIT] intent-extraction', { status: 'failed', strategy: 'local-fallback', reason: e.message, durationMs: Date.now() - t0 });
     return buildLocalIntent(prompt, niche);
   }
 }

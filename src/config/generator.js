@@ -215,7 +215,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
       return { files, validation: templateResult.validation };
     } catch (templateErr) {
       // Fallback: se template engine falhar, continua com pipeline normal
-      console.log("[Zero] Template engine falhou, usando pipeline normal:", templateErr.message);
+      console.log('[Zero AUDIT] template-engine', { status: 'failed', fallbackUsed: true, reason: templateErr.message, durationMs: Date.now() - startTime });
       emit(onProgress, STEPS.TEMPLATE, "Template falhou — usando geracao AI", "warning");
     }
   }
@@ -371,8 +371,8 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   if (hexEdit > 0) {
     code = enforceCSS(code);
     code = fixRechartsJSX(code);
-    console.log(`[Zero] CSS Enforcer (edit): ${hexEdit} hex → CSS vars`);
   }
+  console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexEdit, filesAffected: ['src/pages/Dashboard.tsx (edit-mode)'] });
 
   // Substitui formatters inline por import + remove duplicatas
   code = removeDuplicateConsts(replaceInlineFormatters(code));
@@ -426,9 +426,9 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
     const hexBefore = countHex(appCode);
     if (hexBefore > 0) {
       appCode = enforceCSS(appCode);
-      console.log(`[Zero] CSS Enforcer: ${hexBefore} hex → CSS vars`);
     }
     appCode = fixRechartsJSX(appCode);
+    console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexBefore, filesAffected: ['src/pages/Dashboard.tsx'] });
 
     // Substitui formatters inline por import + remove duplicatas
     appCode = removeDuplicateConsts(replaceInlineFormatters(appCode));
@@ -455,8 +455,8 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
             if (hexReview > 0) {
               reviewed = enforceCSS(reviewed);
               reviewed = fixRechartsJSX(reviewed);
-              console.log(`[Zero] CSS Enforcer pos-REVIEWER: ${hexReview} hex → CSS vars`);
             }
+            console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexReview, filesAffected: ['src/pages/Dashboard.tsx (pos-reviewer)'] });
             reviewed = removeDuplicateConsts(replaceInlineFormatters(reviewed));
             const reviewValidation = validateCode(reviewed);
             if (reviewValidation.score >= validation.score) {

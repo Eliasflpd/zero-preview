@@ -63,6 +63,17 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
     autoFixCount.current++;
     setAutoFixing(true);
     addLog(`Auto-debug: corrigindo automaticamente (tentativa ${autoFixCount.current}/5)...`, "info");
+
+    // Extrair arquivo do erro para o audit
+    const fileMatch = errorMsg.match(/(?:src\/[^\s:]+|[A-Z]\w+\.tsx?)/);
+    console.log('[Zero AUDIT] local-fix', {
+      status: 'error',
+      file: fileMatch ? fileMatch[0] : 'desconhecido',
+      errorsFixed: 0,
+      buildStatus: 'error-500',
+      reason: errorMsg.slice(0, 200),
+    });
+
     // Wait 2s for errors to settle, then fix
     clearTimeout(autoFixTimer.current);
     autoFixTimer.current = setTimeout(() => {
@@ -192,6 +203,13 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           if (serverUrl && onBuildStatus && !errorCapture.hasErrors()) {
             onBuildStatus({ hasError: false, message: null });
           }
+          console.log('[Zero AUDIT] local-fix', {
+            status: serverUrl ? 'ok' : 'error',
+            file: 'src/pages/Dashboard.tsx',
+            errorsFixed: autoFixCount.current,
+            buildStatus: serverUrl ? 'success' : 'pending',
+            reason: serverUrl ? null : 'server URL vazio',
+          });
         }
       }
     ).catch(e => {

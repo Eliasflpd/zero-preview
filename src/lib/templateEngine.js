@@ -37,6 +37,8 @@ export function shouldUseTemplate() {
  * @returns {Promise<{code: string, score: number, validation: object, summary: object, intent: object}>}
  */
 export async function generateFromTemplate(prompt, niche, palette, onProgress) {
+  const t0 = Date.now();
+
   // Step 1: Extrair intencao (modelo fraco faz isso bem)
   onProgress?.({ step: "INTENT", message: "Extraindo intencao...", type: "info" });
   const intent = await extractIntent(prompt, niche);
@@ -46,7 +48,14 @@ export async function generateFromTemplate(prompt, niche, palette, onProgress) {
 
   // Step 3: Gerar codigo a partir do template + intencao
   onProgress?.({ step: "TEMPLATE", message: `Template: ${intent.appType}`, type: "info" });
-  const code = builder(intent, palette);
+  let code;
+  try {
+    code = builder(intent, palette);
+    console.log('[Zero AUDIT] template-engine', { status: 'ok', fallbackUsed: false, reason: null, durationMs: Date.now() - t0 });
+  } catch (e) {
+    console.log('[Zero AUDIT] template-engine', { status: 'failed', fallbackUsed: false, reason: e.message, durationMs: Date.now() - t0 });
+    throw e;
+  }
 
   // Step 4: Validar (deve passar com score alto, ja que template e valido)
   const validation = validateCode(code);
