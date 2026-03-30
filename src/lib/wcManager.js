@@ -170,11 +170,11 @@ const WCManager = {
 
     // ── AUDITORIA: le vite.config.ts de volta do WC filesystem ───────
     try {
-      const viteFromWC = await wc.fs.readFile("vite.config.ts", "utf-8");
-      console.log("[Zero AUDIT] === vite.config.ts LIDO DO WebContainer ===");
+      const viteFromWC = await wc.fs.readFile("vite.config.js", "utf-8");
+      console.log("[Zero AUDIT] === vite.config.js LIDO DO WebContainer ===");
       console.log(viteFromWC);
     } catch (e) {
-      console.log("[Zero AUDIT] Erro lendo vite.config.ts do WC:", e.message);
+      console.log("[Zero AUDIT] Erro lendo vite.config.js do WC:", e.message);
     }
 
     // ── npm install ──────────────────────────────────────────────────
@@ -236,14 +236,29 @@ const WCManager = {
   async _startViteWithTimeout(wc, files, onLog, onUrl, isRetry = false) {
     onLog(isRetry ? "Reiniciando Vite..." : "Iniciando Vite...", "info");
 
+    let urlFromOutput = null;
+
     this.devProcess = await wc.spawn("npm", ["run", "dev"]);
     this.devProcess.output.pipeTo(new WritableStream({
-      write(chunk) { onLog(chunk); }
+      write(chunk) {
+        onLog(chunk);
+        // Captura URL direto do output do Vite (fallback se server-ready nao dispara)
+        const urlMatch = String(chunk).match(/Local:\s+(https?:\/\/[^\s]+)/);
+        if (urlMatch && !urlFromOutput) {
+          urlFromOutput = urlMatch[1];
+          console.log('[Zero AUDIT] vite-url-from-output', urlFromOutput);
+        }
+        // Log quando Vite reporta porta em uso
+        if (String(chunk).includes('Port') && String(chunk).includes('in use')) {
+          console.log('[Zero AUDIT] vite-port-in-use', String(chunk).trim());
+        }
+      }
     }));
 
-    // Race: server-ready vs 30s timeout
+    // Race: server-ready vs 60s timeout
     const serverReady = new Promise((resolve) => {
       this._serverReadyHandler = (port, url) => {
+        console.log('[Zero AUDIT] server-ready', { port, url });
         this.serverUrl = url;
         this._running = false;
         resolve(url);
@@ -251,12 +266,24 @@ const WCManager = {
       wc.on("server-ready", this._serverReadyHandler);
     });
 
+    // Fallback: se server-ready nao dispara mas Vite logou a URL, usa ela apos 10s
+    const urlFallback = new Promise((resolve) => {
+      setTimeout(() => {
+        if (urlFromOutput) {
+          console.log('[Zero AUDIT] using-url-fallback', urlFromOutput);
+          this.serverUrl = urlFromOutput;
+          this._running = false;
+          resolve(urlFromOutput);
+        }
+      }, 15000);
+    });
+
     const serverTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("SERVER_TIMEOUT")), 30000)
+      setTimeout(() => reject(new Error("SERVER_TIMEOUT")), 60000)
     );
 
     try {
-      const url = await Promise.race([serverReady, serverTimeout]);
+      const url = await Promise.race([serverReady, urlFallback, serverTimeout]);
       onLog(`Servidor pronto → ${url}`, "success");
       onUrl(url);
     } catch (e) {
