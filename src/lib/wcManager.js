@@ -143,6 +143,14 @@ const WCManager = {
     console.log("[Zero AUDIT] === package.json sendo montado ===");
     console.log(files["package.json"]);
 
+    // Loga conteudo de todos os .tsx/.ts gerados
+    Object.entries(files).forEach(([path, content]) => {
+      if (path.endsWith('.tsx') || path.endsWith('.ts')) {
+        console.log(`[Zero AUDIT] === arquivo: ${path} ===`);
+        console.log(typeof content === 'string' ? content : JSON.stringify(content));
+      }
+    });
+
     await wc.mount(tree);
     onLog("Arquivos montados!", "success");
 
