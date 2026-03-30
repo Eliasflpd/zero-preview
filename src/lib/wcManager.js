@@ -2,7 +2,7 @@ import { WebContainer } from "@webcontainer/api";
 import { validateSyntax, autoFix, formatSyntaxErrors } from "./syntaxValidator";
 import { removeDuplicateConsts, replaceInlineFormatters, sanitizeTSXForSWC, replaceRechartsImports } from "./patchEngine";
 
-const VITE_CONFIG_TS = `import { defineConfig } from 'vite';
+const VITE_CONFIG_JS = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
@@ -139,11 +139,11 @@ const WCManager = {
     onLog("Montando arquivos...", "info");
 
     const tree = this.buildTree(files);
-    tree["vite.config.ts"] = { file: { contents: VITE_CONFIG_TS } };
+    tree["vite.config.js"] = { file: { contents: VITE_CONFIG_JS } };
 
     // ── AUDITORIA: loga tudo antes de montar ───────────────────────────
     console.log("[Zero AUDIT] === vite.config.ts sendo montado ===");
-    console.log(VITE_CONFIG_TS);
+    console.log(VITE_CONFIG_JS);
     console.log("[Zero AUDIT] === package.json sendo montado ===");
     console.log(files["package.json"]);
 

@@ -1,5 +1,5 @@
 // ─── ZERO PREVIEW — FILE SPLITTER ────────────────────────────────────────────
-// Takes a monolithic Dashboard.tsx and extracts components into separate files.
+// Takes a monolithic Dashboard.jsx and extracts components into separate files.
 // The AI generates everything in 1 file. We split it deterministically.
 // This avoids the AI needing to coordinate imports across files.
 
@@ -14,7 +14,7 @@
  * 4. Add import statements to the main file
  * 5. Add export default to each extracted file
  */
-export function splitComponents(code, mainPath = "src/pages/Dashboard.tsx") {
+export function splitComponents(code, mainPath = "src/pages/Dashboard.jsx") {
   if (!code || code.length < 200) return { [mainPath]: code };
 
   // Find all component declarations with their full bodies
@@ -49,7 +49,7 @@ export function splitComponents(code, mainPath = "src/pages/Dashboard.tsx") {
       return { [mainPath]: code };
     }
 
-    const filePath = `src/components/${comp.name}.tsx`;
+    const filePath = `src/components/${comp.name}.jsx`;
     const extractedCode = buildExtractedFile(comp, code);
     result[filePath] = extractedCode;
 

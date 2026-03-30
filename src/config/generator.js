@@ -179,8 +179,8 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
   // ══ STEP 3: CSS template (no AI call — saves ~4000 tokens) ═════════════════
   files["src/index.css"] = buildNicheCSS(nicheConfig.palette);
-  // Add App.tsx router that imports Dashboard
-  files["src/App.tsx"] = `import Dashboard from "./pages/Dashboard";\nexport default function App() { return <Dashboard />; }`;
+  // Add App.jsx router that imports Dashboard
+  files["src/App.jsx"] = `import Dashboard from "./pages/Dashboard";\nexport default function App() { return <Dashboard />; }`;
 
   emit(onProgress, STEPS.CSS, "Estilos aplicados", "success");
 
@@ -196,7 +196,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
     emit(onProgress, STEPS.INTENT, "Extraindo intencao (Template Engine)...");
     try {
       const templateResult = await generateFromTemplate(prompt, nicho, nicheConfig.palette, onProgress);
-      files["src/pages/Dashboard.tsx"] = templateResult.code;
+      files["src/pages/Dashboard.jsx"] = templateResult.code;
 
       emit(onProgress, STEPS.TEMPLATE, `Template ${templateResult.intent.appType} · ${templateResult.summary.emoji} ${templateResult.score}/100`);
 
@@ -240,7 +240,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
   // VELOCISTA Level 2: inject cached code as reference
   if (cached && (cached.level === 2 || cached.level === 3)) {
-    const refCode = cached.entry.files?.["src/pages/Dashboard.tsx"];
+    const refCode = cached.entry.files?.["src/pages/Dashboard.jsx"];
     if (refCode) {
       extras += `\n\nCODIGO DE REFERENCIA (projeto similar, use como base de estrutura):\n\`\`\`jsx\n${refCode.slice(0, 4000)}\n\`\`\``;
       emit(onProgress, STEPS.CACHE_REUSE, "Reutilizando estrutura de projeto similar");
@@ -258,18 +258,18 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
   let appPrompt = `${prompt}\n\n${CONTEXTO_BR}\n\nBRIEFING:\n${brief.instruction}`;
   if (projectCtxBlock) appPrompt += `\n\n${projectCtxBlock}`;
   if (extras) appPrompt += extras;
-  appPrompt += `\n\nRetorne APENAS codigo TSX. Sem markdown. Maximo 400 linhas. Comece com imports.`;
+  appPrompt += `\n\nRetorne APENAS codigo JSX puro. Sem markdown. Sem TypeScript. Maximo 400 linhas. Comece com imports.`;
   let appCode = await generateAndValidate(appPrompt, onProgress, onCodeStream);
 
-  files["src/pages/Dashboard.tsx"] = appCode.code;
+  files["src/pages/Dashboard.jsx"] = appCode.code;
 
   // ══ STEP 5.5: SPLITTER — Extract components into separate files ════════════
   const originalCode = appCode.code;
   const splitFiles = splitComponents(appCode.code);
   const splitCount = Object.keys(splitFiles).length;
   if (splitCount > 1) {
-    // Validate: Dashboard.tsx must not be truncated
-    const dashFile = splitFiles["src/pages/Dashboard.tsx"];
+    // Validate: Dashboard.jsx must not be truncated
+    const dashFile = splitFiles["src/pages/Dashboard.jsx"];
     const isTruncated = !dashFile
       || dashFile.trimEnd().endsWith("const")
       || dashFile.trimEnd().endsWith("const ")
@@ -279,7 +279,7 @@ export async function generateFiles(prompt, onProgress, previousCode = null, onC
 
     if (isTruncated) {
       // Split failed — use original unsplit file
-      files["src/pages/Dashboard.tsx"] = originalCode;
+      files["src/pages/Dashboard.jsx"] = originalCode;
       emit(onProgress, STEPS.ARCHITECT, "Split cancelado (arquivo protegido)");
     } else {
       for (const [path, content] of Object.entries(splitFiles)) {
@@ -315,7 +315,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   // Modelo 1 (Arquiteto): gera diff parcial com "keep existing code"
   // Instrui explicitamente a usar o formato diff em vez de reescrever tudo
   const editSystem = `${SYSTEM_PROMPT}\n\n${ENGINEERING_SYSTEM_PROMPT}`;
-  const editPrompt = `CODIGO ATUAL DO ARQUIVO:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`${knowledgeCtx}\n\nALTERACAO PEDIDA: ${prompt}\n\nUse "// ... keep existing code (descricao)" para secoes que NAO mudam. Escreva completo apenas o codigo novo ou modificado. Sem markdown, sem explicacao. Se a mudanca for pequena, a maioria do arquivo deve ser "keep existing code".`;
+  const editPrompt = `CODIGO ATUAL DO ARQUIVO:\n\`\`\`jsx\n${previousCode.slice(0, 6000)}\n\`\`\`${knowledgeCtx}\n\nALTERACAO PEDIDA: ${prompt}\n\nUse "// ... keep existing code (descricao)" para secoes que NAO mudam. Escreva completo apenas o codigo novo ou modificado. Sem markdown, sem explicacao. Sem TypeScript. Se a mudanca for pequena, a maioria do arquivo deve ser "keep existing code".`;
 
   let raw;
   try {
@@ -332,13 +332,13 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
     emit(onProgress, STEPS.EDIT, "Modelo 2 reconstruindo arquivo...");
 
     // Passo 1: tenta reconstrucao local (instantanea)
-    const localResult = reconstructLocally("src/pages/Dashboard.tsx", previousCode, code);
+    const localResult = reconstructLocally("src/pages/Dashboard.jsx", previousCode, code);
 
     if (localResult.hasUnresolved) {
       // Passo 2: sobrou "keep" sem resolver — chama Modelo 2 via backend
       try {
         const aiResult = await reconstructWithAI(
-          "src/pages/Dashboard.tsx", previousCode, code, callModel2
+          "src/pages/Dashboard.jsx", previousCode, code, callModel2
         );
         code = aiResult.fullContent;
       } catch (reconstructErr) {
@@ -353,7 +353,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
     if (!code || code.length < 100) {
       // Fallback final: pede pro AI reescrever completo
       emit(onProgress, STEPS.EDIT, "Reconstrucao falhou — modo fallback...");
-      const fallbackPrompt = `CODIGO ATUAL:\n\`\`\`tsx\n${previousCode.slice(0, 6000)}\n\`\`\`\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Sem "keep existing code". Mantenha tudo que funciona. Sem markdown.`;
+      const fallbackPrompt = `CODIGO ATUAL:\n\`\`\`jsx\n${previousCode.slice(0, 6000)}\n\`\`\`\n\nALTERACAO: ${prompt}\n\nRetorne o codigo COMPLETO modificado. Sem "keep existing code". Mantenha tudo que funciona. Sem markdown. Sem TypeScript.`;
       try {
         raw = await callClaude("Voce edita codigo React+TypeScript+Tailwind. Retorne APENAS o codigo modificado completo.", fallbackPrompt, 8192);
         code = cleanCodeFences(raw);
@@ -372,7 +372,7 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
     code = enforceCSS(code);
     code = fixRechartsJSX(code);
   }
-  console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexEdit, filesAffected: ['src/pages/Dashboard.tsx (edit-mode)'] });
+  console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexEdit, filesAffected: ['src/pages/Dashboard.jsx (edit-mode)'] });
 
   // Substitui formatters inline por import + remove duplicatas
   code = removeDuplicateConsts(replaceInlineFormatters(code));
@@ -381,12 +381,12 @@ async function editMode(prompt, previousCode, files, onProgress, onCodeStream, s
   const summary = getValidationSummary(validation);
 
   // Mecanismo 3: valida conteudo antes de aplicar
-  const patchCheck = validateFileContent("src/pages/Dashboard.tsx", code);
+  const patchCheck = validateFileContent("src/pages/Dashboard.jsx", code);
   if (!patchCheck.valid) {
     emit(onProgress, STEPS.CRITICO, `Alerta: ${patchCheck.issues.join(', ')}`, "warning");
   }
 
-  files["src/pages/Dashboard.tsx"] = code;
+  files["src/pages/Dashboard.jsx"] = code;
 
   const duration = Date.now() - startTime;
   recordGeneration({ prompt: prompt.slice(0, 200), nicho: "edit", score: validation.score, duration, success: true });
@@ -428,7 +428,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
       appCode = enforceCSS(appCode);
     }
     appCode = fixRechartsJSX(appCode);
-    console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexBefore, filesAffected: ['src/pages/Dashboard.tsx'] });
+    console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexBefore, filesAffected: ['src/pages/Dashboard.jsx'] });
 
     // Substitui formatters inline por import + remove duplicatas
     appCode = removeDuplicateConsts(replaceInlineFormatters(appCode));
@@ -456,7 +456,7 @@ async function generateAndValidate(appPrompt, onProgress, onCodeStream) {
               reviewed = enforceCSS(reviewed);
               reviewed = fixRechartsJSX(reviewed);
             }
-            console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexReview, filesAffected: ['src/pages/Dashboard.tsx (pos-reviewer)'] });
+            console.log('[Zero AUDIT] css-enforcer', { status: 'ok', hexReplacedCount: hexReview, filesAffected: ['src/pages/Dashboard.jsx (pos-reviewer)'] });
             reviewed = removeDuplicateConsts(replaceInlineFormatters(reviewed));
             const reviewValidation = validateCode(reviewed);
             if (reviewValidation.score >= validation.score) {
