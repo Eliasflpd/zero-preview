@@ -12,6 +12,74 @@
  */
 
 /**
+ * Sanitiza codigo TSX para evitar crashes do SWC.
+ * Corrige: arrow functions quebradas em props, typed params em JSX, etc.
+ *
+ * @param {string} content
+ * @returns {string}
+ */
+export function sanitizeTSXForSWC(content) {
+  if (!content) return content;
+  let result = content;
+
+  // Fix: (v)= /> ou (e)= /> → ($1) =>  (arrow function quebrada em prop JSX)
+  result = result.replace(/\((\w+)\)=\s*\/>/g, '($1) =>');
+
+  // Fix: typed arrow params em JSX props — (e: React.ChangeEvent<...>) => ...
+  // SWC crasheia com type annotations dentro de JSX props
+  // Remove o type annotation: (e: Type) => → (e) =>
+  result = result.replace(/\((\w+)\s*:\s*(?:React\.)?\w+(?:<[^>]*>)?\)\s*=>/g, '($1) =>');
+
+  // Fix: (e: any) => ou (v: number) => dentro de JSX
+  result = result.replace(/\((\w+)\s*:\s*\w+\)\s*=>/g, '($1) =>');
+
+  return result;
+}
+
+/**
+ * Substitui imports de recharts por react-chartjs-2 equivalente.
+ * A AI pode ignorar o prompt e ainda gerar imports de recharts.
+ *
+ * @param {string} content
+ * @returns {string}
+ */
+export function replaceRechartsImports(content) {
+  if (!content || !content.includes('recharts')) return content;
+
+  // Remove qualquer import de recharts
+  let result = content.replace(/import\s+\{[^}]*\}\s+from\s+["']recharts["'];?\n?/g, '');
+
+  // Se o código usava componentes Recharts em JSX, eles vão quebrar.
+  // Adiciona import de react-chartjs-2 se não existir e se há <Bar, <Line, <Pie no JSX
+  const chartComponents = ['Bar', 'Line', 'Pie', 'Doughnut'];
+  const usedCharts = chartComponents.filter(c => new RegExp(`<${c}[\\s/>]`).test(result));
+
+  if (usedCharts.length > 0 && !result.includes('react-chartjs-2')) {
+    const chartImport = `import { ${usedCharts.join(', ')} } from "react-chartjs-2";\nimport { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from "chart.js";\nChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);\n`;
+
+    // Insere após o último import existente
+    const lastImportIdx = result.lastIndexOf('\nimport ');
+    if (lastImportIdx !== -1) {
+      const lineEnd = result.indexOf('\n', lastImportIdx + 1);
+      result = result.slice(0, lineEnd + 1) + chartImport + result.slice(lineEnd + 1);
+    } else {
+      result = chartImport + result;
+    }
+  }
+
+  // Remove Recharts wrapper components que não existem em chart.js
+  // ResponsiveContainer, CartesianGrid, XAxis, YAxis, Cell → remove JSX tags
+  const rechartsOnly = ['ResponsiveContainer', 'CartesianGrid', 'XAxis', 'YAxis', 'Cell', 'Legend'];
+  for (const tag of rechartsOnly) {
+    // Remove <Tag ...> e </Tag> e <Tag ... />
+    result = result.replace(new RegExp(`<${tag}[^>]*/?>`, 'g'), '');
+    result = result.replace(new RegExp(`</${tag}>`, 'g'), '');
+  }
+
+  return result.replace(/\n{3,}/g, '\n\n');
+}
+
+/**
  * @typedef {Object} FilePatch
  * @property {string} filename
  * @property {string} content

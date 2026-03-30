@@ -1,6 +1,6 @@
 import { WebContainer } from "@webcontainer/api";
 import { validateSyntax, autoFix, formatSyntaxErrors } from "./syntaxValidator";
-import { removeDuplicateConsts, replaceInlineFormatters } from "./patchEngine";
+import { removeDuplicateConsts, replaceInlineFormatters, sanitizeTSXForSWC, replaceRechartsImports } from "./patchEngine";
 
 const VITE_CONFIG_TS = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
@@ -94,10 +94,14 @@ const WCManager = {
     await this.killDev();
     this._running = true; // reset after killDev
 
-    // ── FORMATTER + DEDUP SANITIZATION (ultima camada) ─────────────────
+    // ── FULL SANITIZATION (ultima camada) ───────────────────────────────
     for (const [path, content] of Object.entries(files)) {
       if (/\.(tsx?|jsx?)$/.test(path) && typeof content === 'string') {
-        files[path] = removeDuplicateConsts(replaceInlineFormatters(content));
+        files[path] = sanitizeTSXForSWC(
+          replaceRechartsImports(
+            removeDuplicateConsts(replaceInlineFormatters(content))
+          )
+        );
       }
     }
 

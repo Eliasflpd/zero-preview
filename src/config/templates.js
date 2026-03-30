@@ -132,7 +132,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   // ─── TypeScript env declaration ──────────────────────────────────────────────
   "src/vite-env.d.ts": `/// <reference types="vite/client" />`,
 
-  // ─── Utility: cn() + formatCurrency + formatDate ─────────────────────────────
+  // ─── Formatters autossuficientes (zero imports, zero circular deps) ──────────
+  "src/utils/formatters.ts": [
+    'export const formatCurrency = (v: number) =>',
+    '  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);',
+    'export const formatDate = (d: string) => new Date(d).toLocaleDateString("pt-BR");',
+    'export const formatPercent = (v: number) => `${v.toFixed(1)}%`;',
+    'export const formatPhone = (p: string) => p.replace(/(\\d{2})(\\d{5})(\\d{4})/, "($1) $2-$3");',
+  ].join('\n'),
+
+  // ─── Utility: cn() + re-exports de formatters ──────────────────────────────
   "src/lib/utils.ts": `import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 export { formatCurrency, formatDate, formatPercent, formatPhone } from "../utils/formatters";
@@ -140,25 +149,6 @@ export { formatCurrency, formatDate, formatPercent, formatPhone } from "../utils
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }`,
-
-  // ─── Formatters centralizados (NUNCA redeclarar em arquivos gerados) ────────
-  "src/utils/formatters.ts": [
-    'export const formatCurrency = (v: number): string =>',
-    '  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);',
-    '',
-    'export const formatDate = (d: Date | string): string =>',
-    '  new Date(d).toLocaleDateString("pt-BR");',
-    '',
-    'export const formatPercent = (v: number): string =>',
-    '  `${v.toFixed(1)}%`;',
-    '',
-    'export const formatPhone = (phone: string): string => {',
-    '  const digits = phone.replace(/\\D/g, "");',
-    '  if (digits.length === 11) return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;',
-    '  if (digits.length === 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;',
-    '  return phone;',
-    '};',
-  ].join('\n'),
 
   // ─── Shadcn/UI: Button ───────────────────────────────────────────────────────
   "src/components/ui/button.tsx": `import * as React from "react";
