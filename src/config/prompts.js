@@ -50,7 +50,7 @@ REGRA #1 — STACK OBRIGATORIA
 Estes pacotes JA ESTAO instalados. Use-os:
 - react, react-dom (React 18)
 - react-router-dom (React Router v6)
-- @/components/charts/BarChartComponent e PieChartComponent (graficos prontos)
+- SVG inline para graficos (ZERO libs de charts)
 - lucide-react (icones)
 - clsx + tailwind-merge (via cn() em @/lib/utils)
 - @supabase/supabase-js (banco de dados — disponivel em @/lib/supabase)
@@ -149,39 +149,29 @@ SEMPRE passe size e className: <Users size={18} className="text-gray-500" />
 Sidebar: size={18}  |  KPIs: size={20}  |  Botoes: size={16}
 
 ═══════════════════════════════════════════════════════
-REGRA #7 — GRAFICOS (COMPONENTES FIXOS)
+REGRA #7 — GRAFICOS (SVG INLINE — ZERO DEPENDENCIAS)
 ═══════════════════════════════════════════════════════
-NUNCA use recharts. NUNCA use react-chartjs-2 diretamente. NUNCA importe de "chart.js".
-Use APENAS os componentes prontos que JA EXISTEM no projeto:
+NUNCA use recharts, chart.js, react-chartjs-2 ou QUALQUER lib de graficos.
+NUNCA importe nenhum pacote de charts. Use APENAS SVG inline.
 
-import { BarChartComponent } from "@/components/charts/BarChartComponent";
-import { PieChartComponent } from "@/components/charts/PieChartComponent";
+GRAFICO DE BARRAS — use este padrao com SVG e .map():
+1. Crie array: const barData = [{ label: "Jan", value: 12500 }, ...]
+2. Calcule: const maxVal = Math.max(...barData.map(d => d.value))
+3. Renderize SVG com viewBox="0 0 500 200" e className="w-full"
+4. Dentro do SVG, use barData.map() para renderizar rect + text para cada barra
+5. Cada rect: x calculado com gap, y = 180 - (value/maxVal)*160, fill="var(--accent)", rx={4}
+6. Cada text: label abaixo da barra, textAnchor="middle", fontSize={10}
 
-GRAFICO DE BARRAS:
-<BarChartComponent
-  labels={["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"]}
-  datasets={[{ label: "Receita", data: [12500, 15800, 13200, 17600, 14900, 19200], backgroundColor: "var(--accent)" }]}
-  height={280}
-/>
-
-GRAFICO DE PIZZA:
-<PieChartComponent
-  labels={["Alimentacao", "Transporte", "Moradia"]}
-  data={[40, 35, 25]}
-  colors={["#1565C0", "#059669", "#F59E0B"]}
-/>
-
-BARRAS COM MULTIPLOS DATASETS (comparacao):
-<BarChartComponent
-  labels={["Jan", "Fev", "Mar"]}
-  datasets={[
-    { label: "Receitas", data: [5000, 6200, 7100], backgroundColor: "#059669" },
-    { label: "Despesas", data: [3200, 4100, 3800], backgroundColor: "#DC2626" },
-  ]}
-/>
+GRAFICO DE PIZZA — use SVG path com arcos:
+1. Crie array: const pieData = [{ label: "X", value: 40, color: "#1565C0" }, ...]
+2. Calcule total e cumulative para angulos
+3. SVG viewBox="0 0 200 200", centro em (100,100), raio 80
+4. Para cada fatia: calcule startAngle/endAngle, converta para coordenadas com Math.cos/sin
+5. Use path com d="M100,100 L... A80,80 0 largeArc,1 ... Z" e fill={d.color}
+6. Adicione legenda com divs coloridos abaixo do SVG
 
 Labels SEMPRE em portugues. Valores monetarios com formatCurrency (importado de @/lib/utils).
-NUNCA gere codigo de setup de ChartJS (register, CategoryScale, etc.) — ja esta pronto nos componentes.
+SVG SEMPRE com viewBox fixo e className="w-full". NUNCA width/height="100%" no SVG.
 
 ═══════════════════════════════════════════════════════
 REGRA #8 — LOADING + ERROR + EMPTY STATES
@@ -300,8 +290,8 @@ NUNCA renderize objetos diretamente no JSX:
 NUNCA importe arquivos que nao existem:
   PERMITIDO: @/components/ui/button, @/components/ui/card, @/components/ui/badge, @/components/ui/input, @/lib/utils
   PERMITIDO: react, react-dom, react-router-dom, lucide-react
-  GRAFICOS: @/components/charts/BarChartComponent e @/components/charts/PieChartComponent
-  PROIBIDO: recharts, react-chartjs-2 direto, chart.js direto
+  GRAFICOS: SVG inline apenas — ZERO imports de libs de charts
+  PROIBIDO: recharts, react-chartjs-2, chart.js, qualquer pacote de graficos
   PROIBIDO: qualquer outro import local — defina tudo no mesmo arquivo
 
 SEMPRE inclua export default no final.

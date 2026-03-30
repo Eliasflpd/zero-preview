@@ -67,11 +67,9 @@ const useCounter = (end, duration=1500) => {
   return val;
 };
 
-GRAFICOS - CHART.JS + REACT-CHARTJS-2 OBRIGATORIO:
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
-NUNCA use SVG manual para graficos. NUNCA importe recharts.
+GRAFICOS - SVG INLINE OBRIGATORIO:
+NUNCA importe recharts, chart.js, react-chartjs-2 ou qualquer lib de graficos.
+Use APENAS SVG inline com viewBox fixo.
 Pizza SEMPRE com cores: const CORES = ['#1565C0', '#059669', '#3B82F6', '#F59E0B', '#EF4444'];
 
 Card padrao: background #FFFFFF, borderRadius 12, border 1px solid #E5E7EB, padding 20px 24px, boxShadow 0 1px 3px rgba(0,0,0,0.06).
@@ -118,7 +116,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><A
     scripts: { dev: "vite --host", build: "vite build" },
     dependencies: {
       react: "^18.2.0", "react-dom": "^18.2.0",
-      "chart.js": "^4.4.0", "react-chartjs-2": "^5.2.0", "lucide-react": "^0.383.0",
+      "lucide-react": "^0.383.0",
     },
     devDependencies: { "@vitejs/plugin-react-swc": "^3.5.0", vite: "^5.0.8" }
   }, null, 2),

@@ -11,8 +11,6 @@ export const FIXED_FILES = {
       "react": "^18.3.1",
       "react-dom": "^18.3.1",
       "react-router-dom": "^6.26.0",
-      "chart.js": "^4.4.0",
-      "react-chartjs-2": "^5.2.0",
       "lucide-react": "^0.441.0",
       "@supabase/supabase-js": "^2.45.0",
       "clsx": "^2.1.1",
@@ -149,37 +147,6 @@ export { formatCurrency, formatDate, formatPercent, formatPhone } from "../utils
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }`,
-
-  // ─── Chart Components (wrappers fixos — AI nunca gera, apenas usa) ──────────
-  "src/components/charts/BarChartComponent.tsx": [
-    'import { Bar } from "react-chartjs-2";',
-    'import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";',
-    'ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);',
-    '',
-    'interface BarChartProps {',
-    '  labels: string[];',
-    '  datasets: { label: string; data: number[]; backgroundColor: string }[];',
-    '  height?: number;',
-    '}',
-    'export function BarChartComponent({ labels, datasets, height = 250 }: BarChartProps) {',
-    '  return <Bar data={{ labels, datasets }} options={{ responsive: true, plugins: { legend: { position: "top" as const } } }} height={height} />;',
-    '}',
-  ].join('\n'),
-
-  "src/components/charts/PieChartComponent.tsx": [
-    'import { Pie } from "react-chartjs-2";',
-    'import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";',
-    'ChartJS.register(ArcElement, Tooltip, Legend);',
-    '',
-    'interface PieChartProps {',
-    '  labels: string[];',
-    '  data: number[];',
-    '  colors: string[];',
-    '}',
-    'export function PieChartComponent({ labels, data, colors }: PieChartProps) {',
-    '  return <Pie data={{ labels, datasets: [{ data, backgroundColor: colors }] }} />;',
-    '}',
-  ].join('\n'),
 
   // ─── Shadcn/UI: Button ───────────────────────────────────────────────────────
   "src/components/ui/button.tsx": `import * as React from "react";

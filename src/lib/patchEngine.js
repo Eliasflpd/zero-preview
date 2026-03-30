@@ -37,9 +37,8 @@ export function sanitizeTSXForSWC(content) {
 }
 
 /**
- * Substitui imports de recharts e react-chartjs-2 direto pelos componentes fixos.
- * Remove JSX de Recharts (BarChart, PieChart, ResponsiveContainer, etc.)
- * e injeta imports dos componentes wrapper.
+ * Remove qualquer import de libs de charts (recharts, chart.js, react-chartjs-2).
+ * Os apps gerados usam SVG inline — zero dependencias de graficos.
  *
  * @param {string} content
  * @returns {string}
@@ -47,58 +46,18 @@ export function sanitizeTSXForSWC(content) {
 export function replaceRechartsImports(content) {
   if (!content) return content;
 
-  const hasRecharts = content.includes('recharts');
-  const hasChartjsDirect = /from\s+["']react-chartjs-2["']/.test(content);
-  const hasChartjsCore = /from\s+["']chart\.js["']/.test(content);
-  if (!hasRecharts && !hasChartjsDirect && !hasChartjsCore) return content;
+  const hasChartLib = /recharts|react-chartjs-2|chart\.js|ChartJS/.test(content);
+  if (!hasChartLib) return content;
 
   let result = content;
 
-  // Remove imports de recharts, react-chartjs-2, chart.js
+  // Remove imports de qualquer lib de charts
   result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']recharts["'];?\n?/g, '');
   result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']react-chartjs-2["'];?\n?/g, '');
   result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']chart\.js["'];?\n?/g, '');
+  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']@\/components\/charts\/\w+["'];?\n?/g, '');
   // Remove ChartJS.register(...) lines
   result = result.replace(/ChartJS\.register\([^)]*\);?\n?/g, '');
-
-  // Detecta se usa bar charts ou pie charts no JSX
-  const needsBar = /<(?:BarChart|Bar)\b/.test(result);
-  const needsPie = /<(?:PieChart|Pie)\b/.test(result);
-
-  // Remove Recharts-only wrapper tags
-  const wrapperTags = ['ResponsiveContainer', 'CartesianGrid', 'XAxis', 'YAxis', 'Cell', 'BarChart', 'LineChart', 'PieChart', 'AreaChart', 'ComposedChart'];
-  for (const tag of wrapperTags) {
-    result = result.replace(new RegExp(`<${tag}\\b[^>]*/?>`, 'g'), '');
-    result = result.replace(new RegExp(`</${tag}>`, 'g'), '');
-  }
-
-  // Remove <Tooltip .../> e <Legend .../> de Recharts (conflita com chart.js)
-  result = result.replace(/<Tooltip\b[^>]*\/>/g, '');
-  result = result.replace(/<Legend\b[^>]*\/>/g, '');
-
-  // Remove <Bar dataKey=... /> tags de Recharts (diferentes do <Bar> de chart.js)
-  result = result.replace(/<Bar\s+dataKey=[^/]*\/>/g, '');
-  result = result.replace(/<Line\s+(?:type|dataKey)=[^/]*\/>/g, '');
-  result = result.replace(/<Pie\s+(?:data|dataKey)=[^/]*(?:\/>|>[^<]*<\/Pie>)/g, '');
-
-  // Injeta imports dos componentes fixos se necessário
-  const imports = [];
-  if (needsBar && !result.includes('BarChartComponent')) {
-    imports.push('import { BarChartComponent } from "@/components/charts/BarChartComponent";');
-  }
-  if (needsPie && !result.includes('PieChartComponent')) {
-    imports.push('import { PieChartComponent } from "@/components/charts/PieChartComponent";');
-  }
-
-  if (imports.length > 0) {
-    const lastImportIdx = result.lastIndexOf('\nimport ');
-    if (lastImportIdx !== -1) {
-      const lineEnd = result.indexOf('\n', lastImportIdx + 1);
-      result = result.slice(0, lineEnd + 1) + imports.join('\n') + '\n' + result.slice(lineEnd + 1);
-    } else {
-      result = imports.join('\n') + '\n' + result;
-    }
-  }
 
   return result.replace(/\n{3,}/g, '\n\n');
 }

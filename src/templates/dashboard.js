@@ -49,19 +49,10 @@ export function buildDashboard(intent, palette) {
 
   return `import { useState } from "react";
 import { ${iconImport} } from "lucide-react";
-import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-const chartData = {
-  labels: [${chartData.map(d => `"${d.label}"`).join(", ")}],
-  datasets: [{
-    label: "Valor",
-    data: [${chartData.map(d => parseInt(d.value) || 0).join(", ")}],
-    backgroundColor: "var(--accent)",
-    borderRadius: 6,
-  }],
-};
+const chartData = [
+${chartData.map(d => `  { label: "${d.label}", value: ${parseInt(d.value) || 0} },`).join("\n")}
+];
+const maxChartVal = Math.max(...chartData.map(d => d.value));
 
 const tableData = [
 ${tableRows.map((r, i) => `  { id: ${i + 1}, name: "${r.label}", value: "${r.value}", status: "${r.icon === "CheckCircle" ? "Ativo" : r.icon === "Clock" ? "Pendente" : "Inativo"}" },`).join("\n")}
@@ -166,9 +157,20 @@ ${statsCards.map((s, i) => `              { label: "${s.label}", value: "${s.val
           {/* Chart */}
           <div className="bg-white rounded-xl border border-[var(--border)] p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">${chart?.title || "Visao Geral"}</h2>
-            <div className="h-64">
-              <Bar data={chartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
-            </div>
+            <svg viewBox="0 0 500 200" className="w-full" style={{ maxHeight: 220 }}>
+              {chartData.map((d, i) => {
+                const barW = 40;
+                const gap = (500 - chartData.length * barW) / (chartData.length + 1);
+                const x = gap + i * (barW + gap);
+                const h = (d.value / maxChartVal) * 160;
+                return (
+                  <g key={i}>
+                    <rect x={x} y={180 - h} width={barW} height={h} rx={4} fill="var(--accent)" />
+                    <text x={x + barW / 2} y={195} textAnchor="middle" fontSize={10} fill="#6B7280">{d.label}</text>
+                  </g>
+                );
+              })}
+            </svg>
           </div>
 
           {/* Table */}
