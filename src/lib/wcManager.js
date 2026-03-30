@@ -109,7 +109,8 @@ const WCManager = {
         files[path] = sanitizeTSXForSWC(
           replaceRechartsImports(
             removeDuplicateConsts(replaceInlineFormatters(content))
-          )
+          ),
+          path
         );
       }
     }

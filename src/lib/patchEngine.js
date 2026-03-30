@@ -18,20 +18,32 @@
  * @param {string} content
  * @returns {string}
  */
-export function sanitizeTSXForSWC(content) {
+export function sanitizeTSXForSWC(content, filename = '') {
   if (!content) return content;
+  const original = content;
   let result = content;
 
   // Fix: (v)= /> ou (e)= /> → ($1) =>  (arrow function quebrada em prop JSX)
   result = result.replace(/\((\w+)\)=\s*\/>/g, '($1) =>');
 
   // Fix: typed arrow params em JSX props — (e: React.ChangeEvent<...>) => ...
-  // SWC crasheia com type annotations dentro de JSX props
-  // Remove o type annotation: (e: Type) => → (e) =>
   result = result.replace(/\((\w+)\s*:\s*(?:React\.)?\w+(?:<[^>]*>)?\)\s*=>/g, '($1) =>');
 
   // Fix: (e: any) => ou (v: number) => dentro de JSX
   result = result.replace(/\((\w+)\s*:\s*\w+\)\s*=>/g, '($1) =>');
+
+  // Strip TS type annotations: `: string`, `: number`, `: any`, `as Type`
+  // Remove `<Type>` generic params from function declarations
+  result = result.replace(/:\s*(?:string|number|boolean|any|void|never|object)\b/g, '');
+  result = result.replace(/:\s*(?:React\.)\w+(?:<[^>]*>)?/g, '');
+  result = result.replace(/\bas\s+\w+/g, '');
+
+  // Remove interface/type declarations entirely
+  result = result.replace(/^(?:export\s+)?(?:interface|type)\s+\w+[\s\S]*?^\}/gm, '');
+
+  if (result !== original) {
+    console.log('[Zero AUDIT] sanitize-swc', { file: filename, changes: original.length - result.length });
+  }
 
   return result;
 }
