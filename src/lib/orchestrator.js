@@ -44,7 +44,7 @@ Regras das tarefas:
 - instrucao: frase clara e especifica
 
 EXEMPLO de resposta correta:
-{"objetivo":"app de agenda","tarefas":[{"id":1,"agente":"executor","instrucao":"Gerar Dashboard.tsx com sidebar, tabela de pacientes e grafico de consultas","dependeDe":null},{"id":2,"agente":"critico","instrucao":"Validar codigo gerado","dependeDe":[1]},{"id":3,"agente":"reviewer","instrucao":"Corrigir problemas encontrados pelo critico","dependeDe":[2]}]}`;
+{"objetivo":"app de agenda","tarefas":[{"id":1,"agente":"executor","instrucao":"Gerar Dashboard.jsx com sidebar, tabela de pacientes e grafico de consultas","dependeDe":null},{"id":2,"agente":"critico","instrucao":"Validar codigo gerado","dependeDe":[1]},{"id":3,"agente":"reviewer","instrucao":"Corrigir problemas encontrados pelo critico","dependeDe":[2]}]}`;
 
 class Orchestrator {
   constructor(onProgress) {

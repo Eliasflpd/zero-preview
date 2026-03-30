@@ -5,10 +5,10 @@
  * apenas as mudancas necessarias. Elimina erros em cascata.
  *
  * Suporta multiplos formatos de output do AI:
- * - ```typescript filename="src/App.tsx"
- * - // FILE: src/App.tsx
- * - === src/App.tsx ===
- * - `src/App.tsx` seguido de bloco de codigo
+ * - ```typescript filename="src/App.jsx"
+ * - // FILE: src/App.jsx
+ * - === src/App.jsx ===
+ * - `src/App.jsx` seguido de bloco de codigo
  */
 
 /**
@@ -109,7 +109,7 @@ export function parseAIOutput(rawOutput) {
     extractBacktickFiles(rawOutput, files);
   }
 
-  // Fallback: bloco de codigo unico -> assume src/App.tsx
+  // Fallback: bloco de codigo unico -> assume src/App.jsx
   if (files.length === 0) {
     extractSingleBlock(rawOutput, files);
   }
@@ -199,7 +199,7 @@ function extractSingleBlock(raw, files) {
   const match = raw.match(/```(?:typescript|tsx|jsx|javascript)?\n([\s\S]+?)```/);
   if (match) {
     files.push({
-      filename: 'src/App.tsx',
+      filename: 'src/App.jsx',
       content: match[1].trim(),
       isNew: false,
     });
@@ -246,7 +246,7 @@ export function sortFilesByDependency(files) {
     if (filename.includes('hooks/')) return 2;
     if (filename.includes('components/')) return 3;
     if (filename.includes('pages/') || filename.includes('routes/')) return 4;
-    if (filename === 'src/App.tsx' || filename === 'src/main.tsx') return 5;
+    if (filename === 'src/App.jsx' || filename === 'src/main.jsx') return 5;
     if (filename.endsWith('.css')) return 1;
     if (filename.endsWith('.json')) return 0;
     return 3;

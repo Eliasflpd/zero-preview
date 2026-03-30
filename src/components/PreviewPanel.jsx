@@ -205,7 +205,7 @@ export default function PreviewPanel({ files, runId, onClose, onAutoFix, project
           }
           console.log('[Zero AUDIT] local-fix', {
             status: serverUrl ? 'ok' : 'error',
-            file: 'src/pages/Dashboard.tsx',
+            file: 'src/pages/Dashboard.jsx',
             errorsFixed: autoFixCount.current,
             buildStatus: serverUrl ? 'success' : 'pending',
             reason: serverUrl ? null : 'server URL vazio',

@@ -94,9 +94,18 @@ const WCManager = {
     await this.killDev();
     this._running = true; // reset after killDev
 
+    // ── RENAME .tsx → .jsx, .ts → .js (AI pode ignorar o prompt) ───────
+    for (const [path, content] of Object.entries(files)) {
+      if (path.endsWith('.tsx') || (path.endsWith('.ts') && !path.endsWith('.d.ts'))) {
+        const newPath = path.replace(/\.tsx$/, '.jsx').replace(/\.ts$/, '.js');
+        files[newPath] = content;
+        delete files[path];
+      }
+    }
+
     // ── FULL SANITIZATION (ultima camada) ───────────────────────────────
     for (const [path, content] of Object.entries(files)) {
-      if (/\.(tsx?|jsx?)$/.test(path) && typeof content === 'string') {
+      if (/\.(jsx?|js)$/.test(path) && typeof content === 'string') {
         files[path] = sanitizeTSXForSWC(
           replaceRechartsImports(
             removeDuplicateConsts(replaceInlineFormatters(content))
