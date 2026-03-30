@@ -50,7 +50,7 @@ REGRA #1 — STACK OBRIGATORIA
 Estes pacotes JA ESTAO instalados. Use-os:
 - react, react-dom (React 18)
 - react-router-dom (React Router v6)
-- chart.js + react-chartjs-2 (graficos)
+- @/components/charts/BarChartComponent e PieChartComponent (graficos prontos)
 - lucide-react (icones)
 - clsx + tailwind-merge (via cn() em @/lib/utils)
 - @supabase/supabase-js (banco de dados — disponivel em @/lib/supabase)
@@ -149,42 +149,39 @@ SEMPRE passe size e className: <Users size={18} className="text-gray-500" />
 Sidebar: size={18}  |  KPIs: size={20}  |  Botoes: size={16}
 
 ═══════════════════════════════════════════════════════
-REGRA #7 — GRAFICOS (CHART.JS + REACT-CHARTJS-2)
+REGRA #7 — GRAFICOS (COMPONENTES FIXOS)
 ═══════════════════════════════════════════════════════
-NUNCA use recharts. Use APENAS chart.js + react-chartjs-2.
+NUNCA use recharts. NUNCA use react-chartjs-2 diretamente. NUNCA importe de "chart.js".
+Use APENAS os componentes prontos que JA EXISTEM no projeto:
 
-SETUP OBRIGATORIO no topo do arquivo (UMA VEZ):
-import { Bar, Line, Pie, Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement,
-  LineElement, PointElement, ArcElement, Title, Tooltip, Legend
-} from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
+import { BarChartComponent } from "@/components/charts/BarChartComponent";
+import { PieChartComponent } from "@/components/charts/PieChartComponent";
 
-EXEMPLO de grafico de barras:
-const barData = {
-  labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
-  datasets: [{
-    label: "Receita",
-    data: [12500, 15800, 13200, 17600, 14900, 19200],
-    backgroundColor: "var(--accent)",
-  }],
-};
-<div style={{ height: 280 }}>
-  <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false }} />
-</div>
+GRAFICO DE BARRAS:
+<BarChartComponent
+  labels={["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"]}
+  datasets={[{ label: "Receita", data: [12500, 15800, 13200, 17600, 14900, 19200], backgroundColor: "var(--accent)" }]}
+  height={280}
+/>
 
-EXEMPLO de grafico pizza:
-const pieData = {
-  labels: ["Produto A", "Produto B", "Produto C"],
-  datasets: [{
-    data: [40, 35, 25],
-    backgroundColor: ["#1565C0", "#059669", "#F59E0B"],
-  }],
-};
-<Pie data={pieData} />
+GRAFICO DE PIZZA:
+<PieChartComponent
+  labels={["Alimentacao", "Transporte", "Moradia"]}
+  data={[40, 35, 25]}
+  colors={["#1565C0", "#059669", "#F59E0B"]}
+/>
+
+BARRAS COM MULTIPLOS DATASETS (comparacao):
+<BarChartComponent
+  labels={["Jan", "Fev", "Mar"]}
+  datasets={[
+    { label: "Receitas", data: [5000, 6200, 7100], backgroundColor: "#059669" },
+    { label: "Despesas", data: [3200, 4100, 3800], backgroundColor: "#DC2626" },
+  ]}
+/>
 
 Labels SEMPRE em portugues. Valores monetarios com formatCurrency (importado de @/lib/utils).
+NUNCA gere codigo de setup de ChartJS (register, CategoryScale, etc.) — ja esta pronto nos componentes.
 
 ═══════════════════════════════════════════════════════
 REGRA #8 — LOADING + ERROR + EMPTY STATES
@@ -302,7 +299,9 @@ NUNCA renderize objetos diretamente no JSX:
 
 NUNCA importe arquivos que nao existem:
   PERMITIDO: @/components/ui/button, @/components/ui/card, @/components/ui/badge, @/components/ui/input, @/lib/utils
-  PERMITIDO: react, react-dom, react-router-dom, react-chartjs-2, chart.js, lucide-react
+  PERMITIDO: react, react-dom, react-router-dom, lucide-react
+  GRAFICOS: @/components/charts/BarChartComponent e @/components/charts/PieChartComponent
+  PROIBIDO: recharts, react-chartjs-2 direto, chart.js direto
   PROIBIDO: qualquer outro import local — defina tudo no mesmo arquivo
 
 SEMPRE inclua export default no final.

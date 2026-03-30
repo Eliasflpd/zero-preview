@@ -37,43 +37,67 @@ export function sanitizeTSXForSWC(content) {
 }
 
 /**
- * Substitui imports de recharts por react-chartjs-2 equivalente.
- * A AI pode ignorar o prompt e ainda gerar imports de recharts.
+ * Substitui imports de recharts e react-chartjs-2 direto pelos componentes fixos.
+ * Remove JSX de Recharts (BarChart, PieChart, ResponsiveContainer, etc.)
+ * e injeta imports dos componentes wrapper.
  *
  * @param {string} content
  * @returns {string}
  */
 export function replaceRechartsImports(content) {
-  if (!content || !content.includes('recharts')) return content;
+  if (!content) return content;
 
-  // Remove qualquer import de recharts
-  let result = content.replace(/import\s+\{[^}]*\}\s+from\s+["']recharts["'];?\n?/g, '');
+  const hasRecharts = content.includes('recharts');
+  const hasChartjsDirect = /from\s+["']react-chartjs-2["']/.test(content);
+  const hasChartjsCore = /from\s+["']chart\.js["']/.test(content);
+  if (!hasRecharts && !hasChartjsDirect && !hasChartjsCore) return content;
 
-  // Se o código usava componentes Recharts em JSX, eles vão quebrar.
-  // Adiciona import de react-chartjs-2 se não existir e se há <Bar, <Line, <Pie no JSX
-  const chartComponents = ['Bar', 'Line', 'Pie', 'Doughnut'];
-  const usedCharts = chartComponents.filter(c => new RegExp(`<${c}[\\s/>]`).test(result));
+  let result = content;
 
-  if (usedCharts.length > 0 && !result.includes('react-chartjs-2')) {
-    const chartImport = `import { ${usedCharts.join(', ')} } from "react-chartjs-2";\nimport { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend } from "chart.js";\nChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);\n`;
+  // Remove imports de recharts, react-chartjs-2, chart.js
+  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']recharts["'];?\n?/g, '');
+  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']react-chartjs-2["'];?\n?/g, '');
+  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']chart\.js["'];?\n?/g, '');
+  // Remove ChartJS.register(...) lines
+  result = result.replace(/ChartJS\.register\([^)]*\);?\n?/g, '');
 
-    // Insere após o último import existente
+  // Detecta se usa bar charts ou pie charts no JSX
+  const needsBar = /<(?:BarChart|Bar)\b/.test(result);
+  const needsPie = /<(?:PieChart|Pie)\b/.test(result);
+
+  // Remove Recharts-only wrapper tags
+  const wrapperTags = ['ResponsiveContainer', 'CartesianGrid', 'XAxis', 'YAxis', 'Cell', 'BarChart', 'LineChart', 'PieChart', 'AreaChart', 'ComposedChart'];
+  for (const tag of wrapperTags) {
+    result = result.replace(new RegExp(`<${tag}\\b[^>]*/?>`, 'g'), '');
+    result = result.replace(new RegExp(`</${tag}>`, 'g'), '');
+  }
+
+  // Remove <Tooltip .../> e <Legend .../> de Recharts (conflita com chart.js)
+  result = result.replace(/<Tooltip\b[^>]*\/>/g, '');
+  result = result.replace(/<Legend\b[^>]*\/>/g, '');
+
+  // Remove <Bar dataKey=... /> tags de Recharts (diferentes do <Bar> de chart.js)
+  result = result.replace(/<Bar\s+dataKey=[^/]*\/>/g, '');
+  result = result.replace(/<Line\s+(?:type|dataKey)=[^/]*\/>/g, '');
+  result = result.replace(/<Pie\s+(?:data|dataKey)=[^/]*(?:\/>|>[^<]*<\/Pie>)/g, '');
+
+  // Injeta imports dos componentes fixos se necessário
+  const imports = [];
+  if (needsBar && !result.includes('BarChartComponent')) {
+    imports.push('import { BarChartComponent } from "@/components/charts/BarChartComponent";');
+  }
+  if (needsPie && !result.includes('PieChartComponent')) {
+    imports.push('import { PieChartComponent } from "@/components/charts/PieChartComponent";');
+  }
+
+  if (imports.length > 0) {
     const lastImportIdx = result.lastIndexOf('\nimport ');
     if (lastImportIdx !== -1) {
       const lineEnd = result.indexOf('\n', lastImportIdx + 1);
-      result = result.slice(0, lineEnd + 1) + chartImport + result.slice(lineEnd + 1);
+      result = result.slice(0, lineEnd + 1) + imports.join('\n') + '\n' + result.slice(lineEnd + 1);
     } else {
-      result = chartImport + result;
+      result = imports.join('\n') + '\n' + result;
     }
-  }
-
-  // Remove Recharts wrapper components que não existem em chart.js
-  // ResponsiveContainer, CartesianGrid, XAxis, YAxis, Cell → remove JSX tags
-  const rechartsOnly = ['ResponsiveContainer', 'CartesianGrid', 'XAxis', 'YAxis', 'Cell', 'Legend'];
-  for (const tag of rechartsOnly) {
-    // Remove <Tag ...> e </Tag> e <Tag ... />
-    result = result.replace(new RegExp(`<${tag}[^>]*/?>`, 'g'), '');
-    result = result.replace(new RegExp(`</${tag}>`, 'g'), '');
   }
 
   return result.replace(/\n{3,}/g, '\n\n');
