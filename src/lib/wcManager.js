@@ -236,37 +236,12 @@ const WCManager = {
   async _startViteWithTimeout(wc, files, onLog, onUrl, isRetry = false) {
     onLog(isRetry ? "Reiniciando Vite..." : "Iniciando Vite...", "info");
 
-    let urlFromOutput = null;
-
     this.devProcess = await wc.spawn("npm", ["run", "dev"]);
     this.devProcess.output.pipeTo(new WritableStream({
-      write(chunk) {
-        onLog(chunk);
-        // Strip COMPLETO de escape codes e control chars
-        const clean = String(chunk)
-          .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '')
-          .replace(/\[[\d]+[GKHFm]/g, '')
-          .replace(/[\x00-\x1F\x7F]/g, ' ')
-          .trim();
-
-        console.log('[Zero AUDIT] vite-chunk-clean:', JSON.stringify(clean.slice(0, 200)));
-
-        // Detectar URL
-        if (clean.includes('localhost') && !urlFromOutput) {
-          const match = clean.match(/https?:\/\/localhost:(\d+)/);
-          if (match) {
-            urlFromOutput = match[0];
-            console.log('[Zero AUDIT] URL detectada:', urlFromOutput);
-          }
-        }
-        // Log porta em uso
-        if (clean.includes('Port') && clean.includes('in use')) {
-          console.log('[Zero AUDIT] vite-port-in-use', clean);
-        }
-      }
+      write(chunk) { onLog(chunk); }
     }));
 
-    // Race: server-ready vs 60s timeout
+    // Evento nativo do WebContainer — sem regex, sem parsing
     const serverReady = new Promise((resolve) => {
       this._serverReadyHandler = (port, url) => {
         console.log('[Zero AUDIT] server-ready', { port, url });
@@ -277,24 +252,12 @@ const WCManager = {
       wc.on("server-ready", this._serverReadyHandler);
     });
 
-    // Fallback: se server-ready nao dispara mas Vite logou a URL, usa ela apos 10s
-    const urlFallback = new Promise((resolve) => {
-      setTimeout(() => {
-        if (urlFromOutput) {
-          console.log('[Zero AUDIT] using-url-fallback', urlFromOutput);
-          this.serverUrl = urlFromOutput;
-          this._running = false;
-          resolve(urlFromOutput);
-        }
-      }, 15000);
-    });
-
     const serverTimeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("SERVER_TIMEOUT")), 60000)
     );
 
     try {
-      const url = await Promise.race([serverReady, urlFallback, serverTimeout]);
+      const url = await Promise.race([serverReady, serverTimeout]);
       onLog(`Servidor pronto → ${url}`, "success");
       onUrl(url);
     } catch (e) {
