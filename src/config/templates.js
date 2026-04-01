@@ -19,7 +19,7 @@ export const FIXED_FILES = {
       "react-chartjs-2": "^5.2.0",
     },
     devDependencies: {
-      "@vitejs/plugin-react-swc": "^3.5.0",
+      "@vitejs/plugin-react": "^3.5.0",
       "autoprefixer": "^10.4.20",
       "postcss": "^8.4.45",
       "tailwindcss": "^3.4.10",
