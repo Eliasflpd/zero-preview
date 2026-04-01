@@ -58,18 +58,14 @@ export function sanitizeTSXForSWC(content, filename = '') {
 export function replaceRechartsImports(content) {
   if (!content) return content;
 
-  const hasChartLib = /recharts|react-chartjs-2|chart\.js|ChartJS/.test(content);
-  if (!hasChartLib) return content;
+  // APENAS remove recharts — chart.js e react-chartjs-2 sao as libs CORRETAS
+  const hasRecharts = /recharts/.test(content);
+  if (!hasRecharts) return content;
 
   let result = content;
 
-  // Remove imports de qualquer lib de charts
+  // Remove APENAS imports de recharts (nunca chart.js ou react-chartjs-2)
   result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']recharts["'];?\n?/g, '');
-  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']react-chartjs-2["'];?\n?/g, '');
-  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']chart\.js["'];?\n?/g, '');
-  result = result.replace(/import\s+\{[^}]*\}\s+from\s+["']@\/components\/charts\/\w+["'];?\n?/g, '');
-  // Remove ChartJS.register(...) lines
-  result = result.replace(/ChartJS\.register\([^)]*\);?\n?/g, '');
 
   return result.replace(/\n{3,}/g, '\n\n');
 }
