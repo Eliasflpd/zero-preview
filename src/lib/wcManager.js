@@ -3,7 +3,7 @@ import { validateSyntax, autoFix, formatSyntaxErrors } from "./syntaxValidator";
 import { removeDuplicateConsts, replaceInlineFormatters, sanitizeTSXForSWC, replaceRechartsImports } from "./patchEngine";
 
 const VITE_CONFIG_JS = `import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
