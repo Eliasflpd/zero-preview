@@ -15,9 +15,11 @@ export const FIXED_FILES = {
       "@supabase/supabase-js": "^2.45.0",
       "clsx": "^2.1.1",
       "tailwind-merge": "^2.5.2",
+      "chart.js": "^4.4.0",
+      "react-chartjs-2": "^5.2.0",
     },
     devDependencies: {
-      "@vitejs/plugin-react": "^4.3.4",
+      "@vitejs/plugin-react-swc": "^3.5.0",
       "autoprefixer": "^10.4.20",
       "postcss": "^8.4.45",
       "tailwindcss": "^3.4.10",
@@ -123,6 +125,20 @@ export { formatCurrency, formatDate, formatPercent, formatPhone } from "../utils
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }`,
+
+  // ─── Chart.js Setup (registra componentes globalmente) ─────────────────
+  "src/lib/chartSetup.js": `import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, BarElement, LineElement,
+  PointElement, ArcElement, Tooltip, Legend, Filler
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale, LinearScale, BarElement, LineElement,
+  PointElement, ArcElement, Tooltip, Legend, Filler
+);
+
+export default ChartJS;`,
 
   // ─── Shadcn/UI: Button ───────────────────────────────────────────────────────
   "src/components/ui/button.jsx": `import * as React from "react";
