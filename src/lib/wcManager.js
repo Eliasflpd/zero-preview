@@ -1,6 +1,6 @@
 import { WebContainer } from "@webcontainer/api";
 import { validateSyntax, autoFix, formatSyntaxErrors } from "./syntaxValidator";
-import { removeDuplicateConsts, replaceInlineFormatters, sanitizeTSXForSWC, replaceRechartsImports } from "./patchEngine";
+import { removeDuplicateConsts, replaceInlineFormatters, replaceRechartsImports } from "./patchEngine";
 
 const VITE_CONFIG_JS = `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -86,27 +86,17 @@ const WCManager = {
     await this.killDev();
     this._running = true;
 
-    for (const [path, content] of Object.entries(files)) {
-      if (path.endsWith('.tsx') || (path.endsWith('.ts') && !path.endsWith('.d.ts'))) {
-        const newPath = path.replace(/\.tsx$/, '.jsx').replace(/\.ts$/, '.js');
-        files[newPath] = content;
-        delete files[path];
-      }
-    }
+    // .tsx/.ts files kept as-is — esbuild handles TypeScript natively (like Bolt.new)
 
     // NUNCA sanitizar formatters.js e utils.js — sao FIXED_FILES com exports corretos
-    const SKIP_SANITIZE = ['src/utils/formatters.js', 'src/lib/utils.js'];
+    const SKIP_SANITIZE = ['src/utils/formatters', 'src/lib/utils'];
     for (const [path, content] of Object.entries(files)) {
-      if (/\.(jsx?|js)$/.test(path) && typeof content === 'string') {
-        if (SKIP_SANITIZE.some(skip => path.endsWith(skip))) {
-          files[path] = sanitizeTSXForSWC(content, path);
-          continue;
+      if (/\.(tsx?|jsx?|js)$/.test(path) && typeof content === 'string') {
+        if (SKIP_SANITIZE.some(skip => path.includes(skip))) {
+          continue; // FIXED_FILES — nao sanitizar
         }
-        files[path] = sanitizeTSXForSWC(
-          replaceRechartsImports(
-            removeDuplicateConsts(replaceInlineFormatters(content))
-          ),
-          path
+        files[path] = replaceRechartsImports(
+          removeDuplicateConsts(replaceInlineFormatters(content))
         );
       }
     }
